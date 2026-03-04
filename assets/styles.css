@@ -1311,3 +1311,36 @@ p{ line-height: 1.75; }
   padding-top: 70px; /* keep internal spacing */
 }
 
+/* Align brand + IDs horizontally */
+.brand-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+/* ID container */
+.company-ids {
+  display: flex;
+  gap: 18px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Individual ID block */
+.id-block {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+/* Label (CAGE / UEI) */
+.id-label {
+  opacity: 0.7;
+  font-weight: 500;
+}
+
+/* Value */
+.id-value {
+  font-weight: 700;
+}
