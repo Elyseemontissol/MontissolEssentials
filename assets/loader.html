@@ -1,77 +1,139 @@
-
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Loading...</title>
+<!-- LOADER OVERLAY -->
+<div id="pageLoader" class="page-loader" aria-label="Loading" role="status">
+  <div class="loader-wrap">
+    <div class="logo-loader" style="--logo-url: url('assets/images/loader-logo.jpg');"></div>
+    <div class="loader-text">
+      Loading<span class="dots"><span>.</span><span>.</span><span>.</span></span>
+    </div>
+  </div>
+</div>
 
 <style>
+  /* Full-screen overlay */
+  .page-loader{
+    position: fixed;
+    inset: 0;
+    z-index: 999999;
+    display: grid;
+    place-items: center;
+    background: #F24A0B; /* your brand orange */
+    transition: opacity .35s ease, visibility .35s ease;
+  }
+  .page-loader.is-hidden{
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
 
-body{
-    margin:0;
-    height:100vh;
+  .loader-wrap{
     display:flex;
-    justify-content:center;
+    flex-direction:column;
     align-items:center;
-    background:#F24A0B; /* same orange background */
-    font-family:Arial, Helvetica, sans-serif;
-}
+    gap: 18px;
+  }
 
-/* Loader container */
-.loader{
+  /* Logo container */
+  .logo-loader{
+    width: 190px;
+    aspect-ratio: 1 / 1;
+    background-image: var(--logo-url);
+    background-size: cover;
+    background-position: center;
+    border-radius: 16px; /* optional: soften edges if it's a square */
+    position: relative;
+    overflow: hidden;
+    transform: translateZ(0);
+    animation: floatPulse 1.6s ease-in-out infinite;
+    box-shadow: 0 14px 40px rgba(0,0,0,.25);
+  }
+
+  /* Moving “forward” energy bands */
+  .logo-loader::before{
+    content:"";
+    position:absolute;
+    inset:-35%;
+    background:
+      linear-gradient(90deg,
+        rgba(255,255,255,0) 0%,
+        rgba(255,255,255,.15) 25%,
+        rgba(255,255,255,.35) 50%,
+        rgba(255,255,255,.15) 75%,
+        rgba(255,255,255,0) 100%);
+    transform: translateX(-60%) rotate(18deg);
+    animation: sweep 1.05s linear infinite;
+    mix-blend-mode: screen;
+    opacity: .9;
+  }
+
+  /* Subtle “scanline” motion like real loaders */
+  .logo-loader::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:
+      repeating-linear-gradient(
+        90deg,
+        rgba(255,255,255,.10) 0px,
+        rgba(255,255,255,.10) 14px,
+        rgba(255,255,255,0) 14px,
+        rgba(255,255,255,0) 34px
+      );
+    transform: translateX(-35%);
+    animation: bands 1.2s linear infinite;
+    opacity: .18;
+    mix-blend-mode: overlay;
+  }
+
+  .loader-text{
+    color:#fff;
+    font: 600 14px/1.2 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    opacity: .92;
+  }
+
+  /* Animated dots */
+  .dots span{
+    display:inline-block;
+    width: .6em;
     text-align:center;
-}
+    animation: dotBlink 1.2s infinite;
+  }
+  .dots span:nth-child(2){ animation-delay: .15s; }
+  .dots span:nth-child(3){ animation-delay: .30s; }
 
-/* Logo animation */
-.loader img{
-    width:160px;
-    animation: pulse 1.5s infinite ease-in-out;
-}
+  @keyframes sweep{
+    0%   { transform: translateX(-70%) rotate(18deg); }
+    100% { transform: translateX(70%)  rotate(18deg); }
+  }
+  @keyframes bands{
+    0%   { transform: translateX(-35%); }
+    100% { transform: translateX(35%); }
+  }
+  @keyframes floatPulse{
+    0%,100% { transform: translateY(0) scale(1); }
+    50%     { transform: translateY(-6px) scale(1.02); }
+  }
+  @keyframes dotBlink{
+    0%, 80%, 100% { opacity: .25; transform: translateY(0); }
+    40% { opacity: 1; transform: translateY(-1px); }
+  }
 
-/* Text */
-.loading-text{
-    margin-top:20px;
-    color:white;
-    font-size:18px;
-    letter-spacing:2px;
-}
-
-/* Animation */
-@keyframes pulse{
-    0%{
-        transform:scale(1);
-        opacity:1;
+  /* Accessibility: reduce motion */
+  @media (prefers-reduced-motion: reduce){
+    .logo-loader, .logo-loader::before, .logo-loader::after, .dots span{
+      animation: none !important;
     }
-    50%{
-        transform:scale(1.1);
-        opacity:.7;
-    }
-    100%{
-        transform:scale(1);
-        opacity:1;
-    }
-}
-
+  }
 </style>
-</head>
 
-<body>
-
-<div class="loader">
-
-<img src="assets/images/loader.jpg" alt="Loading">
-
-<div class="loading-text">
-Loading...
-</div>
-
-</div>
-
-</body>
-</html>
-
-
-
-
-
+<script>
+  // Hide loader when the page is fully loaded
+  window.addEventListener("load", () => {
+    const loader = document.getElementById("pageLoader");
+    if (!loader) return;
+    loader.classList.add("is-hidden");
+    // optional: remove from DOM after fade
+    setTimeout(() => loader.remove(), 450);
+  });
+</script>
