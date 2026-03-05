@@ -13,13 +13,42 @@
   
 <header class="site-header">
   <div class="container header-inner">
-    <a class="brand" href="index.html">
-      <span class="brand-badge">ME</span>
-      <span>Montissol Essentials</span>
+    <!-- Brand / Logo -->
+    <a class="brand" href="index.html" aria-label="Montissol Essentials Home">
+      <img
+        src="assets/images/MontissolEssentials01.jpg"
+        alt="Montissol Essentials Logo"
+        class="logo"
+      />
     </a>
-    <button class="menu-btn" type="button" aria-label="Toggle menu">Menu</button>
-    <nav class="nav">
-      <a href="index.html" class="">Home</a><a href="about-us.html" class="">About Us</a><a href="services.html" class="">Services</a><!--<a href="industries-served.html" class="">Industries</a>--><!--<a href="pricing.html" class="">Pricing</a>--><a href="project.html" class="">Projects</a><a href="blog.html" class="">Blog</a><!--<a href="careers.html" class="">Careers</a>--><a href="faqs.html" class="">FAQs</a><a href="contact-us.html" class="" aria-current="page">Contact</a><!--<a href="request-a-quote.html" class="cta">Request a Quote</a>-->
+
+    <!-- CAGE / UEI -->
+    <div class="company-ids" aria-label="Company Identifiers">
+      <div class="id-block">
+        <span class="id-label">CAGE</span>
+        <span class="id-value">9TKS0</span>
+      </div>
+      <div class="id-block">
+        <span class="id-label">UEI</span>
+        <span class="id-value">L4GERF8PJB53</span>
+      </div>
+    </div>
+
+    <!-- Mobile Menu Button -->
+    <button class="menu-btn" type="button" aria-label="Toggle menu" aria-expanded="false">
+      Menu
+    </button>
+
+    <!-- Nav -->
+    <nav class="nav" aria-label="Primary Navigation">
+      <a href="index.html" aria-current="page">Home</a>
+      <a href="about-us.html">About Us</a>
+      <a href="services.html">Services</a>
+      <a href="project.html">Projects</a>
+      <a href="blog.html">Blog</a>
+      <a href="faqs.html">FAQs</a>
+      <a href="contact-us.html">Contact</a>
+      <!-- <a href="request-a-quote.html" class="cta">Request a Quote</a> -->
     </nav>
   </div>
 </header>
@@ -243,10 +272,11 @@
 
       <!-- Brand / About -->
       <div class="footer-col">
-        <a class="footer-brand" href="index.html" aria-label="Montissol Essentials Home">
-          <span class="brand-badge">ME</span>
-          <span class="footer-brand__name">Montissol Essentials</span>
-        </a>
+   <a class="footer-brand" href="index.html" aria-label="Montissol Essentials Home">
+  <img src="assets/images/MontissolEssentialsWB.jpg"
+       alt="Montissol Essentials Logo"
+       style="height:60px; width:auto; display:block;">
+</a>
 
         <h4 class="footer-title">Advanced Facility Support</h4>
         <p class="footer-text">

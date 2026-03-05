@@ -993,6 +993,10 @@ p{ line-height: 1.75; }
   align-items:start;
 }
 
+.site-footer {
+  background-color: #000000;
+}
+
 .footer-brand{
   display:flex;
   align-items:center;
@@ -1343,4 +1347,81 @@ p{ line-height: 1.75; }
 /* Value */
 .id-value {
   font-weight: 700;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+}
+
+.logo {
+  height: 40px;
+  width: auto;
+  display: block;
+}
+
+/* Header layout */
+.site-header .header-inner{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+}
+
+/* Brand + logo sizing */
+.brand{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width: fit-content;
+}
+
+.logo{
+  height:40px;      /* adjust 32–45px as needed */
+  width:auto;
+  display:block;
+  object-fit:contain;
+}
+
+/* Company IDs (CAGE/UEI) */
+.company-ids{
+  display:flex;
+  gap:14px;
+  align-items:center;
+  margin-left:20px;
+}
+
+.id-block{
+  display:flex;
+  flex-direction:column;
+  line-height:1.1;
+}
+
+.id-label{
+  font-size:12px;
+  opacity:.75;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+
+.id-value{
+  font-weight:700;
+}
+
+/* Nav */
+.nav{
+  display:flex;
+  gap:14px;
+  align-items:center;
+}
+
+/* Mobile behavior (basic) */
+@media (max-width: 980px){
+  .company-ids{ display:none; }   /* optional: hide IDs on small screens */
+  .nav{ display:none; }          /* you can toggle this with JS */
+  .menu-btn{ display:inline-flex; }
+}
+
+@media (min-width: 981px){
+  .menu-btn{ display:none; }
 }
