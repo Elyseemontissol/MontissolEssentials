@@ -1,0 +1,77 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Loading...</title>
+
+<style>
+
+body{
+    margin:0;
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:#F24A0B; /* same orange background */
+    font-family:Arial, Helvetica, sans-serif;
+}
+
+/* Loader container */
+.loader{
+    text-align:center;
+}
+
+/* Logo animation */
+.loader img{
+    width:160px;
+    animation: pulse 1.5s infinite ease-in-out;
+}
+
+/* Text */
+.loading-text{
+    margin-top:20px;
+    color:white;
+    font-size:18px;
+    letter-spacing:2px;
+}
+
+/* Animation */
+@keyframes pulse{
+    0%{
+        transform:scale(1);
+        opacity:1;
+    }
+    50%{
+        transform:scale(1.1);
+        opacity:.7;
+    }
+    100%{
+        transform:scale(1);
+        opacity:1;
+    }
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="loader">
+
+<img src="assets/images/loader.jpg" alt="Loading">
+
+<div class="loading-text">
+Loading...
+</div>
+
+</div>
+
+</body>
+</html>
+
+
+
+
+
