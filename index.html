@@ -62,7 +62,14 @@
 <section class="hero hero--services hero--zoom">
 
   <!-- Background Image Layer -->
-  <div class="hero-split__bg"></div>
+<div
+  class="hero-split__bg"
+  id="heroBg"
+  style="
+    background-image:url('https://pawzia.foxcreation.online/mavron/wp-content/uploads/sites/4/2025/11/cement-plant-with-high-factory-structure-and-tower-N7J96QC.jpg');
+    transition: opacity 1.5s ease;
+  ">
+</div>
 
   <!-- Overlay Layer -->
   <div class="hero-split__overlay"></div>
@@ -73,13 +80,13 @@
       <span>Mission-Ready Facility Solutions</span>
     </div>
 
-<h1 class="hero-split__headline">
-  Excellence in Government <br>Facility Services
-</h1>
+    <h1 class="hero-split__headline">
+      Excellence in Government <br>Facility Services
+    </h1>
 
-<p class="hero-split__sub">
-Montissl Essentials delivers secure, reliable, and compliant facility services, ensuring operational readiness for critical government infrastructure.
-</p>
+    <p class="hero-split__sub">
+      Montissol Essentials delivers secure, reliable, and compliant facility services, ensuring operational readiness for critical government infrastructure.
+    </p>
 
     <div class="hero-split__actions">
       <a class="btn primary" href="request-a-quote.html">Request a Quote</a>
@@ -541,5 +548,35 @@ Montissl Essentials delivers secure, reliable, and compliant facility services, 
 
 <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
 <script src="assets/app.js"></script>
+
+<script>
+
+const heroImages = [
+"https://pawzia.foxcreation.online/mavron/wp-content/uploads/sites/4/2025/11/cement-plant-with-high-factory-structure-and-tower-N7J96QC.jpg",
+"assets/images/banner2.jpg",
+"assets/images/banner3.jpg"
+];
+
+let currentHeroImage = 0;
+const heroBg = document.getElementById("heroBg");
+
+function rotateHero() {
+
+  heroBg.style.opacity = "0";
+
+  setTimeout(() => {
+
+    currentHeroImage = (currentHeroImage + 1) % heroImages.length;
+
+    heroBg.style.backgroundImage = "url('" + heroImages[currentHeroImage] + "')";
+    heroBg.style.opacity = "1";
+
+  }, 1500);
+
+}
+
+setInterval(rotateHero, 9000);
+
+</script>
 </body>
 </html>
