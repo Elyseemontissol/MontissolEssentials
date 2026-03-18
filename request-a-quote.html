@@ -4,615 +4,239 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Request a Quote - Montissol Essentials</title>
-
+  <meta name="description" content="Request a quote for janitorial, industrial cleaning, or facility support services from Montissol Essentials.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-
   <link rel="stylesheet" href="assets/styles.css"/>
-
-  <!-- Page-specific styles (matches your hero effect + card/grid look) -->
-  <style>
-    /* HERO: same background effect used on Blog/About/Industries */
-    .hero--quote{
-      position:relative;
-      background:#111;
-      overflow:hidden;
-    }
-    .hero--quote::before{
-      content:"";
-      position:absolute;
-      inset:0;
-      background-image:url('https://pawzia.foxcreation.online/mavron/wp-content/uploads/sites/4/2025/11/cement-plant-with-high-factory-structure-and-tower-N7J96QC.jpg');
-      background-size:cover;
-      background-position:center;
-      transform:scale(1);
-      animation:heroZoom 18s ease-in-out infinite alternate;
-      z-index:0;
-    }
-    .hero--quote::after{
-      content:"";
-      position:absolute;
-      inset:0;
-      background:linear-gradient(to bottom, rgba(0,0,0,.78), rgba(0,0,0,.58));
-      z-index:1;
-    }
-    .hero--quote .content{
-      position:relative;
-      z-index:2;
-      padding:120px 0;
-      color:#fff;
-    }
-    .hero--quote .breadcrumbs{
-      margin-top:10px;
-      font-size:14px;
-      opacity:.9;
-    }
-    .hero--quote .breadcrumbs a{ color:inherit; text-decoration:none; }
-    .hero--quote .breadcrumbs a:hover{ text-decoration:underline; }
-
-    @keyframes heroZoom{
-      from { transform:scale(1); }
-      to   { transform:scale(1.08); }
-    }
-
-    /* Layout */
-    .quote-wrap{ padding:72px 0; }
-    .quote-grid{
-      display:grid;
-      grid-template-columns: 1.1fr .9fr;
-      gap:18px;
-      align-items:start;
-    }
-    @media (max-width: 980px){
-      .quote-grid{ grid-template-columns: 1fr; }
-    }
-
-    /* Card styling aligned to your template (safe even if .card exists) */
-    .q-card{
-      background:#fff;
-      border:1px solid rgba(0,0,0,.06);
-      border-radius:18px;
-      box-shadow:0 14px 34px rgba(0,0,0,.06);
-      padding:18px;
-    }
-    .q-card h2{ margin:0; letter-spacing:-0.02em; }
-    .q-hr{
-      height:1px;
-      background:rgba(0,0,0,.08);
-      margin:12px 0 14px;
-    }
-    .q-muted{ opacity:.82; line-height:1.65; margin:0; }
-
-    /* Mini kicker */
-    .mini-kicker{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      font-weight:600;
-      font-size:14px;
-      opacity:.9;
-    }
-    .mini-kicker .dot{
-      width:10px;height:10px;border-radius:999px;background:#ff5a2a;
-      box-shadow:0 0 0 6px rgba(255,90,42,.12);
-    }
-
-    /* Form */
-    .q-form{
-      margin-top:14px;
-      display:grid;
-      grid-template-columns: repeat(12, minmax(0, 1fr));
-      gap:12px;
-    }
-    .q-field{ grid-column: span 6; }
-    .q-field.full{ grid-column: span 12; }
-
-    @media (max-width: 680px){
-      .q-field{ grid-column: span 12; }
-    }
-
-    .q-label{
-      display:block;
-      font-weight:700;
-      font-size:13px;
-      margin-bottom:6px;
-      opacity:.92;
-    }
-    .q-input, .q-select, .q-textarea{
-      width:100%;
-      border:1px solid rgba(0,0,0,.12);
-      border-radius:12px;
-      padding:10px 12px;
-      font: inherit;
-      outline:none;
-      background:#fff;
-    }
-    .q-textarea{ min-height:120px; resize:vertical; }
-    .q-input:focus, .q-select:focus, .q-textarea:focus{
-      border-color: rgba(255,90,42,.65);
-      box-shadow: 0 0 0 4px rgba(255,90,42,.12);
-    }
-
-    .q-checks{
-      display:flex;
-      flex-wrap:wrap;
-      gap:10px 12px;
-      margin-top:6px;
-    }
-    .q-check{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      padding:8px 10px;
-      border:1px solid rgba(0,0,0,.10);
-      border-radius:999px;
-      background:#fff;
-      font-size:13px;
-      font-weight:700;
-      opacity:.9;
-      user-select:none;
-    }
-    .q-check input{ transform: translateY(1px); }
-
-    .q-actions{
-      grid-column: span 12;
-      display:flex;
-      gap:10px;
-      align-items:center;
-      flex-wrap:wrap;
-      margin-top:6px;
-    }
-
-    .q-note{
-      grid-column: span 12;
-      font-size:12.5px;
-      opacity:.78;
-      line-height:1.6;
-      margin-top:2px;
-    }
-
-    /* Status messages */
-    .q-alert{
-      display:none;
-      margin-top:12px;
-      border-radius:14px;
-      padding:12px 12px;
-      border:1px solid rgba(0,0,0,.10);
-      background:rgba(255,255,255,.9);
-      line-height:1.6;
-      font-size:13.5px;
-    }
-    .q-alert.show{ display:block; }
-    .q-alert.success{
-      border-color: rgba(34,197,94,.35);
-      box-shadow: 0 0 0 4px rgba(34,197,94,.10);
-    }
-    .q-alert.error{
-      border-color: rgba(239,68,68,.35);
-      box-shadow: 0 0 0 4px rgba(239,68,68,.10);
-    }
-
-    /* Sidebar */
-    .q-list{
-      list-style:none;
-      padding:0;
-      margin:0;
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-    }
-    .q-li{
-      border:1px solid rgba(0,0,0,.06);
-      border-radius:16px;
-      padding:14px;
-      background:rgba(255,255,255,.85);
-      backdrop-filter: blur(6px);
-    }
-    .q-li strong{ display:block; margin-bottom:6px; }
-    .q-li p{ margin:0; opacity:.82; line-height:1.6; font-size:13.5px; }
-    .q-pill-row{
-      display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;
-    }
-    .q-pill{
-      border:1px solid rgba(0,0,0,.10);
-      border-radius:999px;
-      padding:7px 10px;
-      font-weight:800;
-      font-size:12px;
-      opacity:.9;
-      background:#fff;
-    }
-  </style>
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon.png">
 </head>
-
 <body>
 
 <header class="site-header">
   <div class="container header-inner">
-    <!-- Brand / Logo -->
     <a class="brand" href="index.html" aria-label="Montissol Essentials Home">
-      <img
-        src="assets/images/MontissolEssentials01.jpg"
-        alt="Montissol Essentials Logo"
-        class="logo"
-      />
+      <img src="assets/images/Header-logo.png" alt="Montissol Essentials Logo" class="logo"/>
     </a>
-
-    <!-- CAGE / UEI -->
     <div class="company-ids" aria-label="Company Identifiers">
-      <div class="id-block">
-        <span class="id-label">CAGE</span>
-        <span class="id-value">9TKS0</span>
-      </div>
-      <div class="id-block">
-        <span class="id-label">UEI</span>
-        <span class="id-value">L4GERF8PJB53</span>
-      </div>
+      <div class="id-block"><span class="id-label">CAGE</span><span class="id-value">9TKS0</span></div>
+      <div class="id-block"><span class="id-label">UEI</span><span class="id-value">L4GERF8PJB53</span></div>
     </div>
-
-    <!-- Mobile Menu Button -->
-    <button class="menu-btn" type="button" aria-label="Toggle menu" aria-expanded="false">
-      Menu
-    </button>
-
-    <!-- Nav -->
+    <button class="menu-btn" type="button" aria-label="Toggle menu" aria-expanded="false">Menu</button>
     <nav class="nav" aria-label="Primary Navigation">
-      <a href="index.html" aria-current="page">Home</a>
+      <a href="index.html">Home</a>
       <a href="about-us.html">About Us</a>
       <a href="services.html">Services</a>
       <a href="project.html">Projects</a>
       <a href="blog.html">Blog</a>
       <a href="faqs.html">FAQs</a>
       <a href="contact-us.html">Contact</a>
-      <!-- <a href="request-a-quote.html" class="cta">Request a Quote</a> -->
     </nav>
   </div>
 </header>
 
 <main>
 
-  <!-- HERO -->
-<!-- REQUEST A QUOTE HERO (uses existing hero--zoom CSS) -->
 <section class="hero hero--services hero--zoom">
-
-  <!-- Background Image Layer -->
-  <div class="hero-split__bg"
-    style="background-image:url('https://pawzia.foxcreation.online/mavron/wp-content/uploads/sites/4/2025/11/cement-plant-with-high-factory-structure-and-tower-N7J96QC.jpg');">
-  </div>
-
-  <!-- Overlay Layer -->
+  <div class="hero-split__bg" style="background-image:url('https://pawzia.foxcreation.online/mavron/wp-content/uploads/sites/4/2025/11/cement-plant-with-high-factory-structure-and-tower-N7J96QC.jpg');"></div>
   <div class="hero-split__overlay"></div>
-
   <div class="container hero-split__inner">
-    <div class="hero-split__kicker">
-      <span class="dot"></span>
-      <span>Montissol Essentials</span>
-    </div>
-
+    <div class="hero-split__kicker"><span class="dot"></span><span>Montissol Essentials</span></div>
     <h1 class="hero-split__headline">Request a Quote</h1>
-
-    <p class="hero-split__sub" style="max-width:760px;">
-      Tell us what you need—janitorial, industrial cleaning, dust control, or facility support.
-      We’ll respond with a clear plan and pricing.
-    </p>
-
+    <p class="hero-split__sub">Tell us what you need—janitorial, industrial cleaning, dust control, or facility support. We'll respond with a clear plan and pricing.</p>
     <div class="hero-split__actions">
       <a class="btn primary" href="#quoteForm">Get Started</a>
       <a class="btn ghost" href="contact-us.html">Contact Our Team</a>
     </div>
   </div>
-
 </section>
 
-  <!-- CONTENT -->
-  <section class="quote-wrap">
-    <div class="container">
+<section class="quote-wrap">
+  <div class="container">
+    <div class="quote-grid">
 
-      <div class="quote-grid">
+      <div class="q-card" id="quoteForm">
+        <div class="mini-kicker"><span class="dot"></span><span>Quote Request Form</span></div>
+        <h2 style="margin-top:12px;">Share your project details</h2>
+        <div class="q-hr"></div>
+        <p class="q-muted">Complete the form below. If you're requesting service for multiple locations, include them in the notes.</p>
 
-        <!-- LEFT: FORM -->
-        <div class="q-card" id="quoteForm">
-          <div class="mini-kicker">
-            <span class="dot"></span>
-            <span>Quote Request Form</span>
+        <form class="q-form" id="quoteRequestForm" novalidate>
+          <div class="q-field">
+            <label class="q-label" for="fullName">Full Name *</label>
+            <input class="q-input" id="fullName" name="fullName" type="text" required placeholder="Your name">
           </div>
+          <div class="q-field">
+            <label class="q-label" for="company">Company / Organization</label>
+            <input class="q-input" id="company" name="company" type="text" placeholder="Company name (optional)">
+          </div>
+          <div class="q-field">
+            <label class="q-label" for="email">Email *</label>
+            <input class="q-input" id="email" name="email" type="email" required placeholder="you@company.com">
+          </div>
+          <div class="q-field">
+            <label class="q-label" for="phone">Phone</label>
+            <input class="q-input" id="phone" name="phone" type="tel" placeholder="(xxx) xxx-xxxx (optional)">
+          </div>
+          <div class="q-field">
+            <label class="q-label" for="serviceType">Service Type *</label>
+            <select class="q-select" id="serviceType" name="serviceType" required>
+              <option value="" selected disabled>Select a service</option>
+              <option>Janitorial & Facility Services</option>
+              <option>Industrial Cleaning & Dust Control</option>
+              <option>HEPA Vacuuming & Particulate Control</option>
+              <option>Quality Control & Reporting</option>
+              <option>Staffing Support</option>
+              <option>Other / Not Sure</option>
+            </select>
+          </div>
+          <div class="q-field">
+            <label class="q-label" for="industry">Industry / Environment</label>
+            <select class="q-select" id="industry" name="industry">
+              <option value="" selected>Choose (optional)</option>
+              <option>Government Facility</option>
+              <option>Industrial / Manufacturing</option>
+              <option>Office / Commercial</option>
+              <option>Healthcare</option>
+              <option>Education</option>
+              <option>Warehouse / Logistics</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="q-field">
+            <label class="q-label" for="location">Service Location (City, State) *</label>
+            <input class="q-input" id="location" name="location" type="text" required placeholder="Miami, FL">
+          </div>
+          <div class="q-field">
+            <label class="q-label" for="startDate">Desired Start Date</label>
+            <input class="q-input" id="startDate" name="startDate" type="date">
+          </div>
+          <div class="q-field full">
+            <label class="q-label">Service Frequency (optional)</label>
+            <div class="q-checks">
+              <label class="q-check"><input type="checkbox" name="frequency" value="One-time"> One-time</label>
+              <label class="q-check"><input type="checkbox" name="frequency" value="Daily"> Daily</label>
+              <label class="q-check"><input type="checkbox" name="frequency" value="Weekly"> Weekly</label>
+              <label class="q-check"><input type="checkbox" name="frequency" value="Bi-weekly"> Bi-weekly</label>
+              <label class="q-check"><input type="checkbox" name="frequency" value="Monthly"> Monthly</label>
+              <label class="q-check"><input type="checkbox" name="frequency" value="Other"> Other</label>
+            </div>
+          </div>
+          <div class="q-field full">
+            <label class="q-label" for="scope">Scope / Details *</label>
+            <textarea class="q-textarea" id="scope" name="scope" required placeholder="Describe the work: square footage, number of restrooms, special areas, dust collection zones, shift hours, security requirements, etc."></textarea>
+          </div>
+          <div class="q-field">
+            <label class="q-label" for="budget">Estimated Budget (optional)</label>
+            <select class="q-select" id="budget" name="budget">
+              <option value="" selected>Choose (optional)</option>
+              <option>Under $5,000</option>
+              <option>$5,000 – $25,000</option>
+              <option>$25,000 – $100,000</option>
+              <option>$100,000+</option>
+              <option>Not sure</option>
+            </select>
+          </div>
+          <div class="q-field">
+            <label class="q-label" for="timeline">Timeline (optional)</label>
+            <select class="q-select" id="timeline" name="timeline">
+              <option value="" selected>Choose (optional)</option>
+              <option>ASAP</option>
+              <option>Within 2 weeks</option>
+              <option>Within 30 days</option>
+              <option>60+ days</option>
+            </select>
+          </div>
+          <div class="q-field full">
+            <label class="q-label" for="siteAccess">Site Access / Requirements (optional)</label>
+            <input class="q-input" id="siteAccess" name="siteAccess" type="text" placeholder="Example: badge access, background checks, after-hours only, escort required, etc.">
+          </div>
+          <div class="q-actions">
+            <button class="btn primary-solid" type="submit">Submit Request</button>
+            <button class="btn outline" type="button" id="resetBtn">Clear</button>
+          </div>
+          <div class="q-note">
+            By submitting, you consent to be contacted by Montissol Essentials regarding this request.
+            For urgent needs, email <a href="mailto:Info@MontissolEssentials.com">Info@MontissolEssentials.com</a>.
+          </div>
+        </form>
 
-          <h2 style="margin-top:10px;">Share your project details</h2>
+        <div class="q-alert success" id="successMsg">
+          Your request is ready. If your email app didn't open, you can copy the message below and send it to
+          <strong>Info@MontissolEssentials.com</strong>.
           <div class="q-hr"></div>
-          <p class="q-muted">
-            Complete the form below. If you’re requesting service for multiple locations, include them in the notes.
-          </p>
-
-          <!-- IMPORTANT:
-               This form currently uses a "mailto" fallback via JS (no backend needed).
-               If you later add a server endpoint, set form action to your URL and remove the JS handler. -->
-          <form class="q-form" id="quoteRequestForm" novalidate>
-            <div class="q-field">
-              <label class="q-label" for="fullName">Full Name *</label>
-              <input class="q-input" id="fullName" name="fullName" type="text" required placeholder="Your name">
-            </div>
-
-            <div class="q-field">
-              <label class="q-label" for="company">Company / Organization</label>
-              <input class="q-input" id="company" name="company" type="text" placeholder="Company name (optional)">
-            </div>
-
-            <div class="q-field">
-              <label class="q-label" for="email">Email *</label>
-              <input class="q-input" id="email" name="email" type="email" required placeholder="you@company.com">
-            </div>
-
-            <div class="q-field">
-              <label class="q-label" for="phone">Phone</label>
-              <input class="q-input" id="phone" name="phone" type="tel" placeholder="(xxx) xxx-xxxx (optional)">
-            </div>
-
-            <div class="q-field">
-              <label class="q-label" for="serviceType">Service Type *</label>
-              <select class="q-select" id="serviceType" name="serviceType" required>
-                <option value="" selected disabled>Select a service</option>
-                <option>Janitorial & Facility Services</option>
-                <option>Industrial Cleaning & Dust Control</option>
-                <option>HEPA Vacuuming & Particulate Control</option>
-                <option>Quality Control & Reporting</option>
-                <option>Staffing Support</option>
-                <option>Other / Not Sure</option>
-              </select>
-            </div>
-
-            <div class="q-field">
-              <label class="q-label" for="industry">Industry / Environment</label>
-              <select class="q-select" id="industry" name="industry">
-                <option value="" selected>Choose (optional)</option>
-                <option>Government Facility</option>
-                <option>Industrial / Manufacturing</option>
-                <option>Office / Commercial</option>
-                <option>Healthcare</option>
-                <option>Education</option>
-                <option>Warehouse / Logistics</option>
-                <option>Other</option>
-              </select>
-            </div>
-
-            <div class="q-field">
-              <label class="q-label" for="location">Service Location (City, State) *</label>
-              <input class="q-input" id="location" name="location" type="text" required placeholder="Miami, FL">
-            </div>
-
-            <div class="q-field">
-              <label class="q-label" for="startDate">Desired Start Date</label>
-              <input class="q-input" id="startDate" name="startDate" type="date">
-            </div>
-
-            <div class="q-field full">
-              <label class="q-label">Service Frequency (optional)</label>
-              <div class="q-checks">
-                <label class="q-check"><input type="checkbox" name="frequency" value="One-time"> One-time</label>
-                <label class="q-check"><input type="checkbox" name="frequency" value="Daily"> Daily</label>
-                <label class="q-check"><input type="checkbox" name="frequency" value="Weekly"> Weekly</label>
-                <label class="q-check"><input type="checkbox" name="frequency" value="Bi-weekly"> Bi-weekly</label>
-                <label class="q-check"><input type="checkbox" name="frequency" value="Monthly"> Monthly</label>
-                <label class="q-check"><input type="checkbox" name="frequency" value="Other"> Other</label>
-              </div>
-            </div>
-
-            <div class="q-field full">
-              <label class="q-label" for="scope">Scope / Details *</label>
-              <textarea class="q-textarea" id="scope" name="scope" required
-                placeholder="Describe the work: square footage, number of restrooms, special areas, dust collection zones, shift hours, security requirements, etc."></textarea>
-            </div>
-
-            <div class="q-field">
-              <label class="q-label" for="budget">Estimated Budget (optional)</label>
-              <select class="q-select" id="budget" name="budget">
-                <option value="" selected>Choose (optional)</option>
-                <option>Under $5,000</option>
-                <option>$5,000 – $25,000</option>
-                <option>$25,000 – $100,000</option>
-                <option>$100,000+</option>
-                <option>Not sure</option>
-              </select>
-            </div>
-
-            <div class="q-field">
-              <label class="q-label" for="timeline">Timeline (optional)</label>
-              <select class="q-select" id="timeline" name="timeline">
-                <option value="" selected>Choose (optional)</option>
-                <option>ASAP</option>
-                <option>Within 2 weeks</option>
-                <option>Within 30 days</option>
-                <option>60+ days</option>
-              </select>
-            </div>
-
-            <div class="q-field full">
-              <label class="q-label" for="siteAccess">Site Access / Requirements (optional)</label>
-              <input class="q-input" id="siteAccess" name="siteAccess" type="text"
-                     placeholder="Example: badge access, background checks, after-hours only, escort required, etc.">
-            </div>
-
-            <div class="q-actions">
-              <button class="btn primary" type="submit">Submit Request</button>
-              <button class="btn ghost" type="button" id="resetBtn">Clear</button>
-            </div>
-
-            <div class="q-note">
-              By submitting, you consent to be contacted by Montissol Essentials regarding this request.
-              For urgent needs, email <a href="mailto:Info@MontissolEssentials.com">Info@MontissolEssentials.com</a>.
-            </div>
-          </form>
-
-          <div class="q-alert success" id="successMsg">
-            ✅ Your request is ready. If your email app didn’t open, you can copy the message below and send it to
-            <strong>Info@MontissolEssentials.com</strong>.
-            <div class="q-hr"></div>
-            <pre id="emailPreview" style="white-space:pre-wrap; margin:0; font:inherit;"></pre>
-          </div>
-
-          <div class="q-alert error" id="errorMsg">
-            ⚠️ Please complete the required fields: <strong>Name</strong>, <strong>Email</strong>, <strong>Service Type</strong>, <strong>Location</strong>, and <strong>Scope</strong>.
-          </div>
+          <pre id="emailPreview" style="white-space:pre-wrap; margin:0; font:inherit;"></pre>
         </div>
 
-        <!-- RIGHT: INFO SIDEBAR -->
-        <!-- Replace your existing <aside ...> block with this one.
-     (Only change is an orange theme for the “What to Expect” card.) -->
+        <div class="q-alert error" id="errorMsg">
+          Please complete the required fields: <strong>Name</strong>, <strong>Email</strong>, <strong>Service Type</strong>, <strong>Location</strong>, and <strong>Scope</strong>.
+        </div>
+      </div>
 
-<aside class="q-card q-card--orange" style="position:sticky; top:16px;">
-  <div class="mini-kicker">
-    <span class="dot"></span>
-    <span>What to Expect</span>
+      <aside class="q-card q-card--orange" style="position:sticky; top:80px;">
+        <div class="mini-kicker"><span class="dot"></span><span>What to Expect</span></div>
+        <h2 style="margin-top:12px;">Fast, clear, and compliant</h2>
+        <div class="q-hr"></div>
+        <ul class="q-list">
+          <li class="q-li"><strong>1) We review your request</strong><p>We confirm scope, access requirements, and scheduling details to avoid surprises.</p></li>
+          <li class="q-li"><strong>2) We send a plan + price</strong><p>Clear staffing approach, schedule, and quality control steps—aligned with your facility needs.</p></li>
+          <li class="q-li"><strong>3) We mobilize</strong><p>Safety-first execution, documented checklists, and consistent communication.</p></li>
+        </ul>
+        <div class="q-hr"></div>
+        <p class="q-muted"><strong>Typical services:</strong></p>
+        <div class="q-pill-row">
+          <span class="q-pill">Janitorial</span>
+          <span class="q-pill">Industrial Cleaning</span>
+          <span class="q-pill">HEPA Vacuuming</span>
+          <span class="q-pill">Dust Control</span>
+          <span class="q-pill">Quality Reporting</span>
+        </div>
+        <div class="q-hr"></div>
+        <p class="q-muted">Prefer email? Send details to <a href="mailto:Info@MontissolEssentials.com">Info@MontissolEssentials.com</a>.</p>
+      </aside>
+
+    </div>
   </div>
-
-  <h2 style="margin-top:10px;">Fast, clear, and compliant</h2>
-  <div class="q-hr"></div>
-
-  <ul class="q-list">
-    <li class="q-li">
-      <strong>1) We review your request</strong>
-      <p>We confirm scope, access requirements, and scheduling details to avoid surprises.</p>
-    </li>
-    <li class="q-li">
-      <strong>2) We send a plan + price</strong>
-      <p>Clear staffing approach, schedule, and quality control steps—aligned with your facility needs.</p>
-    </li>
-    <li class="q-li">
-      <strong>3) We mobilize</strong>
-      <p>Safety-first execution, documented checklists, and consistent communication.</p>
-    </li>
-  </ul>
-
-  <div class="q-hr"></div>
-  <p class="q-muted" style="margin:0;">
-    <strong>Typical services:</strong>
-  </p>
-  <div class="q-pill-row">
-    <span class="q-pill">Janitorial</span>
-    <span class="q-pill">Industrial Cleaning</span>
-    <span class="q-pill">HEPA Vacuuming</span>
-    <span class="q-pill">Dust Control</span>
-    <span class="q-pill">Quality Reporting</span>
-  </div>
-
-  <div class="q-hr"></div>
-  <p class="q-muted" style="margin:0;">
-    Prefer email? Send details to
-    <a href="mailto:Info@MontissolEssentials.com">Info@MontissolEssentials.com</a>.
-  </p>
-</aside>
-
-<!-- Add these styles inside the <style> block in your request-a-quote.html -->
-<style>
-  /* Orange themed “What to Expect” card */
-  .q-card--orange{
-    background: linear-gradient(180deg, rgba(255,90,42,.18), rgba(255,90,42,.08));
-    border-color: rgba(255,90,42,.28);
-    box-shadow: 0 18px 50px rgba(255,90,42,.14);
-  }
-  .q-card--orange .mini-kicker{
-    opacity:1;
-  }
-  .q-card--orange .mini-kicker .dot{
-    background:#fff;
-    box-shadow: 0 0 0 6px rgba(255,255,255,.18);
-  }
-  .q-card--orange h2{
-    color:#1b1b1b;
-  }
-  .q-card--orange .q-hr{
-    background: rgba(255,90,42,.30);
-  }
-  .q-card--orange .q-muted{
-    opacity:.9;
-  }
-
-  /* Make the inner list tiles slightly “warm” */
-  .q-card--orange .q-li{
-    background: rgba(255,255,255,.78);
-    border-color: rgba(255,90,42,.18);
-  }
-  .q-card--orange .q-li strong{
-    color:#111;
-  }
-
-  /* Pills match orange theme */
-  .q-card--orange .q-pill{
-    border-color: rgba(255,90,42,.25);
-    background: rgba(255,255,255,.92);
-  }
-
-  /* Link color inside orange card */
-  .q-card--orange a{
-    color:#b93812;
-    font-weight:700;
-  }
-  .q-card--orange a:hover{
-    color:#ff5a2a;
-  }
-</style>
+</section>
 
 </main>
 
 <footer class="site-footer mega-footer">
   <div class="container">
     <div class="footer-grid">
-
       <div class="footer-col">
-   <a class="footer-brand" href="index.html" aria-label="Montissol Essentials Home">
-  <img src="assets/images/MontissolEssentialsWB.jpg"
-       alt="Montissol Essentials Logo"
-       style="height:60px; width:auto; display:block;">
-</a>
-
+        <a class="footer-brand" href="index.html" aria-label="Montissol Essentials Home"><img src="assets/images/Header-logo.png" alt="Montissol Essentials Logo" style="height:60px; width:auto; display:block;"></a>
         <h4 class="footer-title">Advanced Facility Support</h4>
-        <p class="footer-text">
-          Montissol Essentials LLC delivers janitorial, industrial cleaning, and facility support services for
-          government and commercial environments—with safety-first execution and documented quality control.
-        </p>
+        <p class="footer-text">Montissol Essentials LLC delivers janitorial, industrial cleaning, and facility support services for government and commercial environments—with safety-first execution and documented quality control.</p>
       </div>
-
       <div class="footer-col">
-        <h4 class="footer-title">Quick Links</h4>
-        <div class="footer-hr"></div>
+        <h4 class="footer-title">Quick Links</h4><div class="footer-hr"></div>
         <ul class="footer-links">
-          <li><a href="index.html"><span class="arr">›</span> Home</a></li>
-          <li><a href="about-us.html"><span class="arr">›</span> About Us</a></li>
-          <li><a href="services.html"><span class="arr">›</span> Services</a></li>
-          <li><a href="project.html"><span class="arr">›</span> Projects</a></li>
-          <li><a href="blog.html"><span class="arr">›</span> Blog</a></li>
-          <li><a href="contact-us.html"><span class="arr">›</span> Contact Us</a></li>
-          <li><a href="request-a-quote.html"><span class="arr">›</span> Request a Quote</a></li>
+          <li><a href="index.html"><span class="arr">&#8250;</span> Home</a></li>
+          <li><a href="about-us.html"><span class="arr">&#8250;</span> About Us</a></li>
+          <li><a href="services.html"><span class="arr">&#8250;</span> Services</a></li>
+          <li><a href="project.html"><span class="arr">&#8250;</span> Projects</a></li>
+          <li><a href="blog.html"><span class="arr">&#8250;</span> Blog</a></li>
+          <li><a href="contact-us.html"><span class="arr">&#8250;</span> Contact Us</a></li>
+          <li><a href="request-a-quote.html"><span class="arr">&#8250;</span> Request a Quote</a></li>
         </ul>
       </div>
-
       <div class="footer-col">
-        <h4 class="footer-title">Services</h4>
-        <div class="footer-hr"></div>
+        <h4 class="footer-title">Services</h4><div class="footer-hr"></div>
         <ul class="footer-links">
-          <li><a href="services.html"><span class="arr">›</span> Janitorial &amp; Facility Services</a></li>
-          <li><a href="services.html"><span class="arr">›</span> Industrial Cleaning &amp; Dust Control</a></li>
-          <li><a href="services.html"><span class="arr">›</span> HEPA Vacuuming &amp; Particulate Control</a></li>
-          <li><a href="services.html"><span class="arr">›</span> Quality Control &amp; Reporting</a></li>
-          <li><a href="services.html"><span class="arr">›</span> Staffing Support (as needed)</a></li>
+          <li><a href="services.html"><span class="arr">&#8250;</span> Janitorial &amp; Facility Services</a></li>
+          <li><a href="services.html"><span class="arr">&#8250;</span> Industrial Cleaning &amp; Dust Control</a></li>
+          <li><a href="services.html"><span class="arr">&#8250;</span> HEPA Vacuuming &amp; Particulate Control</a></li>
+          <li><a href="services.html"><span class="arr">&#8250;</span> Quality Control &amp; Reporting</a></li>
+          <li><a href="services.html"><span class="arr">&#8250;</span> Staffing Support (as needed)</a></li>
         </ul>
       </div>
-
       <div class="footer-col">
-        <h4 class="footer-title">Contact Information</h4>
-        <div class="footer-hr"></div>
-
+        <h4 class="footer-title">Contact Information</h4><div class="footer-hr"></div>
         <div class="footer-contact">
-          <div class="footer-contact__item">
-            <span class="label">Email</span>
-            <a href="mailto:Info@MontissolEssentials.com">Info@MontissolEssentials.com</a>
-          </div>
-          <div class="footer-contact__item">
-            <span class="label">Location</span>
-            <span>Miami, Florida</span>
-          </div>
+          <div class="footer-contact__item"><span class="label">Email</span><a href="mailto:Info@MontissolEssentials.com">Info@MontissolEssentials.com</a></div>
+          <div class="footer-contact__item"><span class="label">Location</span><span>Miami, Florida</span></div>
         </div>
-
         <h4 class="footer-title" style="margin-top:16px;">Social Media</h4>
         <div class="footer-social">
           <a class="social-pill" href="#" aria-label="Facebook">f</a>
@@ -621,11 +245,9 @@
           <a class="social-pill" href="#" aria-label="YouTube">yt</a>
         </div>
       </div>
-
     </div>
-
     <div class="footer-bottom">
-      <div class="small">© <span id="year"></span> Montissol Essentials. All rights reserved.</div>
+      <div class="small">&copy; <span id="year"></span> Montissol Essentials. All rights reserved.</div>
       <div class="small"><a href="privacy.html">Privacy</a></div>
     </div>
   </div>
@@ -634,7 +256,6 @@
 <script>
   document.getElementById('year').textContent = new Date().getFullYear();
 
-  // --- Form handling (no backend): validates + opens email draft + shows preview fallback ---
   (function(){
     const form = document.getElementById('quoteRequestForm');
     const resetBtn = document.getElementById('resetBtn');
@@ -643,11 +264,10 @@
     const emailPreview = document.getElementById('emailPreview');
 
     function getCheckedValues(name){
-      return Array.from(form.querySelectorAll(`input[name="${name}"]:checked`)).map(i => i.value);
+      return Array.from(form.querySelectorAll('input[name="' + name + '"]:checked')).map(i => i.value);
     }
 
     function escapeForMailto(s){
-      // mailto body must be URL-encoded; keep it readable
       return encodeURIComponent(s).replace(/%20/g, '+');
     }
 
@@ -680,45 +300,32 @@
       const siteAccess = form.siteAccess.value.trim();
       const frequency = getCheckedValues('frequency');
 
-      // required fields
       if (!fullName || !email || !serviceType || !location || !scope){
         errorMsg.classList.add('show');
         return;
       }
 
-      const subject = `Request a Quote - ${serviceType} (${location})`;
+      const subject = 'Request a Quote - ' + serviceType + ' (' + location + ')';
       const body =
-`Hello Montissol Essentials Team,
+'Hello Montissol Essentials Team,\n\nI would like to request a quote. Here are the details:\n\nName: ' + fullName +
+'\nCompany/Organization: ' + (company || 'N/A') +
+'\nEmail: ' + email +
+'\nPhone: ' + (phone || 'N/A') +
+'\n\nService Type: ' + serviceType +
+'\nIndustry/Environment: ' + (industry || 'N/A') +
+'\nLocation: ' + location +
+'\nDesired Start Date: ' + (startDate || 'N/A') +
+'\nFrequency: ' + (frequency.length ? frequency.join(', ') : 'N/A') +
+'\n\nBudget: ' + (budget || 'N/A') +
+'\nTimeline: ' + (timeline || 'N/A') +
+'\nSite Access/Requirements: ' + (siteAccess || 'N/A') +
+'\n\nScope / Details:\n' + scope +
+'\n\nThank you,\n' + fullName;
 
-I would like to request a quote. Here are the details:
-
-Name: ${fullName}
-Company/Organization: ${company || "N/A"}
-Email: ${email}
-Phone: ${phone || "N/A"}
-
-Service Type: ${serviceType}
-Industry/Environment: ${industry || "N/A"}
-Location: ${location}
-Desired Start Date: ${startDate || "N/A"}
-Frequency: ${frequency.length ? frequency.join(", ") : "N/A"}
-
-Budget: ${budget || "N/A"}
-Timeline: ${timeline || "N/A"}
-Site Access/Requirements: ${siteAccess || "N/A"}
-
-Scope / Details:
-${scope}
-
-Thank you,
-${fullName}
-`;
-
-      // Show preview + try to open email draft
       emailPreview.textContent = body;
       successMsg.classList.add('show');
 
-      const mailto = `mailto:Info@MontissolEssentials.com?subject=${escapeForMailto(subject)}&body=${escapeForMailto(body)}`;
+      const mailto = 'mailto:Info@MontissolEssentials.com?subject=' + escapeForMailto(subject) + '&body=' + escapeForMailto(body);
       window.location.href = mailto;
     });
   })();

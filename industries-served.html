@@ -4,576 +4,154 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Industries Served - Montissol Essentials</title>
-
+  <meta name="description" content="Montissol Essentials serves military, federal, industrial, and commercial facilities.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-
   <link rel="stylesheet" href="assets/styles.css"/>
-
-  <!-- Page-specific layout to match your screenshot -->
-  <style>
-    /* keep page styles scoped to this file */
-    .industries-wrap { padding: 72px 0; }
-    .industries-top {
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:24px;
-      margin-bottom:28px;
-    }
-    .industries-kicker {
-      display:flex;
-      align-items:center;
-      gap:10px;
-      font-weight:600;
-      font-size:16px;
-      opacity:.9;
-    }
-    .industries-kicker .dot {
-      width:10px;height:10px;border-radius:999px;background:#ff5a2a;
-      box-shadow:0 0 0 6px rgba(255,90,42,.12);
-    }
-    .industries-title {
-      margin:10px 0 0;
-      font-size: clamp(34px, 3.6vw, 54px);
-      line-height:1.05;
-      letter-spacing:-0.02em;
-      max-width:760px;
-    }
-
-    /* Circle CTA (top right) */
-    .circle-cta {
-      display:flex;
-      align-items:center;
-      gap:14px;
-      text-decoration:none;
-      color:inherit;
-      white-space:nowrap;
-      margin-top:6px;
-    }
-    .circle-cta .ring {
-      width:72px;height:72px;border-radius:999px;
-      border:2px solid rgba(255,90,42,.7);
-      display:grid;place-items:center;
-      position:relative;
-      transition:transform .15s ease, border-color .15s ease;
-    }
-    .circle-cta .ring::after{
-      content:"";
-      position:absolute; inset:-8px;
-      border-radius:999px;
-      border:2px solid rgba(255,90,42,.22);
-      pointer-events:none;
-    }
-    .circle-cta svg { width:22px;height:22px; }
-    .circle-cta .label {
-      font-weight:600;
-      font-size:15px;
-      line-height:1.2;
-      opacity:.9;
-    }
-    .circle-cta:hover .ring { transform:translateY(-1px); border-color: rgba(255,90,42,1); }
-
-    /* Main 2-column content */
-    .industries-grid{
-      display:grid;
-      grid-template-columns: 1.15fr 1fr;
-      gap:46px;
-      align-items:start;
-      margin-top:14px;
-    }
-
-    .card-img{
-      border-radius:18px;
-      overflow:hidden;
-      box-shadow: 0 16px 40px rgba(0,0,0,.10);
-      background:#111;
-    }
-    .card-img img{
-      width:100%;
-      height:auto;
-      display:block;
-    }
-
-    .industries-right p{
-      margin:0;
-      max-width:560px;
-      opacity:.85;
-      line-height:1.6;
-      font-size:15px;
-    }
-
-    .industries-right-inner{
-      display:grid;
-      grid-template-columns: 1fr 0.95fr;
-      gap:26px;
-      align-items:start;
-      margin-top:22px;
-    }
-
-    .industries-subtitle{
-      margin:0 0 14px;
-      font-size:22px;
-      line-height:1.15;
-      letter-spacing:-0.01em;
-    }
-
-    .sector-list{
-      list-style:none;
-      padding:0;
-      margin:0;
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      max-width:320px;
-    }
-    .sector-list a{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:14px;
-      text-decoration:none;
-      color:inherit;
-      font-weight:600;
-      font-size:15px;
-      padding:6px 0;
-      border-bottom:1px solid rgba(0,0,0,.06);
-    }
-    .sector-list a:hover{ color:#ff5a2a; }
-    .sector-list .arrow{
-      width:18px;height:18px; flex:0 0 18px;
-      opacity:.7;
-    }
-    .sector-list a:hover .arrow{ opacity:1; }
-
-    .industries-small-img{
-      border-radius:18px;
-      overflow:hidden;
-      box-shadow: 0 16px 40px rgba(0,0,0,.10);
-      margin-top:6px;
-      background:#111;
-    }
-    .industries-small-img img{
-      width:100%;
-      height:auto;
-      display:block;
-    }
-
-    /* Responsive */
-    @media (max-width: 980px){
-      .industries-grid{ grid-template-columns:1fr; gap:28px; }
-      .industries-right-inner{ grid-template-columns:1fr; }
-      .circle-cta{ display:none; }
-    }
-    
-  </style>
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon.png">
 </head>
 <body>
 
 <header class="site-header">
   <div class="container header-inner">
-    <!-- Brand / Logo -->
-    <a class="brand" href="index.html" aria-label="Montissol Essentials Home">
-      <img
-        src="assets/images/MontissolEssentials01.jpg"
-        alt="Montissol Essentials Logo"
-        class="logo"
-      />
-    </a>
-
-    <!-- CAGE / UEI -->
+    <a class="brand" href="index.html" aria-label="Montissol Essentials Home"><img src="assets/images/Header-logo.png" alt="Montissol Essentials Logo" class="logo"/></a>
     <div class="company-ids" aria-label="Company Identifiers">
-      <div class="id-block">
-        <span class="id-label">CAGE</span>
-        <span class="id-value">9TKS0</span>
-      </div>
-      <div class="id-block">
-        <span class="id-label">UEI</span>
-        <span class="id-value">L4GERF8PJB53</span>
-      </div>
+      <div class="id-block"><span class="id-label">CAGE</span><span class="id-value">9TKS0</span></div>
+      <div class="id-block"><span class="id-label">UEI</span><span class="id-value">L4GERF8PJB53</span></div>
     </div>
-
-    <!-- Mobile Menu Button -->
-    <button class="menu-btn" type="button" aria-label="Toggle menu" aria-expanded="false">
-      Menu
-    </button>
-
-    <!-- Nav -->
+    <button class="menu-btn" type="button" aria-label="Toggle menu" aria-expanded="false">Menu</button>
     <nav class="nav" aria-label="Primary Navigation">
-      <a href="index.html" aria-current="page">Home</a>
-      <a href="about-us.html">About Us</a>
-      <a href="services.html">Services</a>
-      <a href="project.html">Projects</a>
-      <a href="blog.html">Blog</a>
-      <a href="faqs.html">FAQs</a>
-      <a href="contact-us.html">Contact</a>
-      <!-- <a href="request-a-quote.html" class="cta">Request a Quote</a> -->
+      <a href="index.html">Home</a><a href="about-us.html">About Us</a><a href="services.html">Services</a><a href="project.html">Projects</a><a href="blog.html">Blog</a><a href="faqs.html">FAQs</a><a href="contact-us.html">Contact</a>
     </nav>
   </div>
 </header>
 
 <main>
 
-  <!-- PAGE HERO -->
-<!-- INDUSTRIES HERO (uses existing hero--zoom CSS) -->
 <section class="hero hero--services hero--zoom">
-
-  <!-- Background Image Layer -->
-  <div class="hero-split__bg"
-    style="background-image:url('https://pawzia.foxcreation.online/mavron/wp-content/uploads/sites/4/2025/11/cement-plant-with-high-factory-structure-and-tower-N7J96QC.jpg');">
-  </div>
-
-  <!-- Overlay Layer -->
+  <div class="hero-split__bg" style="background-image:url('https://pawzia.foxcreation.online/mavron/wp-content/uploads/sites/4/2025/11/cement-plant-with-high-factory-structure-and-tower-N7J96QC.jpg');"></div>
   <div class="hero-split__overlay"></div>
-
   <div class="container hero-split__inner">
-    <div class="hero-split__kicker">
-      <span class="dot"></span>
-      <span>Montissol Essentials</span>
-    </div>
-
+    <div class="hero-split__kicker"><span class="dot"></span><span>Montissol Essentials</span></div>
     <h1 class="hero-split__headline">Industries Served</h1>
+    <p class="hero-split__sub">We provide reliable facility services to support a wide range of industries with trained personnel and documented quality control.</p>
   </div>
-
 </section>
 
-<style>
-.hero-industries{
-  position:relative;
-  background:#111;
-  overflow:hidden;
-}
-
-.hero-industries::before{
-  content:"";
-  position:absolute;
-  inset:0;
-  background-image:url('https://pawzia.foxcreation.online/mavron/wp-content/uploads/sites/4/2025/11/cement-plant-with-high-factory-structure-and-tower-N7J96QC.jpg');
-  background-size:cover;
-  background-position:center;
-  transform:scale(1);
-  animation:heroZoom 18s ease-in-out infinite alternate;
-  z-index:0;
-}
-
-.hero-industries::after{
-  content:"";
-  position:absolute;
-  inset:0;
-  background:linear-gradient(
-    to bottom,
-    rgba(0,0,0,.75),
-    rgba(0,0,0,.55)
-  );
-  z-index:1;
-}
-
-.hero-industries .content{
-  position:relative;
-  z-index:2;
-  padding:120px 0;
-  color:#fff;
-}
-
-@keyframes heroZoom{
-  from { transform:scale(1); }
-  to   { transform:scale(1.08); }
-}
-</style>
-
-
-
-
-
-
-
-
-
-  <!-- REDESIGNED TRUSTED SECTORS (matches your screenshot layout) -->
-  <section class="industries-wrap">
-    <div class="container">
-
-      <div class="industries-top">
-        <div>
-          <div class="industries-kicker">
-            <span class="dot"></span>
-            <span>Trusted Sectors</span>
-          </div>
-          <h2 class="industries-title">Reliable Manufacturing Solutions<br/>For Key Industries</h2>
-        </div>
-
-        <a class="circle-cta" href="services.html" aria-label="View All Services">
-          <span class="ring" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M7 17L17 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              <path d="M10 7H17V14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-          </span>
-          <span class="label">View All<br/>Services</span>
-        </a>
-      </div>
-
-      <div class="industries-grid">
-
-        <!-- LEFT big image -->
-        <div class="card-img">
-          <img
-            src="https://pawzia.foxcreation.online/mavron/wp-content/uploads/sites/4/2025/11/portrait-of-female-automation-engineer-standing-in-RTFLVU4-1024x683.jpg"
-            alt="Onsite facility team"
-            loading="lazy"
-            decoding="async"
-          />
-        </div>
-
-        <!-- RIGHT content + list + small image -->
-        <div class="industries-right">
-          <p>
-            We provide reliable manufacturing solutions to support a wide range of industries. With advanced
-            facilities and experienced engineers, we deliver precise, high-quality results tailored to meet the
-            specific demands of each sector.
-          </p>
-
-          <div class="industries-right-inner">
-            <div>
-              <h3 class="industries-subtitle">Industrial Needs<br/>Across Sectors</h3>
-
-              <ul class="sector-list">
-                <li>
-                  <a href="#" aria-label="Automotive">
-                    <span>Warehouse</span>
-                    <svg class="arrow" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M7 17L17 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                      <path d="M10 7H17V14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                  </a>
-                </li>
-                <li>
-                  <a href="#" aria-label="Construction">
-                    <span>Construction</span>
-                    <svg class="arrow" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M7 17L17 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                      <path d="M10 7H17V14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                  </a>
-                </li>
-                <li>
-                  <a href="#" aria-label="Energy and Power">
-                    <span>Energy &amp; Power Plants</span>
-                    <svg class="arrow" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M7 17L17 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                      <path d="M10 7H17V14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                  </a>
-                </li>
-                <li>
-                  <a href="#" aria-label="Electronics and Technology">
-                    <span>Electronics &amp; Technology</span>
-                    <svg class="arrow" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M7 17L17 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                      <path d="M10 7H17V14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                  </a>
-                </li>
-                <li>
-                  <a href="#" aria-label="Aerospace and Defense">
-                    <span>Aerospace &amp; Defense</span>
-                    <svg class="arrow" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M7 17L17 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                      <path d="M10 7H17V14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            <div class="industries-small-img">
-              <img
-                src="https://pawzia.foxcreation.online/mavron/wp-content/uploads/sites/4/2025/11/two-engineers-in-a-steel-mill-consult-the-size-of-N8GHVRU.jpg"
-                alt="Industrial work and planning"
-                loading="lazy"
-                decoding="async"
-              />
-            </div>
-          </div>
-        </div>
-
-      </div>
-
+<!-- SECTORS IN CARDS -->
+<section class="section home-section">
+  <div class="container">
+    <div class="center-head">
+      <div class="mini-kicker"><span class="dot"></span><span>Trusted Sectors</span></div>
+      <h2 class="center-title">Reliable Facility Solutions For Key Industries</h2>
     </div>
-  </section>
 
-  <!-- CLIENT LOGOS STRIP -->
-  <section class="section home-section home-section--alt">
-    <div class="container">
-      <div class="center-head">
-        <h2 class="center-title">A Reliable Partner for Industry-Leading Organizations</h2>
-      </div>
+    <div class="about-grid">
+      <div>
+        <p style="font-size:1rem; color:var(--text-secondary); margin-bottom:24px;">We deliver consistent, high-quality results tailored to meet the specific demands of each sector. With advanced capabilities and experienced teams, we support operations where reliability matters most.</p>
 
-  </section>
+        <h3 class="industry-sub">Industries We Serve</h3>
+        <ul class="industry-list">
+          <li><span>Warehouse &amp; Logistics</span><span class="li-arrow">&#8599;</span></li>
+          <li><span>Construction</span><span class="li-arrow">&#8599;</span></li>
+          <li><span>Energy &amp; Power Plants</span><span class="li-arrow">&#8599;</span></li>
+          <li><span>Electronics &amp; Technology</span><span class="li-arrow">&#8599;</span></li>
+          <li><span>Aerospace &amp; Defense</span><span class="li-arrow">&#8599;</span></li>
+          <li><span>Military Installations</span><span class="li-arrow">&#8599;</span></li>
+        </ul>
 
-  <!-- CAPABILITIES -->
-  <section class="section home-section">
-    <div class="container">
-
-      <div class="center-head">
-        <div class="mini-kicker">
-          <span class="dot"></span>
-          <span>Our Capabilities</span>
-        </div>
-        <h2 class="center-title">High-Performance Facility Services</h2>
-      </div>
-
-      <div class="cap-grid" style="margin-top:24px;">
-
-        <article class="cap-card cap-card--active">
-          <div class="cap-icon">
-            <img
-              src="https://pawzia.foxcreation.online/mavron/wp-content/uploads/sites/4/2025/11/Icon-1.png"
-              alt=""
-              width="52"
-              height="52"
-              loading="lazy"
-              decoding="async"
-              style="width:52px;height:52px;object-fit:contain;"
-            />
-          </div>
-          <h3>Quality Control &amp; Reporting</h3>
-          <p>Inspection-ready checklists, verification steps, and clear communication on service outcomes.</p>
-        </article>
-
-        <article class="cap-card">
-          <div class="cap-icon">
-            <img
-              src="https://pawzia.foxcreation.online/mavron/wp-content/uploads/sites/4/2025/11/Icon-2.png"
-              alt=""
-              width="52"
-              height="52"
-              loading="lazy"
-              decoding="async"
-              style="width:52px;height:52px;object-fit:contain;"
-            />
-          </div>
-          <h3>Industrial Cleaning &amp; Dust Control</h3>
-          <p>HEPA vacuuming and dust control practices designed to support safe, clean industrial operations.</p>
-        </article>
-
-        <article class="cap-card">
-          <div class="cap-icon">
-            <img
-              src="https://pawzia.foxcreation.online/mavron/wp-content/uploads/sites/4/2025/11/Icon-3.png"
-              alt=""
-              width="52"
-              height="52"
-              loading="lazy"
-              decoding="async"
-              style="width:52px;height:52px;object-fit:contain;"
-            />
-          </div>
-          <h3>Program Execution</h3>
-          <p>Reliable schedules, trained personnel, and consistent delivery across multiple facility types.</p>
-        </article>
-
-      </div>
-
-      <!-- Video block -->
-      <div class="section-block" style="margin-top:26px; text-align:center;">
-        <h3 style="margin-top:0;">Learn More About Our Approach</h3>
-        <p style="max-width:820px; margin:10px auto 0;">
-          Watch a short overview video. (You can replace this with your own company video link anytime.)
-        </p>
-
-        <div style="margin-top:16px; border-radius:18px; overflow:hidden;">
-          <iframe
-            width="100%"
-            height="420"
-            src="https://www.youtube.com/embed/VhBl3dHT5SY"
-            title="YouTube video"
-            frameborder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowfullscreen
-            style="display:block;"
-          ></iframe>
+        <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:24px;">
+          <a class="btn primary-solid" href="services.html">View All Services</a>
+          <a class="btn outline" href="contact-us.html">Contact Us</a>
         </div>
       </div>
 
+      <div>
+        <div style="border-radius:var(--radius-xl); overflow:hidden; box-shadow:var(--shadow-lg);">
+          <img src="https://pawzia.foxcreation.online/mavron/wp-content/uploads/sites/4/2025/11/portrait-of-female-automation-engineer-standing-in-RTFLVU4-1024x683.jpg" alt="Onsite facility team" loading="lazy" decoding="async"/>
+        </div>
+        <div style="border-radius:var(--radius-xl); overflow:hidden; box-shadow:var(--shadow-lg); margin-top:24px;">
+          <img src="https://pawzia.foxcreation.online/mavron/wp-content/uploads/sites/4/2025/11/two-engineers-in-a-steel-mill-consult-the-size-of-N8GHVRU.jpg" alt="Industrial work and planning" loading="lazy" decoding="async"/>
+        </div>
+      </div>
     </div>
-  </section>
+  </div>
+</section>
+
+<!-- CAPABILITIES -->
+<section class="section home-section home-section--alt">
+  <div class="container">
+    <div class="center-head">
+      <div class="mini-kicker"><span class="dot"></span><span>Our Capabilities</span></div>
+      <h2 class="center-title">High-Performance Facility Services</h2>
+    </div>
+
+    <div class="cap-grid">
+      <article class="cap-card cap-card--active">
+        <div class="cap-icon">
+          <img src="https://pawzia.foxcreation.online/mavron/wp-content/uploads/sites/4/2025/11/Icon-1.png" alt="" width="52" height="52" loading="lazy" decoding="async" style="width:52px;height:52px;object-fit:contain;"/>
+        </div>
+        <h3>Quality Control &amp; Reporting</h3>
+        <p>Inspection-ready checklists, verification steps, and clear communication on service outcomes.</p>
+      </article>
+      <article class="cap-card">
+        <div class="cap-icon">
+          <img src="https://pawzia.foxcreation.online/mavron/wp-content/uploads/sites/4/2025/11/Icon-2.png" alt="" width="52" height="52" loading="lazy" decoding="async" style="width:52px;height:52px;object-fit:contain;"/>
+        </div>
+        <h3>Industrial Cleaning &amp; Dust Control</h3>
+        <p>HEPA vacuuming and dust control practices designed to support safe, clean industrial operations.</p>
+      </article>
+      <article class="cap-card">
+        <div class="cap-icon">
+          <img src="https://pawzia.foxcreation.online/mavron/wp-content/uploads/sites/4/2025/11/Icon-3.png" alt="" width="52" height="52" loading="lazy" decoding="async" style="width:52px;height:52px;object-fit:contain;"/>
+        </div>
+        <h3>Program Execution</h3>
+        <p>Reliable schedules, trained personnel, and consistent delivery across multiple facility types.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- VIDEO -->
+<section class="section home-section">
+  <div class="container">
+    <div class="center-head">
+      <div class="mini-kicker"><span class="dot"></span><span>Learn More</span></div>
+      <h2 class="center-title">Learn More About Our Approach</h2>
+    </div>
+    <div style="max-width:900px; margin:0 auto; border-radius:var(--radius-xl); overflow:hidden; box-shadow:var(--shadow-lg);">
+      <iframe width="100%" height="480" src="https://www.youtube.com/embed/VhBl3dHT5SY" title="YouTube video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="display:block;"></iframe>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="newsletter-full">
+  <div class="newsletter-inner">
+    <div>
+      <div class="mini-kicker"><span class="dot"></span><span>Ready to Start?</span></div>
+      <h3 class="newsletter-title">Let's discuss how we can support your facility.</h3>
+      <p class="newsletter-sub">Tell us what you need and we'll respond with a clear plan.</p>
+    </div>
+    <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+      <a class="btn primary" href="request-a-quote.html">Request a Quote</a>
+      <a class="btn ghost" href="contact-us.html">Contact Our Team</a>
+    </div>
+  </div>
+</section>
 
 </main>
 
 <footer class="site-footer mega-footer">
   <div class="container">
     <div class="footer-grid">
-
-      <div class="footer-col">
-   <a class="footer-brand" href="index.html" aria-label="Montissol Essentials Home">
-  <img src="assets/images/MontissolEssentialsWB.jpg"
-       alt="Montissol Essentials Logo"
-       style="height:60px; width:auto; display:block;">
-</a>
-
-        <h4 class="footer-title">Advanced Facility Support</h4>
-        <p class="footer-text">
-          Montissol Essentials LLC delivers janitorial, industrial cleaning, and facility support services for
-          government and commercial environments—with safety-first execution and documented quality control.
-        </p>
-      </div>
-
-      <div class="footer-col">
-        <h4 class="footer-title">Quick Links</h4>
-        <div class="footer-hr"></div>
-        <ul class="footer-links">
-          <li><a href="index.html"><span class="arr">›</span> Home</a></li>
-          <li><a href="about-us.html"><span class="arr">›</span> About Us</a></li>
-          <li><a href="services.html"><span class="arr">›</span> Services</a></li>
-          <li><a href="project.html"><span class="arr">›</span> Our Project</a></li>
-          <li><a href="blog.html"><span class="arr">›</span> Blog</a></li>
-          <li><a href="contact-us.html"><span class="arr">›</span> Contact Us</a></li>
-        </ul>
-      </div>
-
-      <div class="footer-col">
-        <h4 class="footer-title">Services</h4>
-        <div class="footer-hr"></div>
-        <ul class="footer-links">
-          <li><a href="services.html"><span class="arr">›</span> Janitorial &amp; Facility Services</a></li>
-          <li><a href="services.html"><span class="arr">›</span> Industrial Cleaning &amp; Dust Control</a></li>
-          <li><a href="services.html"><span class="arr">›</span> HEPA Vacuuming</a></li>
-          <li><a href="services.html"><span class="arr">›</span> Quality Control</a></li>
-          <li><a href="services.html"><span class="arr">›</span> Staffing Support</a></li>
-        </ul>
-      </div>
-
-      <div class="footer-col">
-        <h4 class="footer-title">Contact Information</h4>
-        <div class="footer-hr"></div>
-        <div class="footer-contact">
-          <div class="footer-contact__item">
-            <span class="label">Email</span>
-            <a href="mailto:Info@MontissolEssentials.com">Info@MontissolEssentials.com</a>
-          </div>
-          <div class="footer-contact__item">
-            <span class="label">Location</span>
-            <span>Miami, Florida</span>
-          </div>
-        </div>
-
-        <h4 class="footer-title" style="margin-top:16px;">Social Media</h4>
-        <div class="footer-social">
-          <a class="social-pill" href="#" aria-label="Facebook">f</a>
-          <a class="social-pill" href="#" aria-label="X / Twitter">x</a>
-          <a class="social-pill" href="#" aria-label="Instagram">ig</a>
-          <a class="social-pill" href="#" aria-label="YouTube">yt</a>
-        </div>
-      </div>
-
+      <div class="footer-col"><a class="footer-brand" href="index.html" aria-label="Montissol Essentials Home"><img src="assets/images/Header-logo.png" alt="Montissol Essentials Logo" style="height:60px; width:auto; display:block;"></a><h4 class="footer-title">Advanced Facility Support</h4><p class="footer-text">Montissol Essentials LLC delivers janitorial, industrial cleaning, and facility support services for government and commercial environments—with safety-first execution and documented quality control.</p></div>
+      <div class="footer-col"><h4 class="footer-title">Quick Links</h4><div class="footer-hr"></div><ul class="footer-links"><li><a href="index.html"><span class="arr">&#8250;</span> Home</a></li><li><a href="about-us.html"><span class="arr">&#8250;</span> About Us</a></li><li><a href="services.html"><span class="arr">&#8250;</span> Services</a></li><li><a href="project.html"><span class="arr">&#8250;</span> Projects</a></li><li><a href="blog.html"><span class="arr">&#8250;</span> Blog</a></li><li><a href="contact-us.html"><span class="arr">&#8250;</span> Contact Us</a></li></ul></div>
+      <div class="footer-col"><h4 class="footer-title">Services</h4><div class="footer-hr"></div><ul class="footer-links"><li><a href="services.html"><span class="arr">&#8250;</span> Janitorial &amp; Facility Services</a></li><li><a href="services.html"><span class="arr">&#8250;</span> Industrial Cleaning &amp; Dust Control</a></li><li><a href="services.html"><span class="arr">&#8250;</span> HEPA Vacuuming</a></li><li><a href="services.html"><span class="arr">&#8250;</span> Quality Control</a></li><li><a href="services.html"><span class="arr">&#8250;</span> Staffing Support</a></li></ul></div>
+      <div class="footer-col"><h4 class="footer-title">Contact Information</h4><div class="footer-hr"></div><div class="footer-contact"><div class="footer-contact__item"><span class="label">Email</span><a href="mailto:Info@MontissolEssentials.com">Info@MontissolEssentials.com</a></div><div class="footer-contact__item"><span class="label">Location</span><span>Miami, Florida</span></div></div><h4 class="footer-title" style="margin-top:16px;">Social Media</h4><div class="footer-social"><a class="social-pill" href="#" aria-label="Facebook">f</a><a class="social-pill" href="#" aria-label="X / Twitter">x</a><a class="social-pill" href="#" aria-label="Instagram">ig</a><a class="social-pill" href="#" aria-label="YouTube">yt</a></div></div>
     </div>
-
-    <div class="footer-bottom">
-      <div class="small">© <span id="year"></span> Montissol Essentials. All rights reserved.</div>
-      <div class="small"><a href="privacy.html">Privacy</a></div>
-    </div>
+    <div class="footer-bottom"><div class="small">&copy; <span id="year"></span> Montissol Essentials. All rights reserved.</div><div class="small"><a href="privacy.html">Privacy</a></div></div>
   </div>
 </footer>
 

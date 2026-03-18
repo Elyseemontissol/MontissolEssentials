@@ -4,430 +4,175 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Projects - Montissol Essentials</title>
-
+  <meta name="description" content="Government facility services delivered with QC discipline by Montissol Essentials.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-
   <link rel="stylesheet" href="assets/styles.css"/>
-
-  <!-- Page-only styling (keeps your global design intact) -->
-  <style>
-    .projects-wrap{ margin-top:24px; }
-    .projects-head{ max-width:920px; margin:0 auto; text-align:center; }
-    .projects-head p{ margin:10px auto 0; opacity:.85; max-width:820px; }
-
-    .project-grid{
-      margin-top:26px;
-      display:grid;
-      grid-template-columns: repeat(12, minmax(0, 1fr));
-      gap:18px;
-      align-items:stretch;
-    }
-    .project-card{
-      grid-column: span 6;
-      background:#fff;
-      border:1px solid rgba(0,0,0,.06);
-      border-radius:18px;
-      box-shadow:0 14px 34px rgba(0,0,0,.06);
-      overflow:hidden;
-      display:flex;
-      flex-direction:column;
-    }
-    .project-media{
-      position:relative;
-      height:220px;
-      background:#111;
-      overflow:hidden;
-    }
-    .project-media img{
-      width:100%;
-      height:100%;
-      object-fit:cover;
-      display:block;
-      filter:grayscale(1);
-    }
-    .project-media::after{
-      content:"";
-      position:absolute;
-      inset:0;
-      background:linear-gradient(to bottom, rgba(0,0,0,.30), rgba(0,0,0,.65));
-    }
-    .project-badge{
-      position:absolute;
-      left:14px;
-      top:14px;
-      z-index:2;
-      background:rgba(255,255,255,.92);
-      border:1px solid rgba(0,0,0,.08);
-      border-radius:999px;
-      padding:6px 10px;
-      font-weight:700;
-      font-size:12px;
-      letter-spacing:.02em;
-    }
-    .project-body{
-      padding:16px 16px 14px;
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-      flex:1;
-    }
-    .project-title{
-      margin:0;
-      font-size:18px;
-      letter-spacing:-0.01em;
-    }
-    .project-sub{
-      margin:0;
-      opacity:.85;
-      line-height:1.6;
-      font-size:14px;
-    }
-    .project-meta{
-      display:grid;
-      grid-template-columns: repeat(12, minmax(0, 1fr));
-      gap:10px;
-      margin-top:2px;
-    }
-    .meta-item{
-      grid-column: span 6;
-      background:rgba(0,0,0,.03);
-      border:1px solid rgba(0,0,0,.06);
-      border-radius:14px;
-      padding:10px 12px;
-    }
-    .meta-label{ font-size:12px; font-weight:700; opacity:.75; }
-    .meta-value{ margin-top:2px; font-size:13px; font-weight:600; }
-
-    .svc-list{
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-      margin:2px 0 0;
-      padding:0;
-      list-style:none;
-    }
-    .svc-pill{
-      font-size:12px;
-      padding:6px 10px;
-      border-radius:999px;
-      border:1px solid rgba(0,0,0,.10);
-      background:#fff;
-      opacity:.95;
-    }
-
-    .project-actions{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-top:auto;
-      padding-top:6px;
-    }
-
-    .note-card{
-      grid-column: span 12;
-      background:linear-gradient(180deg, rgba(0,0,0,.03), rgba(0,0,0,.01));
-      border:1px solid rgba(0,0,0,.06);
-      border-radius:18px;
-      padding:16px;
-      box-shadow:0 12px 28px rgba(0,0,0,.05);
-    }
-    .note-card p{ margin:0; opacity:.86; line-height:1.65; }
-
-    @media (max-width: 980px){
-      .project-card{ grid-column: span 12; }
-      .meta-item{ grid-column: span 12; }
-      .project-media{ height:200px; }
-    }
-  </style>
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon.png">
 </head>
 <body>
 
 <header class="site-header">
   <div class="container header-inner">
-    <!-- Brand / Logo -->
     <a class="brand" href="index.html" aria-label="Montissol Essentials Home">
-      <img
-        src="assets/images/MontissolEssentials01.jpg"
-        alt="Montissol Essentials Logo"
-        class="logo"
-      />
+      <img src="assets/images/Header-logo.png" alt="Montissol Essentials Logo" class="logo"/>
     </a>
-
-    <!-- CAGE / UEI -->
     <div class="company-ids" aria-label="Company Identifiers">
-      <div class="id-block">
-        <span class="id-label">CAGE</span>
-        <span class="id-value">9TKS0</span>
-      </div>
-      <div class="id-block">
-        <span class="id-label">UEI</span>
-        <span class="id-value">L4GERF8PJB53</span>
-      </div>
+      <div class="id-block"><span class="id-label">CAGE</span><span class="id-value">9TKS0</span></div>
+      <div class="id-block"><span class="id-label">UEI</span><span class="id-value">L4GERF8PJB53</span></div>
     </div>
-
-    <!-- Mobile Menu Button -->
-    <button class="menu-btn" type="button" aria-label="Toggle menu" aria-expanded="false">
-      Menu
-    </button>
-
-    <!-- Nav -->
+    <button class="menu-btn" type="button" aria-label="Toggle menu" aria-expanded="false">Menu</button>
     <nav class="nav" aria-label="Primary Navigation">
-      <a href="index.html" aria-current="page">Home</a>
+      <a href="index.html">Home</a>
       <a href="about-us.html">About Us</a>
       <a href="services.html">Services</a>
-      <a href="project.html">Projects</a>
+      <a href="project.html" aria-current="page">Projects</a>
       <a href="blog.html">Blog</a>
       <a href="faqs.html">FAQs</a>
       <a href="contact-us.html">Contact</a>
-      <!-- <a href="request-a-quote.html" class="cta">Request a Quote</a> -->
     </nav>
   </div>
 </header>
 
 <main>
 
-  <!-- PROJECTS HERO (uses your existing hero--zoom CSS system) -->
-  <section class="hero hero--services hero--zoom">
-    <div class="hero-split__bg"
-      style="background-image:url('https://pawzia.foxcreation.online/mavron/wp-content/uploads/sites/4/2025/11/cement-plant-with-high-factory-structure-and-tower-N7J96QC.jpg');">
+<section class="hero hero--services hero--zoom">
+  <div class="hero-split__bg" style="background-image:url('https://pawzia.foxcreation.online/mavron/wp-content/uploads/sites/4/2025/11/cement-plant-with-high-factory-structure-and-tower-N7J96QC.jpg');"></div>
+  <div class="hero-split__overlay"></div>
+  <div class="container hero-split__inner">
+    <div class="hero-split__kicker"><span class="dot"></span><span>Montissol Essentials LLC</span></div>
+    <h1 class="hero-split__headline">Projects</h1>
+    <p class="hero-split__sub">A snapshot of mission-ready work: industrial cleaning, janitorial and facility services, and documented quality control delivered under disciplined schedules for government environments.</p>
+    <div class="hero-split__actions">
+      <a class="btn primary" href="request-a-quote.html">Request a Quote</a>
+      <a class="btn ghost" href="contact-us.html">Contact Our Team</a>
     </div>
-    <div class="hero-split__overlay"></div>
+  </div>
+</section>
 
-    <div class="container hero-split__inner">
-      <div class="hero-split__kicker">
-        <span class="dot"></span>
-        <span>Montissol Essentials LLC</span>
-      </div>
-      <h1 class="hero-split__headline">Projects</h1>
-      <p class="hero-split__sub" style="max-width:860px;">
-        A snapshot of mission-ready work: industrial cleaning, janitorial and facility services, and documented quality control
-        delivered under disciplined schedules for government environments.
-      </p>
-      <div class="hero-split__actions">
-        <a class="btn primary" href="request-a-quote.html">Request a Quote</a>
-        <a class="btn ghost" href="contact-us.html">Contact Our Team</a>
-      </div>
+<section class="section home-section">
+  <div class="container projects-wrap">
+    <div class="projects-head">
+      <div class="mini-kicker" style="justify-content:center;"><span class="dot"></span><span>Current &amp; Recent Performance</span></div>
+      <h2 class="center-title">Government Facility Services Delivered with QC Discipline</h2>
+      <p>We support operational continuity through planned cleaning programs, safety-first execution, and inspection-ready documentation. Below are two representative contracts showing how we deliver.</p>
     </div>
-  </section>
 
-  <section class="section home-section">
-    <div class="container projects-wrap">
-
-      <div class="projects-head">
-        <div class="mini-kicker" style="justify-content:center;">
-          <span class="dot"></span>
-          <span>Current &amp; Recent Performance</span>
+    <div class="project-grid">
+      <article class="project-card" aria-label="Tinker Air Force Base – Industrial Cleaning Services">
+        <div class="project-media">
+          <span class="project-badge">U.S. Air Force</span>
+          <img src="assets/images/KC135.jpeg" alt="Industrial facility interior" loading="lazy" decoding="async"/>
         </div>
-        <h2 class="center-title">Government Facility Services Delivered with QC Discipline</h2>
-        <p>
-          We support operational continuity through planned cleaning programs, safety-first execution, and inspection-ready documentation.
-          Below are two representative contracts showing how we deliver.
-        </p>
-      </div>
-
-      <div class="project-grid">
-
-        <!-- PROJECT 1: Tinker AFB -->
-        <article class="project-card" aria-label="Tinker Air Force Base – Industrial Cleaning Services">
-          <div class="project-media">
-            <span class="project-badge">U.S. Air Force</span>
-            <img
-              src="assets/images/KC135.jpeg"
-              alt="Industrial facility interior"
-              loading="lazy" decoding="async"
-            />
+        <div class="project-body">
+          <h3 class="project-title">Tinker AFB (OK) – Plasma Spray Booth &amp; Dust Collector Cleaning</h3>
+          <p class="project-sub">Montissol Essentials performs industrial cleaning services supporting aerospace maintenance operations. Work is executed with safety controls and documented quality checks to support inspection readiness and sustained operations.</p>
+          <div class="project-meta">
+            <div class="meta-item"><div class="meta-label">Contract</div><div class="meta-value">FA813225C0002 (Firm Fixed Price)</div></div>
+            <div class="meta-item"><div class="meta-label">Performance Location</div><div class="meta-value">Tinker AFB, Oklahoma</div></div>
+            <div class="meta-item"><div class="meta-label">Scope Highlights</div><div class="meta-value">Industrial cleaning, HEPA/dust control, reporting</div></div>
+            <div class="meta-item"><div class="meta-label">Quality Approach</div><div class="meta-value">Checklists, inspections, corrective actions</div></div>
           </div>
-
-          <div class="project-body">
-            <h3 class="project-title">Tinker AFB (OK) – Plasma Spray Booth &amp; Dust Collector Cleaning</h3>
-            <p class="project-sub">
-              Montissol Essentials performs industrial cleaning services supporting aerospace maintenance operations.
-              Work is executed with safety controls and documented quality checks to support inspection readiness and sustained operations.
-            </p>
-
-            <div class="project-meta">
-              <div class="meta-item">
-                <div class="meta-label">Contract</div>
-                <div class="meta-value">FA813225C0002 (Firm Fixed Price)</div>
-              </div>
-              <div class="meta-item">
-                <div class="meta-label">Performance Location</div>
-                <div class="meta-value">Tinker AFB, Oklahoma</div>
-              </div>
-              <div class="meta-item">
-                <div class="meta-label">Scope Highlights</div>
-                <div class="meta-value">Industrial cleaning, HEPA/dust control, reporting</div>
-              </div>
-              <div class="meta-item">
-                <div class="meta-label">Quality Approach</div>
-                <div class="meta-value">Checklists, inspections, corrective actions</div>
-              </div>
-            </div>
-
-            <ul class="svc-list" aria-label="Services provided on Tinker AFB contract">
-              <li class="svc-pill">Plasma spray booth cleaning</li>
-              <li class="svc-pill">Dust collector cleaning support</li>
-              <li class="svc-pill">Grit blast dust collector cleaning</li>
-              <li class="svc-pill">HEPA vacuuming &amp; particulate control</li>
-              <li class="svc-pill">Safe debris containment &amp; handling</li>
-              <li class="svc-pill">Scheduled services + responsiveness</li>
-              <li class="svc-pill">Documented QC (checklists/inspections)</li>
-            </ul>
-
-           
-          </div>
-        </article>
-
-        <!-- PROJECT 2: CBP / U.S. Border Patrol Curlew Station -->
-        <article class="project-card" aria-label="U.S. Customs and Border Protection – Facilities Services">
-          <div class="project-media">
-            <span class="project-badge">CBP / U.S. Border Patrol</span>
-            <img
-              src="assets/images/CBP.jpg"
-              alt="Office and facilities operations"
-              loading="lazy" decoding="async"
-            />
-          </div>
-
-          <div class="project-body">
-            <h3 class="project-title">U.S. Border Patrol Curlew Station – Facilities Services</h3>
-            <p class="project-sub">
-              Montissol Essentials delivers facilities services supporting daily station operations, with structured schedules,
-              high-touch cleaning, and inspection-ready documentation to maintain safe, professional spaces.
-            </p>
-
-            <div class="project-meta">
-              <div class="meta-item">
-                <div class="meta-label">Contract / PO</div>
-                <div class="meta-value">70B03C25P00000134 (Facilities Services)</div>
-              </div>
-              <div class="meta-item">
-                <div class="meta-label">Customer</div>
-                <div class="meta-value">U.S. Customs &amp; Border Protection</div>
-              </div>
-              <div class="meta-item">
-                <div class="meta-label">Work Type</div>
-                <div class="meta-value">Janitorial &amp; facility support services</div>
-              </div>
-              <div class="meta-item">
-                <div class="meta-label">Delivery Model</div>
-                <div class="meta-value">Recurring schedules + on-call responsiveness</div>
-              </div>
-            </div>
-
-            <ul class="svc-list" aria-label="Services provided on CBP contract">
-              <li class="svc-pill">Janitorial services (routine cleaning)</li>
-              <li class="svc-pill">Restroom sanitation &amp; replenishment</li>
-              <li class="svc-pill">Floor care (as required)</li>
-              <li class="svc-pill">High-touch point disinfection</li>
-              <li class="svc-pill">Breakroom/common-area cleaning</li>
-              <li class="svc-pill">Trash removal &amp; area upkeep</li>
-              <li class="svc-pill">Documented QC (supervisor checks)</li>
-            </ul>
-          </div>
-        </article>
-
-        <!-- Note / Compliance -->
-        <div class="note-card" role="note" aria-label="Quality control and compliance note">
-          <div class="mini-kicker">
-            <span class="dot"></span>
-            <span>How We Deliver</span>
-          </div>
-          <h3 style="margin:10px 0 8px;">Quality control is built into every shift</h3>
-          <p>
-            Across contracts, we prioritize safety-first execution, disciplined scheduling, and inspection-ready documentation.
-            Our supervisors use checklists and verification steps, track issues, and apply corrective actions quickly—so customers
-            get consistent results without disrupting operations.
-          </p>
+          <ul class="svc-list" aria-label="Services provided on Tinker AFB contract">
+            <li class="svc-pill">Plasma spray booth cleaning</li>
+            <li class="svc-pill">Dust collector cleaning support</li>
+            <li class="svc-pill">Grit blast dust collector cleaning</li>
+            <li class="svc-pill">HEPA vacuuming &amp; particulate control</li>
+            <li class="svc-pill">Safe debris containment &amp; handling</li>
+            <li class="svc-pill">Scheduled services + responsiveness</li>
+            <li class="svc-pill">Documented QC (checklists/inspections)</li>
+          </ul>
         </div>
+      </article>
 
+      <article class="project-card" aria-label="U.S. Customs and Border Protection – Facilities Services">
+        <div class="project-media">
+          <span class="project-badge">CBP / U.S. Border Patrol</span>
+          <img src="assets/images/CBP.jpg" alt="Office and facilities operations" loading="lazy" decoding="async"/>
+        </div>
+        <div class="project-body">
+          <h3 class="project-title">U.S. Border Patrol Curlew Station – Facilities Services</h3>
+          <p class="project-sub">Montissol Essentials delivers facilities services supporting daily station operations, with structured schedules, high-touch cleaning, and inspection-ready documentation to maintain safe, professional spaces.</p>
+          <div class="project-meta">
+            <div class="meta-item"><div class="meta-label">Contract / PO</div><div class="meta-value">70B03C25P00000134 (Facilities Services)</div></div>
+            <div class="meta-item"><div class="meta-label">Customer</div><div class="meta-value">U.S. Customs &amp; Border Protection</div></div>
+            <div class="meta-item"><div class="meta-label">Work Type</div><div class="meta-value">Janitorial &amp; facility support services</div></div>
+            <div class="meta-item"><div class="meta-label">Delivery Model</div><div class="meta-value">Recurring schedules + on-call responsiveness</div></div>
+          </div>
+          <ul class="svc-list" aria-label="Services provided on CBP contract">
+            <li class="svc-pill">Janitorial services (routine cleaning)</li>
+            <li class="svc-pill">Restroom sanitation &amp; replenishment</li>
+            <li class="svc-pill">Floor care (as required)</li>
+            <li class="svc-pill">High-touch point disinfection</li>
+            <li class="svc-pill">Breakroom/common-area cleaning</li>
+            <li class="svc-pill">Trash removal &amp; area upkeep</li>
+            <li class="svc-pill">Documented QC (supervisor checks)</li>
+          </ul>
+        </div>
+      </article>
+
+      <div class="note-card" role="note" aria-label="Quality control and compliance note">
+        <div class="mini-kicker"><span class="dot"></span><span>How We Deliver</span></div>
+        <h3 style="margin:12px 0 10px;">Quality control is built into every shift</h3>
+        <p>Across contracts, we prioritize safety-first execution, disciplined scheduling, and inspection-ready documentation. Our supervisors use checklists and verification steps, track issues, and apply corrective actions quickly—so customers get consistent results without disrupting operations.</p>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- CTA strip -->
-  <section class="newsletter-full">
-    <div class="newsletter-inner">
-      <div class="newsletter-left">
-        <div class="mini-kicker">
-          <span class="dot"></span>
-          <span>Need Support?</span>
-        </div>
-        <h3 class="newsletter-title">Let’s talk scope, schedule, and how we can help.</h3>
-        <p class="newsletter-sub">
-          Tell us what you need. We’ll respond with a clear plan and inspection-ready approach.
-        </p>
-      </div>
-
-      <div class="newsletter-form" style="display:flex; gap:10px; flex-wrap:wrap;">
-        <a class="btn primary" href="request-a-quote.html">Request a Quote</a>
-        <a class="btn ghost" href="contact-us.html">Contact Our Team</a>
-      </div>
+<section class="newsletter-full">
+  <div class="newsletter-inner">
+    <div class="newsletter-left">
+      <div class="mini-kicker"><span class="dot"></span><span>Need Support?</span></div>
+      <h3 class="newsletter-title">Let's talk scope, schedule, and how we can help.</h3>
+      <p class="newsletter-sub">Tell us what you need. We'll respond with a clear plan and inspection-ready approach.</p>
     </div>
-  </section>
+    <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+      <a class="btn primary" href="request-a-quote.html">Request a Quote</a>
+      <a class="btn ghost" href="contact-us.html">Contact Our Team</a>
+    </div>
+  </div>
+</section>
 
 </main>
 
 <footer class="site-footer mega-footer">
   <div class="container">
     <div class="footer-grid">
-
       <div class="footer-col">
-   <a class="footer-brand" href="index.html" aria-label="Montissol Essentials Home">
-  <img src="assets/images/MontissolEssentialsWB.jpg"
-       alt="Montissol Essentials Logo"
-       style="height:60px; width:auto; display:block;">
-</a>
+        <a class="footer-brand" href="index.html" aria-label="Montissol Essentials Home"><img src="assets/images/Header-logo.png" alt="Montissol Essentials Logo" style="height:60px; width:auto; display:block;"></a>
         <h4 class="footer-title">Advanced Facility Support</h4>
-        <p class="footer-text">
-          Montissol Essentials LLC delivers janitorial, industrial cleaning, and facility support services for
-          government and commercial environments—with safety-first execution and documented quality control.
-        </p>
+        <p class="footer-text">Montissol Essentials LLC delivers janitorial, industrial cleaning, and facility support services for government and commercial environments—with safety-first execution and documented quality control.</p>
       </div>
-
       <div class="footer-col">
-        <h4 class="footer-title">Quick Links</h4>
-        <div class="footer-hr"></div>
+        <h4 class="footer-title">Quick Links</h4><div class="footer-hr"></div>
         <ul class="footer-links">
-          <li><a href="index.html"><span class="arr">›</span> Home</a></li>
-          <li><a href="about-us.html"><span class="arr">›</span> About Us</a></li>
-          <li><a href="services.html"><span class="arr">›</span> Services</a></li>
-          <li><a href="project.html"><span class="arr">›</span> Projects</a></li>
-          <li><a href="blog.html"><span class="arr">›</span> Blog</a></li>
-          <li><a href="contact-us.html"><span class="arr">›</span> Contact Us</a></li>
-          <li><a href="request-a-quote.html"><span class="arr">›</span> Request a Quote</a></li>
+          <li><a href="index.html"><span class="arr">&#8250;</span> Home</a></li>
+          <li><a href="about-us.html"><span class="arr">&#8250;</span> About Us</a></li>
+          <li><a href="services.html"><span class="arr">&#8250;</span> Services</a></li>
+          <li><a href="project.html"><span class="arr">&#8250;</span> Projects</a></li>
+          <li><a href="blog.html"><span class="arr">&#8250;</span> Blog</a></li>
+          <li><a href="contact-us.html"><span class="arr">&#8250;</span> Contact Us</a></li>
+          <li><a href="request-a-quote.html"><span class="arr">&#8250;</span> Request a Quote</a></li>
         </ul>
       </div>
-
       <div class="footer-col">
-        <h4 class="footer-title">Services</h4>
-        <div class="footer-hr"></div>
+        <h4 class="footer-title">Services</h4><div class="footer-hr"></div>
         <ul class="footer-links">
-          <li><a href="services.html"><span class="arr">›</span> Janitorial &amp; Facility Services</a></li>
-          <li><a href="services.html"><span class="arr">›</span> Industrial Cleaning &amp; Dust Control</a></li>
-          <li><a href="services.html"><span class="arr">›</span> HEPA Vacuuming &amp; Particulate Control</a></li>
-          <li><a href="services.html"><span class="arr">›</span> Quality Control &amp; Reporting</a></li>
-          <li><a href="services.html"><span class="arr">›</span> Staffing Support (as needed)</a></li>
+          <li><a href="services.html"><span class="arr">&#8250;</span> Janitorial &amp; Facility Services</a></li>
+          <li><a href="services.html"><span class="arr">&#8250;</span> Industrial Cleaning &amp; Dust Control</a></li>
+          <li><a href="services.html"><span class="arr">&#8250;</span> HEPA Vacuuming &amp; Particulate Control</a></li>
+          <li><a href="services.html"><span class="arr">&#8250;</span> Quality Control &amp; Reporting</a></li>
+          <li><a href="services.html"><span class="arr">&#8250;</span> Staffing Support (as needed)</a></li>
         </ul>
       </div>
-
       <div class="footer-col">
-        <h4 class="footer-title">Contact Information</h4>
-        <div class="footer-hr"></div>
-
+        <h4 class="footer-title">Contact Information</h4><div class="footer-hr"></div>
         <div class="footer-contact">
-          <div class="footer-contact__item">
-            <span class="label">Email</span>
-            <a href="mailto:Info@MontissolEssentials.com">Info@MontissolEssentials.com</a>
-          </div>
-          <div class="footer-contact__item">
-            <span class="label">Location</span>
-            <span>Miami, Florida</span>
-          </div>
+          <div class="footer-contact__item"><span class="label">Email</span><a href="mailto:Info@MontissolEssentials.com">Info@MontissolEssentials.com</a></div>
+          <div class="footer-contact__item"><span class="label">Location</span><span>Miami, Florida</span></div>
         </div>
-
         <h4 class="footer-title" style="margin-top:16px;">Social Media</h4>
         <div class="footer-social">
           <a class="social-pill" href="#" aria-label="Facebook">f</a>
@@ -436,11 +181,9 @@
           <a class="social-pill" href="#" aria-label="YouTube">yt</a>
         </div>
       </div>
-
     </div>
-
     <div class="footer-bottom">
-      <div class="small">© <span id="year"></span> Montissol Essentials. All rights reserved.</div>
+      <div class="small">&copy; <span id="year"></span> Montissol Essentials. All rights reserved.</div>
       <div class="small"><a href="privacy.html">Privacy</a></div>
     </div>
   </div>

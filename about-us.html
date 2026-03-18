@@ -4,426 +4,135 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>About Us - Montissol Essentials</title>
-
+  <meta name="description" content="Learn about Montissol Essentials LLC - trusted facility support built for mission-critical work.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-
   <link rel="stylesheet" href="assets/styles.css"/>
-
-  <!-- Page-specific styles aligned with your Industries layout + hero background effect -->
-  <style>
-    /* HERO: same background effect as Industries (overlay + subtle zoom) */
-    .hero--about{
-      position:relative;
-      background:#111;
-      overflow:hidden;
-    }
-    .hero--about::before{
-      content:"";
-      position:absolute;
-      inset:0;
-      background-image:url('https://pawzia.foxcreation.online/mavron/wp-content/uploads/sites/4/2025/11/cement-plant-with-high-factory-structure-and-tower-N7J96QC.jpg');
-      background-size:cover;
-      background-position:center;
-      transform:scale(1);
-      animation:heroZoom 18s ease-in-out infinite alternate;
-      z-index:0;
-    }
-    .hero--about::after{
-      content:"";
-      position:absolute;
-      inset:0;
-      background:linear-gradient(to bottom, rgba(0,0,0,.78), rgba(0,0,0,.58));
-      z-index:1;
-    }
-    .hero--about .content{
-      position:relative;
-      z-index:2;
-      padding:120px 0;
-      color:#fff;
-    }
-    .hero--about .breadcrumbs{
-      margin-top:10px;
-      font-size:14px;
-      opacity:.9;
-    }
-    .hero--about .breadcrumbs a{ color:inherit; text-decoration:none; }
-    .hero--about .breadcrumbs a:hover{ text-decoration:underline; }
-
-    @keyframes heroZoom{
-      from { transform:scale(1); }
-      to   { transform:scale(1.08); }
-    }
-
-    /* Top header row (kicker + big title + circle CTA) */
-    .about-wrap{ padding:72px 0; }
-    .about-top{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:24px;
-      margin-bottom:26px;
-    }
-    .about-kicker{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      font-weight:600;
-      font-size:14px;
-      opacity:.9;
-    }
-    .about-kicker .dot{
-      width:10px;height:10px;border-radius:999px;background:#ff5a2a;
-      box-shadow:0 0 0 6px rgba(255,90,42,.12);
-    }
-    .about-title{
-      margin:10px 0 0;
-      font-size: clamp(34px, 3.6vw, 54px);
-      line-height:1.05;
-      letter-spacing:-0.02em;
-      max-width:820px;
-    }
-
-    .circle-cta{
-      display:flex;
-      align-items:center;
-      gap:14px;
-      text-decoration:none;
-      color:inherit;
-      white-space:nowrap;
-      margin-top:6px;
-    }
-    .circle-cta .ring{
-      width:72px;height:72px;border-radius:999px;
-      border:2px solid rgba(255,90,42,.7);
-      display:grid;place-items:center;
-      position:relative;
-      transition:transform .15s ease, border-color .15s ease;
-    }
-    .circle-cta .ring::after{
-      content:"";
-      position:absolute; inset:-8px;
-      border-radius:999px;
-      border:2px solid rgba(255,90,42,.22);
-      pointer-events:none;
-    }
-    .circle-cta svg{ width:22px;height:22px; }
-    .circle-cta .label{
-      font-weight:600;
-      font-size:14px;
-      line-height:1.2;
-      opacity:.9;
-    }
-    .circle-cta:hover .ring{
-      transform:translateY(-1px);
-      border-color: rgba(255,90,42,1);
-    }
-
-    /* Main 2-column block (image left, story + cards right) */
-    .about-grid{
-      display:grid;
-      grid-template-columns: 1.15fr 1fr;
-      gap:46px;
-      align-items:start;
-      margin-top:10px;
-    }
-    .about-photo{
-      border-radius:18px;
-      overflow:hidden;
-      box-shadow: 0 16px 40px rgba(0,0,0,.10);
-      background:#111;
-    }
-    .about-photo img{ width:100%; height:auto; display:block; }
-
-    .about-copy p{
-      margin:0;
-      opacity:.88;
-      line-height:1.7;
-      font-size:14.5px;
-      max-width:600px;
-    }
-    .about-copy .actions{
-      margin-top:16px;
-      display:flex;
-      gap:12px;
-      flex-wrap:wrap;
-    }
-
-    /* Stat / value cards aligned to the cleaner look */
-    .about-cards{
-      display:grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap:14px;
-      margin-top:22px;
-    }
-    .about-card{
-      border-radius:16px;
-      background: #fff;
-      box-shadow: 0 12px 28px rgba(0,0,0,.06);
-      border: 1px solid rgba(0,0,0,.06);
-      padding:16px 16px 14px;
-    }
-    .about-card h3{
-      margin:0 0 6px;
-      font-size:15px;
-      letter-spacing:-0.01em;
-    }
-    .about-card p{
-      margin:0;
-      font-size:13.5px;
-      line-height:1.55;
-      opacity:.85;
-    }
-
-    /* Full-width “Our story” band (optional but looks good) */
-    .about-band{
-      margin-top:54px;
-      border-radius:18px;
-      background: linear-gradient(180deg, rgba(255,90,42,.08), rgba(0,0,0,0));
-      border: 1px solid rgba(0,0,0,.06);
-      padding:22px;
-    }
-    .about-band h3{
-      margin:0 0 10px;
-      font-size:20px;
-      letter-spacing:-0.01em;
-    }
-    .about-band p{
-      margin:0;
-      opacity:.88;
-      line-height:1.7;
-      font-size:14.5px;
-      max-width:920px;
-    }
-
-    /* Responsive */
-    @media (max-width: 980px){
-      .about-grid{ grid-template-columns: 1fr; gap:24px; }
-      .about-cards{ grid-template-columns: 1fr; }
-      .circle-cta{ display:none; }
-    }
-  </style>
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon.png">
 </head>
-
 <body>
 
 <header class="site-header">
   <div class="container header-inner">
-    <!-- Brand / Logo -->
     <a class="brand" href="index.html" aria-label="Montissol Essentials Home">
-      <img
-        src="assets/images/MontissolEssentials01.jpg"
-        alt="Montissol Essentials Logo"
-        class="logo"
-      />
+      <img src="assets/images/Header-logo.png" alt="Montissol Essentials Logo" class="logo"/>
     </a>
-
-    <!-- CAGE / UEI -->
     <div class="company-ids" aria-label="Company Identifiers">
-      <div class="id-block">
-        <span class="id-label">CAGE</span>
-        <span class="id-value">9TKS0</span>
-      </div>
-      <div class="id-block">
-        <span class="id-label">UEI</span>
-        <span class="id-value">L4GERF8PJB53</span>
-      </div>
+      <div class="id-block"><span class="id-label">CAGE</span><span class="id-value">9TKS0</span></div>
+      <div class="id-block"><span class="id-label">UEI</span><span class="id-value">L4GERF8PJB53</span></div>
     </div>
-
-    <!-- Mobile Menu Button -->
-    <button class="menu-btn" type="button" aria-label="Toggle menu" aria-expanded="false">
-      Menu
-    </button>
-
-    <!-- Nav -->
+    <button class="menu-btn" type="button" aria-label="Toggle menu" aria-expanded="false">Menu</button>
     <nav class="nav" aria-label="Primary Navigation">
-      <a href="index.html" aria-current="page">Home</a>
-      <a href="about-us.html">About Us</a>
+      <a href="index.html">Home</a>
+      <a href="about-us.html" aria-current="page">About Us</a>
       <a href="services.html">Services</a>
       <a href="project.html">Projects</a>
       <a href="blog.html">Blog</a>
       <a href="faqs.html">FAQs</a>
       <a href="contact-us.html">Contact</a>
-      <!-- <a href="request-a-quote.html" class="cta">Request a Quote</a> -->
     </nav>
   </div>
 </header>
 
 <main>
 
-  
-<!-- ABOUT HERO (uses existing hero--zoom CSS) -->
 <section class="hero hero--services hero--zoom">
-
-  <!-- Background Image Layer -->
-  <div class="hero-split__bg"
-    style="background-image:url('https://pawzia.foxcreation.online/mavron/wp-content/uploads/sites/4/2025/11/cement-plant-with-high-factory-structure-and-tower-N7J96QC.jpg');">
-  </div>
-
-  <!-- Overlay Layer -->
+  <div class="hero-split__bg" style="background-image:url('https://pawzia.foxcreation.online/mavron/wp-content/uploads/sites/4/2025/11/cement-plant-with-high-factory-structure-and-tower-N7J96QC.jpg');"></div>
   <div class="hero-split__overlay"></div>
-
   <div class="container hero-split__inner">
-    <div class="hero-split__kicker">
-      <span class="dot"></span>
-      <span>Montissol Essentials</span>
-    </div>
-
+    <div class="hero-split__kicker"><span class="dot"></span><span>Montissol Essentials</span></div>
     <h1 class="hero-split__headline">About Us</h1>
-
-    <p class="hero-split__sub" style="max-width:720px;">
-      Safety-first facility services for government and commercial environments—delivered with documented quality control.
-    </p>
+    <p class="hero-split__sub">Safety-first facility services for government and commercial environments—delivered with documented quality control.</p>
   </div>
-
 </section>
 
-  <!-- ABOUT CONTENT (aligned with Industries layout) -->
-  <section class="about-wrap">
-    <div class="container">
-
-      <div class="about-top">
-        <div>
-          <div class="about-kicker">
-            <span class="dot"></span>
-            <span>Who We Are</span>
-          </div>
-          <h2 class="about-title">Trusted Facility Support<br/>Built for Mission-Critical Work</h2>
-        </div>
-
-        <a class="circle-cta" href="services.html" aria-label="View All Services">
-          <span class="ring" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M7 17L17 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              <path d="M10 7H17V14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-          </span>
-          <span class="label">View All<br/>Services</span>
-        </a>
-      </div>
-
-      <div class="about-grid">
-
-        <!-- LEFT: image -->
-        <div class="about-photo">
-          <img
-            src="https://pawzia.foxcreation.online/mavron/wp-content/uploads/sites/4/2025/11/portrait-of-female-automation-engineer-standing-in-RTFLVU4-1024x683.jpg"
-            alt="Montissol Essentials team"
-            loading="lazy"
-            decoding="async"
-          />
-        </div>
-
-        <!-- RIGHT: story + value cards -->
-        <div class="about-copy">
-          <p>
-            Montissol Essentials LLC provides janitorial, industrial cleaning, and facility support services with a
-            compliance-first approach. We focus on consistent performance, clear communication, and measurable quality—
-            supporting government and commercial sites where reliability matters.
-          </p>
-
-          <div class="actions">
-            <a class="btn ghost" href="industries-served.html">Industries Served</a>
-            <a class="btn ghost" href="services.html">Our Services</a>
-          </div>
-
-          <div class="about-cards">
-            <div class="about-card">
-              <h3>Safety-First Execution</h3>
-              <p>Procedures aligned to site requirements, PPE discipline, and documented work practices.</p>
-            </div>
-            <div class="about-card">
-              <h3>Quality Control</h3>
-              <p>Checklists, inspections, and reporting designed to support audit-ready performance.</p>
-            </div>
-            <div class="about-card">
-              <h3>Industrial Cleaning</h3>
-              <p>HEPA vacuuming and dust control methods tailored to industrial and manufacturing settings.</p>
-            </div>
-            <div class="about-card">
-              <h3>Reliable Staffing</h3>
-              <p>Trained personnel and schedule consistency for ongoing facility operations.</p>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- OPTIONAL band section (keeps the page from feeling “empty”) -->
-      <div class="about-band">
-        <h3>Our Commitment</h3>
-        <p>
-          We’re built to support facilities that can’t afford downtime. Our approach centers on safety, communication,
-          and repeatable processes—so every shift delivers consistent results. If you need a partner that executes
-          to standard, documents outcomes, and stays responsive, Montissol Essentials is ready.
-        </p>
-      </div>
-
+<section class="section home-section">
+  <div class="container">
+    <div class="center-head">
+      <div class="mini-kicker"><span class="dot"></span><span>Who We Are</span></div>
+      <h2 class="center-title">Trusted Facility Support<br/>Built for Mission-Critical Work</h2>
     </div>
-  </section>
+
+    <div class="about-grid">
+      <div>
+        <p style="font-size:1rem; color:var(--text-secondary); margin-bottom:20px;">Montissol Essentials LLC provides janitorial, industrial cleaning, and facility support services with a compliance-first approach. We focus on consistent performance, clear communication, and measurable quality—supporting government and commercial sites where reliability matters.</p>
+
+        <div class="cap-grid cap-grid--2col">
+          <article class="cap-card"><h3>Safety-First Execution</h3><p>Procedures aligned to site requirements, PPE discipline, and documented work practices.</p></article>
+          <article class="cap-card"><h3>Quality Control</h3><p>Checklists, inspections, and reporting designed to support audit-ready performance.</p></article>
+          <article class="cap-card"><h3>Industrial Cleaning</h3><p>HEPA vacuuming and dust control methods tailored to industrial and manufacturing settings.</p></article>
+          <article class="cap-card"><h3>Reliable Staffing</h3><p>Trained personnel and schedule consistency for ongoing facility operations.</p></article>
+        </div>
+
+        <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:24px;">
+          <a class="btn primary-solid" href="services.html">Our Services</a>
+          <a class="btn outline" href="industries-served.html">Industries Served</a>
+        </div>
+      </div>
+
+      <div>
+        <div class="about-photo" style="border-radius:var(--radius-xl); overflow:hidden;">
+          <img src="https://pawzia.foxcreation.online/mavron/wp-content/uploads/sites/4/2025/11/portrait-of-female-automation-engineer-standing-in-RTFLVU4-1024x683.jpg" alt="Montissol Essentials team" loading="lazy" decoding="async"/>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section home-section home-section--alt">
+  <div class="container">
+    <div class="center-head">
+      <div class="mini-kicker"><span class="dot"></span><span>Our Promise</span></div>
+      <h2 class="center-title">Our Commitment</h2>
+    </div>
+    <div class="cap-card" style="max-width:900px; margin:0 auto; text-align:center;">
+      <p>We're built to support facilities that can't afford downtime. Our approach centers on safety, communication, and repeatable processes—so every shift delivers consistent results. If you need a partner that executes to standard, documents outcomes, and stays responsive, Montissol Essentials is ready.</p>
+    </div>
+  </div>
+</section>
 
 </main>
 
 <footer class="site-footer mega-footer">
   <div class="container">
     <div class="footer-grid">
-
       <div class="footer-col">
-  <a class="footer-brand" href="index.html" aria-label="Montissol Essentials Home">
-  <img src="assets/images/MontissolEssentialsWB.jpg"
-       alt="Montissol Essentials Logo"
-       style="height:60px; width:auto; display:block;">
-</a>
-
+        <a class="footer-brand" href="index.html" aria-label="Montissol Essentials Home"><img src="assets/images/Header-logo.png" alt="Montissol Essentials Logo" style="height:60px; width:auto; display:block;"></a>
         <h4 class="footer-title">Advanced Facility Support</h4>
-        <p class="footer-text">
-          Montissol Essentials LLC delivers janitorial, industrial cleaning, and facility support services for
-          government and commercial environments—with safety-first execution and documented quality control.
-        </p>
+        <p class="footer-text">Montissol Essentials LLC delivers janitorial, industrial cleaning, and facility support services for government and commercial environments—with safety-first execution and documented quality control.</p>
       </div>
-
       <div class="footer-col">
         <h4 class="footer-title">Quick Links</h4>
         <div class="footer-hr"></div>
         <ul class="footer-links">
-          <li><a href="index.html"><span class="arr">›</span> Home</a></li>
-          <li><a href="about-us.html"><span class="arr">›</span> About Us</a></li>
-          <li><a href="services.html"><span class="arr">›</span> Services</a></li>
-          <li><a href="project.html"><span class="arr">›</span> Projects</a></li>
-          <li><a href="blog.html"><span class="arr">›</span> Blog</a></li>
-          <li><a href="contact-us.html"><span class="arr">›</span> Contact Us</a></li>
-          <li><a href="request-a-quote.html"><span class="arr">›</span> Request a Quote</a></li>
+          <li><a href="index.html"><span class="arr">&#8250;</span> Home</a></li>
+          <li><a href="about-us.html"><span class="arr">&#8250;</span> About Us</a></li>
+          <li><a href="services.html"><span class="arr">&#8250;</span> Services</a></li>
+          <li><a href="project.html"><span class="arr">&#8250;</span> Projects</a></li>
+          <li><a href="blog.html"><span class="arr">&#8250;</span> Blog</a></li>
+          <li><a href="contact-us.html"><span class="arr">&#8250;</span> Contact Us</a></li>
+          <li><a href="request-a-quote.html"><span class="arr">&#8250;</span> Request a Quote</a></li>
         </ul>
       </div>
-
       <div class="footer-col">
         <h4 class="footer-title">Services</h4>
         <div class="footer-hr"></div>
         <ul class="footer-links">
-          <li><a href="services.html"><span class="arr">›</span> Janitorial &amp; Facility Services</a></li>
-          <li><a href="services.html"><span class="arr">›</span> Industrial Cleaning &amp; Dust Control</a></li>
-          <li><a href="services.html"><span class="arr">›</span> HEPA Vacuuming &amp; Particulate Control</a></li>
-          <li><a href="services.html"><span class="arr">›</span> Quality Control &amp; Reporting</a></li>
-          <li><a href="services.html"><span class="arr">›</span> Staffing Support (as needed)</a></li>
+          <li><a href="services.html"><span class="arr">&#8250;</span> Janitorial &amp; Facility Services</a></li>
+          <li><a href="services.html"><span class="arr">&#8250;</span> Industrial Cleaning &amp; Dust Control</a></li>
+          <li><a href="services.html"><span class="arr">&#8250;</span> HEPA Vacuuming &amp; Particulate Control</a></li>
+          <li><a href="services.html"><span class="arr">&#8250;</span> Quality Control &amp; Reporting</a></li>
+          <li><a href="services.html"><span class="arr">&#8250;</span> Staffing Support (as needed)</a></li>
         </ul>
       </div>
-
       <div class="footer-col">
         <h4 class="footer-title">Contact Information</h4>
         <div class="footer-hr"></div>
-
         <div class="footer-contact">
-          <div class="footer-contact__item">
-            <span class="label">Email</span>
-            <a href="mailto:Info@MontissolEssentials.com">Info@MontissolEssentials.com</a>
-          </div>
-          <div class="footer-contact__item">
-            <span class="label">Location</span>
-            <span>Miami, Florida</span>
-          </div>
+          <div class="footer-contact__item"><span class="label">Email</span><a href="mailto:Info@MontissolEssentials.com">Info@MontissolEssentials.com</a></div>
+          <div class="footer-contact__item"><span class="label">Location</span><span>Miami, Florida</span></div>
         </div>
-
         <h4 class="footer-title" style="margin-top:16px;">Social Media</h4>
         <div class="footer-social">
           <a class="social-pill" href="#" aria-label="Facebook">f</a>
@@ -432,11 +141,9 @@
           <a class="social-pill" href="#" aria-label="YouTube">yt</a>
         </div>
       </div>
-
     </div>
-
     <div class="footer-bottom">
-      <div class="small">© <span id="year"></span> Montissol Essentials. All rights reserved.</div>
+      <div class="small">&copy; <span id="year"></span> Montissol Essentials. All rights reserved.</div>
       <div class="small"><a href="privacy.html">Privacy</a></div>
     </div>
   </div>

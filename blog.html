@@ -3,258 +3,155 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Blog Topic - Montissol Essentials</title>
-
+  <title>Blog - Montissol Essentials</title>
+  <meta name="description" content="Insights, tips, and best practices for janitorial, industrial cleaning, and facility support services.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-
   <link rel="stylesheet" href="assets/styles.css"/>
-
-  <!-- same styling from blog.html -->
-  <style>
-    .hero--blog{position:relative;background:#111;overflow:hidden}
-    .hero--blog::before{content:"";position:absolute;inset:0;background-image:url('https://pawzia.foxcreation.online/mavron/wp-content/uploads/sites/4/2025/11/cement-plant-with-high-factory-structure-and-tower-N7J96QC.jpg');background-size:cover;background-position:center;transform:scale(1);animation:heroZoom 18s ease-in-out infinite alternate;z-index:0}
-    .hero--blog::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom, rgba(0,0,0,.78), rgba(0,0,0,.58));z-index:1}
-    .hero--blog .content{position:relative;z-index:2;padding:120px 0;color:#fff}
-    .hero--blog .breadcrumbs{margin-top:10px;font-size:14px;opacity:.9}
-    .hero--blog .breadcrumbs a{color:inherit;text-decoration:none}
-    .hero--blog .breadcrumbs a:hover{text-decoration:underline}
-    @keyframes heroZoom{from{transform:scale(1)}to{transform:scale(1.08)}}
-
-    .blog-wrap{padding:72px 0}
-    .blog-top{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:22px}
-    .blog-kicker{display:flex;align-items:center;gap:10px;font-weight:600;font-size:14px;opacity:.9}
-    .blog-kicker .dot{width:10px;height:10px;border-radius:999px;background:#ff5a2a;box-shadow:0 0 0 6px rgba(255,90,42,.12)}
-    .blog-title{margin:10px 0 0;font-size:clamp(34px, 3.6vw, 54px);line-height:1.05;letter-spacing:-0.02em;max-width:840px}
-    .blog-sub{margin:14px 0 0;max-width:760px;opacity:.85;line-height:1.7;font-size:14.5px}
-
-    .blog-tools{margin-top:18px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;border:1px solid rgba(0,0,0,.06);border-radius:16px;padding:12px;background:rgba(255,255,255,.75);backdrop-filter:blur(8px)}
-    .blog-search{display:flex;align-items:center;gap:10px;flex:1 1 360px;min-width:260px}
-    .blog-search input{width:100%;border:1px solid rgba(0,0,0,.10);border-radius:12px;padding:10px 12px;font:inherit;outline:none}
-    .blog-search input:focus{border-color:rgba(255,90,42,.6);box-shadow:0 0 0 4px rgba(255,90,42,.12)}
-
-    .post-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:22px}
-    .post-card{border-radius:18px;overflow:hidden;background:#fff;border:1px solid rgba(0,0,0,.06);box-shadow:0 14px 34px rgba(0,0,0,.06);display:flex;flex-direction:column;min-height:100%}
-    .post-thumb{aspect-ratio:16/10;background:#111;overflow:hidden}
-    .post-thumb img{width:100%;height:100%;object-fit:cover;display:block;filter:brightness(.92)}
-    .post-body{padding:16px 16px 14px;display:flex;flex-direction:column;gap:10px;flex:1}
-    .post-meta{display:flex;gap:10px;flex-wrap:wrap;font-size:12.5px;opacity:.75}
-    .post-tag{display:inline-flex;align-items:center;gap:8px;font-weight:600}
-    .post-tag::before{content:"";width:7px;height:7px;border-radius:999px;background:#ff5a2a;box-shadow:0 0 0 5px rgba(255,90,42,.12)}
-    .post-title{margin:0;font-size:16px;letter-spacing:-0.01em;line-height:1.25}
-    .post-excerpt{margin:0;font-size:13.8px;line-height:1.6;opacity:.86}
-
-    .no-results{margin-top:18px;border:1px solid rgba(0,0,0,.08);border-radius:16px;padding:14px;background:#fff;display:none;opacity:.9}
-
-    @media (max-width:1024px){.post-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-    @media (max-width:680px){.post-grid{grid-template-columns:1fr}}
-  </style>
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon.png">
 </head>
-
 <body>
 
 <header class="site-header">
   <div class="container header-inner">
-    <!-- Brand / Logo -->
     <a class="brand" href="index.html" aria-label="Montissol Essentials Home">
-      <img
-        src="assets/images/MontissolEssentials01.jpg"
-        alt="Montissol Essentials Logo"
-        class="logo"
-      />
+      <img src="assets/images/Header-logo.png" alt="Montissol Essentials Logo" class="logo"/>
     </a>
-
-    <!-- CAGE / UEI -->
     <div class="company-ids" aria-label="Company Identifiers">
-      <div class="id-block">
-        <span class="id-label">CAGE</span>
-        <span class="id-value">9TKS0</span>
-      </div>
-      <div class="id-block">
-        <span class="id-label">UEI</span>
-        <span class="id-value">L4GERF8PJB53</span>
-      </div>
+      <div class="id-block"><span class="id-label">CAGE</span><span class="id-value">9TKS0</span></div>
+      <div class="id-block"><span class="id-label">UEI</span><span class="id-value">L4GERF8PJB53</span></div>
     </div>
-
-    <!-- Mobile Menu Button -->
-    <button class="menu-btn" type="button" aria-label="Toggle menu" aria-expanded="false">
-      Menu
-    </button>
-
-    <!-- Nav -->
+    <button class="menu-btn" type="button" aria-label="Toggle menu" aria-expanded="false">Menu</button>
     <nav class="nav" aria-label="Primary Navigation">
-      <a href="index.html" aria-current="page">Home</a>
+      <a href="index.html">Home</a>
       <a href="about-us.html">About Us</a>
       <a href="services.html">Services</a>
       <a href="project.html">Projects</a>
-      <a href="blog.html">Blog</a>
+      <a href="blog.html" aria-current="page">Blog</a>
       <a href="faqs.html">FAQs</a>
       <a href="contact-us.html">Contact</a>
-      <!-- <a href="request-a-quote.html" class="cta">Request a Quote</a> -->
     </nav>
   </div>
 </header>
 
 <main>
-<!-- BLOG HERO (uses existing hero--zoom CSS) -->
+
 <section class="hero hero--services hero--zoom">
-
-  <!-- Background Image Layer -->
-  <div class="hero-split__bg"
-    style="background-image:url('https://pawzia.foxcreation.online/mavron/wp-content/uploads/sites/4/2025/11/cement-plant-with-high-factory-structure-and-tower-N7J96QC.jpg');">
-  </div>
-
-  <!-- Overlay Layer -->
+  <div class="hero-split__bg" style="background-image:url('https://pawzia.foxcreation.online/mavron/wp-content/uploads/sites/4/2025/11/cement-plant-with-high-factory-structure-and-tower-N7J96QC.jpg');"></div>
   <div class="hero-split__overlay"></div>
-
   <div class="container hero-split__inner">
-    <div class="hero-split__kicker">
-      <span class="dot"></span>
-      <span>Montissol Essentials</span>
-    </div>
-
+    <div class="hero-split__kicker"><span class="dot"></span><span>Montissol Essentials</span></div>
     <h1 class="hero-split__headline" id="topicTitle">Blog</h1>
-
-    <p class="hero-split__sub" id="topicDesc">
-      Insights, tips, and best practices for janitorial, industrial cleaning, and facility support services.
-    </p>
+    <p class="hero-split__sub" id="topicDesc">Insights, tips, and best practices for janitorial, industrial cleaning, and facility support services.</p>
   </div>
-
 </section>
 
-  <section class="blog-wrap">
-    <div class="container">
-
-      <div class="blog-tools">
-        <div class="blog-search">
-          <input id="blogSearch" type="search" placeholder="Search within this topic..." aria-label="Search blog posts">
-        </div>
-      </div>
-
-      <div class="no-results" id="noResults">
-        No posts match your search in this category.
-      </div>
-
-      <!-- SAME POST LIST (copy from blog.html) -->
-      <div class="post-grid" id="postGrid">
-
-        <article class="post-card" data-category="Janitorial">
-          <div class="post-thumb"><img src="https://images.unsplash.com/photo-1581091215367-59ab6b6c8f3f?q=80&w=1400&auto=format&fit=crop" alt="Facility operations" loading="lazy" decoding="async"></div>
-          <div class="post-body">
-            <div class="post-meta"><span class="post-tag">Janitorial</span><span>•</span><span>Checklist</span></div>
-            <h3 class="post-title">Daily Janitorial Checklist for High-Traffic Facilities</h3>
-            <p class="post-excerpt">A practical list of tasks that keeps restrooms, common areas, and entry points inspection-ready.</p>
-          </div>
-        </article>
-
-        <article class="post-card" data-category="Industrial">
-          <div class="post-thumb"><img src="https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?q=80&w=1400&auto=format&fit=crop" alt="Industrial cleaning" loading="lazy" decoding="async"></div>
-          <div class="post-body">
-            <div class="post-meta"><span class="post-tag">Industrial</span><span>•</span><span>Best Practices</span></div>
-            <h3 class="post-title">HEPA Vacuuming: Reducing Dust in Industrial Spaces</h3>
-            <p class="post-excerpt">When to use HEPA, how to stage work zones, and how to document results for safety and compliance.</p>
-          </div>
-        </article>
-
-        <article class="post-card" data-category="Quality Control">
-          <div class="post-thumb"><img src="https://images.unsplash.com/photo-1586281380349-632531db7ed4?q=80&w=1400&auto=format&fit=crop" alt="Quality control" loading="lazy" decoding="async"></div>
-          <div class="post-body">
-            <div class="post-meta"><span class="post-tag">Quality Control</span><span>•</span><span>Reporting</span></div>
-            <h3 class="post-title">What “Inspection-Ready” Reporting Looks Like</h3>
-            <p class="post-excerpt">Templates for checklists, corrective actions, and proof of performance that clients appreciate.</p>
-          </div>
-        </article>
-
-        <article class="post-card" data-category="Compliance">
-          <div class="post-thumb"><img src="https://images.unsplash.com/photo-1581092160562-40aa08e78837?q=80&w=1400&auto=format&fit=crop" alt="Compliance and safety" loading="lazy" decoding="async"></div>
-          <div class="post-body">
-            <div class="post-meta"><span class="post-tag">Compliance</span><span>•</span><span>Safety</span></div>
-            <h3 class="post-title">Safety-First Work: How We Stage Sensitive Areas</h3>
-            <p class="post-excerpt">Signage, access control, PPE discipline, and keeping operations moving while work is performed.</p>
-          </div>
-        </article>
-
-        <article class="post-card" data-category="Janitorial">
-          <div class="post-thumb"><img src="https://images.unsplash.com/photo-1521791136064-7986c2920216?q=80&w=1400&auto=format&fit=crop" alt="Cleaning standards" loading="lazy" decoding="async"></div>
-          <div class="post-body">
-            <div class="post-meta"><span class="post-tag">Janitorial</span><span>•</span><span>Standards</span></div>
-            <h3 class="post-title">Restroom Standards That Pass Inspections</h3>
-            <p class="post-excerpt">A simple standard for high-touch points, consumables, odor control, and final checks.</p>
-          </div>
-        </article>
-
-        <article class="post-card" data-category="Industrial">
-          <div class="post-thumb"><img src="https://images.unsplash.com/photo-1581093588401-22d8a2d15a3b?q=80&w=1400&auto=format&fit=crop" alt="Industrial equipment" loading="lazy" decoding="async"></div>
-          <div class="post-body">
-            <div class="post-meta"><span class="post-tag">Industrial</span><span>•</span><span>Equipment</span></div>
-            <h3 class="post-title">Choosing Tools for Dust Collection Areas</h3>
-            <p class="post-excerpt">What to look for in vacuums, filters, and accessories when working around fine particulate.</p>
-          </div>
-        </article>
-
+<section class="blog-wrap">
+  <div class="container">
+    <div class="blog-tools">
+      <div class="blog-search">
+        <input id="blogSearch" type="search" placeholder="Search within this topic..." aria-label="Search blog posts">
       </div>
     </div>
-  </section>
+
+    <div class="no-results" id="noResults">No posts match your search in this category.</div>
+
+    <div class="post-grid" id="postGrid">
+      <article class="post-card" data-category="Janitorial">
+        <div class="post-thumb"><img src="https://images.unsplash.com/photo-1581091215367-59ab6b6c8f3f?q=80&w=1400&auto=format&fit=crop" alt="Facility operations" loading="lazy" decoding="async"></div>
+        <div class="post-body">
+          <div class="post-meta"><span class="post-tag">Janitorial</span><span>•</span><span>Checklist</span></div>
+          <h3 class="post-title">Daily Janitorial Checklist for High-Traffic Facilities</h3>
+          <p class="post-excerpt">A practical list of tasks that keeps restrooms, common areas, and entry points inspection-ready.</p>
+        </div>
+      </article>
+
+      <article class="post-card" data-category="Industrial">
+        <div class="post-thumb"><img src="https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?q=80&w=1400&auto=format&fit=crop" alt="Industrial cleaning" loading="lazy" decoding="async"></div>
+        <div class="post-body">
+          <div class="post-meta"><span class="post-tag">Industrial</span><span>•</span><span>Best Practices</span></div>
+          <h3 class="post-title">HEPA Vacuuming: Reducing Dust in Industrial Spaces</h3>
+          <p class="post-excerpt">When to use HEPA, how to stage work zones, and how to document results for safety and compliance.</p>
+        </div>
+      </article>
+
+      <article class="post-card" data-category="Quality Control">
+        <div class="post-thumb"><img src="https://images.unsplash.com/photo-1586281380349-632531db7ed4?q=80&w=1400&auto=format&fit=crop" alt="Quality control" loading="lazy" decoding="async"></div>
+        <div class="post-body">
+          <div class="post-meta"><span class="post-tag">Quality Control</span><span>•</span><span>Reporting</span></div>
+          <h3 class="post-title">What "Inspection-Ready" Reporting Looks Like</h3>
+          <p class="post-excerpt">Templates for checklists, corrective actions, and proof of performance that clients appreciate.</p>
+        </div>
+      </article>
+
+      <article class="post-card" data-category="Compliance">
+        <div class="post-thumb"><img src="https://images.unsplash.com/photo-1581092160562-40aa08e78837?q=80&w=1400&auto=format&fit=crop" alt="Compliance and safety" loading="lazy" decoding="async"></div>
+        <div class="post-body">
+          <div class="post-meta"><span class="post-tag">Compliance</span><span>•</span><span>Safety</span></div>
+          <h3 class="post-title">Safety-First Work: How We Stage Sensitive Areas</h3>
+          <p class="post-excerpt">Signage, access control, PPE discipline, and keeping operations moving while work is performed.</p>
+        </div>
+      </article>
+
+      <article class="post-card" data-category="Janitorial">
+        <div class="post-thumb"><img src="https://images.unsplash.com/photo-1521791136064-7986c2920216?q=80&w=1400&auto=format&fit=crop" alt="Cleaning standards" loading="lazy" decoding="async"></div>
+        <div class="post-body">
+          <div class="post-meta"><span class="post-tag">Janitorial</span><span>•</span><span>Standards</span></div>
+          <h3 class="post-title">Restroom Standards That Pass Inspections</h3>
+          <p class="post-excerpt">A simple standard for high-touch points, consumables, odor control, and final checks.</p>
+        </div>
+      </article>
+
+      <article class="post-card" data-category="Industrial">
+        <div class="post-thumb"><img src="https://images.unsplash.com/photo-1581093588401-22d8a2d15a3b?q=80&w=1400&auto=format&fit=crop" alt="Industrial equipment" loading="lazy" decoding="async"></div>
+        <div class="post-body">
+          <div class="post-meta"><span class="post-tag">Industrial</span><span>•</span><span>Equipment</span></div>
+          <h3 class="post-title">Choosing Tools for Dust Collection Areas</h3>
+          <p class="post-excerpt">What to look for in vacuums, filters, and accessories when working around fine particulate.</p>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
 </main>
 
 <footer class="site-footer mega-footer">
   <div class="container">
     <div class="footer-grid">
-
       <div class="footer-col">
-  <a class="footer-brand" href="index.html" aria-label="Montissol Essentials Home">
-  <img src="assets/images/MontissolEssentialsWB.jpg"
-       alt="Montissol Essentials Logo"
-       style="height:60px; width:auto; display:block;">
-</a>
-
+        <a class="footer-brand" href="index.html" aria-label="Montissol Essentials Home"><img src="assets/images/Header-logo.png" alt="Montissol Essentials Logo" style="height:60px; width:auto; display:block;"></a>
         <h4 class="footer-title">Advanced Facility Support</h4>
-        <p class="footer-text">
-          Montissol Essentials LLC delivers janitorial, industrial cleaning, and facility support services for
-          government and commercial environments—with safety-first execution and documented quality control.
-        </p>
+        <p class="footer-text">Montissol Essentials LLC delivers janitorial, industrial cleaning, and facility support services for government and commercial environments—with safety-first execution and documented quality control.</p>
       </div>
-
       <div class="footer-col">
-        <h4 class="footer-title">Quick Links</h4>
-        <div class="footer-hr"></div>
+        <h4 class="footer-title">Quick Links</h4><div class="footer-hr"></div>
         <ul class="footer-links">
-          <li><a href="index.html"><span class="arr">›</span> Home</a></li>
-          <li><a href="about-us.html"><span class="arr">›</span> About Us</a></li>
-          <li><a href="services.html"><span class="arr">›</span> Services</a></li>
-          <li><a href="project.html"><span class="arr">›</span> Our Project</a></li>
-          <li><a href="blog.html"><span class="arr">›</span> Blog</a></li>
-          <li><a href="contact-us.html"><span class="arr">›</span> Contact Us</a></li>
+          <li><a href="index.html"><span class="arr">&#8250;</span> Home</a></li>
+          <li><a href="about-us.html"><span class="arr">&#8250;</span> About Us</a></li>
+          <li><a href="services.html"><span class="arr">&#8250;</span> Services</a></li>
+          <li><a href="project.html"><span class="arr">&#8250;</span> Projects</a></li>
+          <li><a href="blog.html"><span class="arr">&#8250;</span> Blog</a></li>
+          <li><a href="contact-us.html"><span class="arr">&#8250;</span> Contact Us</a></li>
         </ul>
       </div>
-
       <div class="footer-col">
-        <h4 class="footer-title">Services</h4>
-        <div class="footer-hr"></div>
+        <h4 class="footer-title">Services</h4><div class="footer-hr"></div>
         <ul class="footer-links">
-          <li><a href="services.html"><span class="arr">›</span> Janitorial &amp; Facility Services</a></li>
-          <li><a href="services.html"><span class="arr">›</span> Industrial Cleaning &amp; Dust Control</a></li>
-          <li><a href="services.html"><span class="arr">›</span> HEPA Vacuuming</a></li>
-          <li><a href="services.html"><span class="arr">›</span> Quality Control</a></li>
-          <li><a href="services.html"><span class="arr">›</span> Staffing Support</a></li>
+          <li><a href="services.html"><span class="arr">&#8250;</span> Janitorial &amp; Facility Services</a></li>
+          <li><a href="services.html"><span class="arr">&#8250;</span> Industrial Cleaning &amp; Dust Control</a></li>
+          <li><a href="services.html"><span class="arr">&#8250;</span> HEPA Vacuuming</a></li>
+          <li><a href="services.html"><span class="arr">&#8250;</span> Quality Control</a></li>
+          <li><a href="services.html"><span class="arr">&#8250;</span> Staffing Support</a></li>
         </ul>
       </div>
-
       <div class="footer-col">
-        <h4 class="footer-title">Contact Information</h4>
-        <div class="footer-hr"></div>
+        <h4 class="footer-title">Contact Information</h4><div class="footer-hr"></div>
         <div class="footer-contact">
-          <div class="footer-contact__item">
-            <span class="label">Email</span>
-            <a href="mailto:Info@MontissolEssentials.com">Info@MontissolEssentials.com</a>
-          </div>
-          <div class="footer-contact__item">
-            <span class="label">Location</span>
-            <span>Miami, Florida</span>
-          </div>
+          <div class="footer-contact__item"><span class="label">Email</span><a href="mailto:Info@MontissolEssentials.com">Info@MontissolEssentials.com</a></div>
+          <div class="footer-contact__item"><span class="label">Location</span><span>Miami, Florida</span></div>
         </div>
-
         <h4 class="footer-title" style="margin-top:16px;">Social Media</h4>
         <div class="footer-social">
           <a class="social-pill" href="#" aria-label="Facebook">f</a>
@@ -263,11 +160,9 @@
           <a class="social-pill" href="#" aria-label="YouTube">yt</a>
         </div>
       </div>
-
     </div>
-
     <div class="footer-bottom">
-      <div class="small">© <span id="year"></span> Montissol Essentials. All rights reserved.</div>
+      <div class="small">&copy; <span id="year"></span> Montissol Essentials. All rights reserved.</div>
       <div class="small"><a href="privacy.html">Privacy</a></div>
     </div>
   </div>
@@ -276,17 +171,14 @@
 <script>
   document.getElementById('year').textContent = new Date().getFullYear();
 
-  // Read category from query string
   const params = new URLSearchParams(window.location.search);
   const category = (params.get('category') || '').trim();
 
   const title = document.getElementById('topicTitle');
-  const crumb = document.getElementById('crumbTopic');
   const desc = document.getElementById('topicDesc');
 
-  if (category){
+  if (category) {
     title.textContent = category + " Posts";
-    crumb.textContent = category;
     desc.textContent = "Browse posts related to " + category + ". Use search to narrow results.";
     document.title = category + " Posts - Montissol Essentials";
   }
@@ -295,22 +187,21 @@
   const cards = Array.from(document.querySelectorAll('.post-card'));
   const noResults = document.getElementById('noResults');
 
-  function normalize(s){ return (s || '').toString().toLowerCase().trim(); }
+  function normalize(s) { return (s || '').toString().toLowerCase().trim(); }
 
-  function applyFilters(){
+  function applyFilters() {
     const q = normalize(searchInput.value);
     const cat = normalize(category);
     let shown = 0;
 
     cards.forEach(card => {
       const cardCat = normalize(card.getAttribute('data-category'));
-      const title = normalize(card.querySelector('.post-title')?.textContent);
-      const excerpt = normalize(card.querySelector('.post-excerpt')?.textContent);
-      const hay = `${title} ${excerpt} ${cardCat}`;
+      const t = normalize(card.querySelector('.post-title')?.textContent);
+      const ex = normalize(card.querySelector('.post-excerpt')?.textContent);
+      const hay = t + ' ' + ex + ' ' + cardCat;
 
       const matchCategory = !cat || cardCat === cat;
       const matchSearch = !q || hay.includes(q);
-
       const show = matchCategory && matchSearch;
       card.style.display = show ? '' : 'none';
       if (show) shown++;
@@ -322,8 +213,6 @@
   searchInput.addEventListener('input', applyFilters);
   applyFilters();
 </script>
-
-
 <script src="assets/app.js"></script>
 </body>
 </html>

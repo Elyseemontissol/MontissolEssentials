@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx serve:*)",
+      "Bash(netstat -ano)",
+      "Bash(for f:*)",
+      "Bash(do echo:*)",
+      "Read(//c/Users/Elyse/OneDrive/Contracts/Montissol Website/HTML Files/**)",
+      "Bash(done)"
+    ]
+  }
+}
