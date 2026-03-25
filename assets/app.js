@@ -42,16 +42,5 @@
 
 })();
 
-// Newsletter form handling
-document.addEventListener('DOMContentLoaded', () => {
-  const form = document.getElementById('newsletterForm');
-  if (!form) return;
-
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const btn = form.querySelector('button[type="submit"]');
-    const input = form.querySelector('input[type="email"]');
-    if (btn) btn.textContent = 'Subscribed!';
-    if (input) input.value = '';
-  });
-});
+// Newsletter form handling is in the inline script in index.html
+// (uses fetch POST to /api/newsletter via Resend).
