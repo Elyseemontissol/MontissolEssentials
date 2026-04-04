@@ -145,6 +145,27 @@ input, textarea, select, button { font: inherit; }
   100% { transform: scale(1.12); }
 }
 
+/* Thunder / lightning flash effect */
+.hero-lightning {
+  position: absolute; inset: 0; z-index: 1;
+  pointer-events: none; opacity: 0;
+  background: radial-gradient(ellipse at 60% 20%, rgba(255,255,255,.9) 0%, rgba(200,210,255,.4) 30%, transparent 70%);
+  mix-blend-mode: screen;
+  animation: thunderFlash 7s ease-in-out infinite;
+}
+@keyframes thunderFlash {
+  0%, 100% { opacity: 0; }
+  4%       { opacity: .75; }
+  5.5%     { opacity: 0; }
+  7%       { opacity: .5; }
+  8%       { opacity: 0; }
+  22%      { opacity: 0; }
+  23%      { opacity: .6; }
+  24%      { opacity: 0; }
+  25%      { opacity: .35; }
+  25.5%    { opacity: 0; }
+}
+
 .hero-split__overlay {
   position: absolute; inset: 0;
   background: linear-gradient(170deg, rgba(0,0,0,.78) 0%, rgba(0,0,0,.55) 50%, rgba(231,77,16,.18) 100%);
