@@ -18,3 +18,34 @@
     if (yearEl) yearEl.textContent = new Date().getFullYear();
   }
 })();
+
+// Lightning effect for cloud banner
+(function () {
+  var el = document.querySelector('.hero-lightning');
+  if (!el) return;
+
+  function flashAt(x, y) {
+    el.style.background =
+      'radial-gradient(ellipse at ' + x + '% ' + y + '%, rgba(255,255,255,.85) 0%, rgba(200,210,255,.35) 25%, transparent 65%)';
+    el.style.opacity = (.5 + Math.random() * .4).toFixed(2);
+    setTimeout(function () { el.style.opacity = '0'; }, 80);
+  }
+
+  function triggerLightning() {
+    var x = 15 + Math.random() * 70;
+    var y = 5 + Math.random() * 30;
+    flashAt(x, y);
+    setTimeout(function () { flashAt(x + (Math.random() * 10 - 5), y + (Math.random() * 6 - 3)); }, 150);
+  }
+
+  function schedule() {
+    triggerLightning();
+    setTimeout(schedule, 3000 + Math.random() * 4000);
+  }
+
+  // Expose for index.html carousel to pause/resume
+  window._lightningSchedule = schedule;
+  window._lightningEl = el;
+
+  schedule();
+})();
