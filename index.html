@@ -15,6 +15,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/styles.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
   <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon.png">
   <link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/images/favicon.png">
@@ -32,23 +33,32 @@
   </div>
   <canvas id="particleCanvas"></canvas>
   <div class="hero-lightning" id="heroLightning"></div>
+
+  <!-- Cloud layers -->
+  <div class="cloud-layer cloud-layer--1"></div>
+  <div class="cloud-layer cloud-layer--2"></div>
+  <div class="cloud-layer cloud-layer--3"></div>
+  <div class="cloud-layer cloud-layer--4"></div>
+  <div class="cloud-layer cloud-layer--5"></div>
+
   <div class="hero-split__overlay"></div>
 
   <div class="container hero-split__inner">
-    <div class="hero-split__kicker">
+    <div class="hero-split__kicker hero-anim">
       <span class="dot"></span>
       <span>Mission-Ready Facility Solutions</span>
     </div>
 
-    <h1 class="hero-split__headline">
-      Excellence in Government<br>Facility Services
+    <h1 class="hero-split__headline hero-anim">
+      <span class="headline-word">Excellence</span> <span class="headline-word">in</span> <span class="headline-word">Government</span><br>
+      <span class="headline-word">Facility</span> <span class="headline-word">Services</span>
     </h1>
 
-    <p class="hero-split__sub">
+    <p class="hero-split__sub hero-anim">
       Montissol Essentials delivers secure, reliable, and compliant facility services, ensuring operational readiness for critical government infrastructure.
     </p>
 
-    <div class="hero-split__actions">
+    <div class="hero-split__actions hero-anim">
       <a class="btn primary" href="request-a-quote.html">Request a Quote</a>
       <a class="btn ghost" href="contact-us.html">Contact Our Team</a>
     </div>
@@ -404,6 +414,94 @@ function rotateHero() {
 }
 
 setInterval(rotateHero, 9000);
+
+// ====== GSAP Cloud & Hero Animation ======
+(function() {
+  const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+
+  // 1. Clouds sweep in from the edges with parallax depth
+  tl.fromTo('.cloud-layer--3',
+    { opacity: 0, x: -300, scale: 1.15 },
+    { opacity: 1, x: 0, scale: 1, duration: 2.5 }, 0
+  )
+  .fromTo('.cloud-layer--2',
+    { opacity: 0, x: 400, scale: 1.1 },
+    { opacity: 1, x: 0, scale: 1, duration: 3 }, 0.2
+  )
+  .fromTo('.cloud-layer--4',
+    { opacity: 0, y: -80, scale: 1.2 },
+    { opacity: 1, y: 0, scale: 1, duration: 2.8 }, 0.3
+  )
+  .fromTo('.cloud-layer--1',
+    { opacity: 0, x: -500, y: 60 },
+    { opacity: 1, x: 0, y: 0, duration: 3.2 }, 0.4
+  )
+  .fromTo('.cloud-layer--5',
+    { opacity: 0, x: 500, y: 40 },
+    { opacity: 1, x: 0, y: 0, duration: 3 }, 0.5
+  );
+
+  // 2. Kicker fades up
+  tl.fromTo('.hero-split__kicker',
+    { opacity: 0, y: 30, scale: 0.9 },
+    { opacity: 1, y: 0, scale: 1, duration: 0.8 }, 1.2
+  );
+
+  // 3. Headline words cascade in one by one
+  tl.fromTo('.headline-word',
+    { opacity: 0, y: 60, rotateX: -40, scale: 0.85 },
+    { opacity: 1, y: 0, rotateX: 0, scale: 1, duration: 0.9, stagger: 0.12 }, 1.5
+  );
+
+  // 4. Subtitle slides up
+  tl.fromTo('.hero-split__sub.hero-anim',
+    { opacity: 0, y: 25 },
+    { opacity: 1, y: 0, duration: 0.7 }, 2.4
+  );
+
+  // 5. CTA buttons pop in
+  tl.fromTo('.hero-split__actions.hero-anim',
+    { opacity: 0, y: 20 },
+    { opacity: 1, y: 0, duration: 0.6 }, 2.7
+  );
+
+  // 6. Continuous cloud drift (infinite parallax)
+  gsap.to('.cloud-layer--1', {
+    backgroundPositionX: '+=1600px',
+    duration: 90,
+    ease: 'none',
+    repeat: -1
+  });
+  gsap.to('.cloud-layer--2', {
+    backgroundPositionX: '-=1800px',
+    duration: 120,
+    ease: 'none',
+    repeat: -1
+  });
+  gsap.to('.cloud-layer--3', {
+    backgroundPositionX: '+=2000px',
+    duration: 150,
+    ease: 'none',
+    repeat: -1
+  });
+  gsap.to('.cloud-layer--4', {
+    backgroundPositionX: '-=1700px',
+    duration: 100,
+    ease: 'none',
+    repeat: -1
+  });
+  gsap.to('.cloud-layer--5', {
+    backgroundPositionX: '+=1900px',
+    duration: 130,
+    ease: 'none',
+    repeat: -1
+  });
+
+  // 7. Subtle cloud breathing (scale pulse)
+  gsap.to('.cloud-layer--1', { scaleY: 1.04, duration: 6, ease: 'sine.inOut', repeat: -1, yoyo: true });
+  gsap.to('.cloud-layer--2', { scaleY: 1.06, duration: 8, ease: 'sine.inOut', repeat: -1, yoyo: true, delay: 1 });
+  gsap.to('.cloud-layer--5', { scaleY: 1.05, duration: 7, ease: 'sine.inOut', repeat: -1, yoyo: true, delay: 2 });
+})();
 </script>
 </body>
 </html>
