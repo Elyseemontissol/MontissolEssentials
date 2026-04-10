@@ -4,9 +4,9 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Pay Invoice - Montissol Essentials</title>
-  <meta name="description" content="Securely pay your Montissol Essentials invoice online via Square.">
+  <meta name="description" content="Securely pay your Montissol Essentials invoice online with a credit or debit card.">
   <meta property="og:title" content="Pay Invoice - Montissol Essentials">
-  <meta property="og:description" content="Securely pay your Montissol Essentials invoice online via Square.">
+  <meta property="og:description" content="Securely pay your Montissol Essentials invoice online with a credit or debit card.">
   <meta property="og:image" content="https://montissolessentials.com/assets/images/Header-logo.png">
   <meta property="og:url" content="https://montissolessentials.com/invoice.html">
   <meta property="og:type" content="website">
@@ -19,11 +19,10 @@
   <link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/images/favicon.png">
 
+  <script src="https://web.squarecdn.com/v1/square.js"></script>
+
   <style>
-    .pay-wrap {
-      max-width: 680px;
-      margin: 0 auto;
-    }
+    .pay-wrap { max-width: 680px; margin: 0 auto; }
 
     .pay-panel {
       background: rgba(255,255,255,.03);
@@ -31,14 +30,9 @@
       padding: 48px;
       border: 1px solid var(--border);
       backdrop-filter: blur(16px);
-      text-align: center;
     }
 
-    .pay-title {
-      font-size: 1.8rem;
-      font-weight: 900;
-      margin-bottom: 6px;
-    }
+    .pay-title { font-size: 1.8rem; font-weight: 900; margin-bottom: 6px; }
 
     .pay-subtitle {
       color: var(--text-secondary);
@@ -47,83 +41,138 @@
       line-height: 1.6;
     }
 
-    .pay-divider {
-      border: none;
-      border-top: 1px solid var(--border);
-      margin: 28px 0;
+    .pay-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
     }
 
+    .amount-display {
+      background: rgba(231, 77, 16, .08);
+      border: 1px solid rgba(231, 77, 16, .25);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin: 24px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .amount-display__label {
+      font-size: .8rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .1em;
+      color: var(--text-secondary);
+    }
+
+    .amount-display__value {
+      font-size: 2rem; font-weight: 900;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .pay-divider { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
+
     .pay-methods-label {
-      font-size: .78rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .12em;
-      color: var(--text-muted);
-      text-align: center;
+      font-size: .78rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .12em;
+      color: var(--text-muted); text-align: center;
+      margin-bottom: 16px;
+    }
+
+    #card-container {
+      min-height: 90px;
       margin-bottom: 20px;
     }
 
-    .square-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      padding: 18px 48px;
+    .pay-btn {
+      display: block; width: 100%;
+      padding: 18px 40px;
       border-radius: var(--radius-pill);
       border: none;
-      background: #006aff;
+      background: var(--gradient);
       color: #fff;
-      font-size: 1.1rem;
-      font-weight: 800;
+      font-size: 1.05rem; font-weight: 800;
       font-family: inherit;
       cursor: pointer;
-      text-decoration: none;
       transition: all .3s ease;
-      box-shadow: 0 4px 20px rgba(0,106,255,.3);
+      box-shadow: var(--shadow-glow);
     }
 
-    .square-btn:hover {
-      background: #0052cc;
+    .pay-btn:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 30px rgba(0,106,255,.4);
+      box-shadow: var(--shadow-glow-lg);
     }
 
-    .square-btn svg {
-      flex-shrink: 0;
+    .pay-btn:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+      transform: none;
     }
 
     .pay-notice {
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      margin-top: 20px;
-      padding: 14px 16px;
+      display: flex; align-items: flex-start; gap: 10px;
+      margin-top: 20px; padding: 14px 16px;
       border-radius: var(--radius);
       background: rgba(255,255,255,.03);
       border: 1px solid var(--border);
-      text-align: left;
     }
 
-    .pay-notice svg {
-      flex-shrink: 0;
-      margin-top: 1px;
-      color: var(--brand);
-    }
+    .pay-notice svg { flex-shrink: 0; margin-top: 1px; color: var(--brand); }
 
     .pay-notice p {
-      font-size: .8rem;
-      color: var(--text-secondary);
-      line-height: 1.6;
-      margin: 0;
+      font-size: .8rem; color: var(--text-secondary);
+      line-height: 1.6; margin: 0;
     }
 
-    .pay-notice p strong {
-      color: var(--text);
+    .pay-notice p strong { color: var(--text); }
+
+    .field input.invalid, .field textarea.invalid {
+      border-color: #ef4444;
+      box-shadow: 0 0 0 3px rgba(239,68,68,.12);
+    }
+
+    .field-error {
+      font-size: .75rem; color: #ef4444;
+      font-weight: 600; margin-top: 2px; display: none;
+    }
+
+    #paySuccess { display: none; text-align: center; padding: 60px 20px; }
+
+    .success-icon {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: rgba(34,197,94,.12);
+      display: grid; place-items: center;
+      margin: 0 auto 24px;
+    }
+
+    .success-title { font-size: 2rem; font-weight: 900; margin-bottom: 12px; }
+
+    .success-sub {
+      font-size: 1rem; line-height: 1.7;
+      max-width: 420px; margin: 0 auto 12px;
+      color: var(--text-secondary);
+    }
+
+    .success-ref { font-size: .85rem; color: var(--text-muted); margin-bottom: 28px; }
+    .success-ref span { color: var(--brand); font-weight: 700; }
+
+    #payFormError {
+      display: none; margin-bottom: 20px;
+      padding: 14px 18px; border-radius: var(--radius);
+      background: rgba(239,68,68,.1);
+      border: 1px solid rgba(239,68,68,.25);
+      color: #f87171; font-size: .88rem; font-weight: 600;
     }
 
     @media (max-width: 600px) {
       .pay-panel { padding: 28px 20px; }
-      .square-btn { padding: 16px 36px; font-size: 1rem; }
+      .pay-grid { grid-template-columns: 1fr; }
+      .field-span-2 { grid-column: span 1; }
+      .amount-display { flex-direction: column; align-items: flex-start; gap: 6px; }
+      .amount-display__value { font-size: 1.6rem; }
     }
   </style>
 </head>
@@ -142,7 +191,7 @@
   <div class="container hero-split__inner">
     <div class="hero-split__kicker"><span class="dot"></span><span>Secure Payment Portal</span></div>
     <h1 class="hero-split__headline">Pay Your Invoice</h1>
-    <p class="hero-split__sub">Pay your Montissol Essentials invoice securely online. We accept all major credit &amp; debit cards through Square.</p>
+    <p class="hero-split__sub">Pay your Montissol Essentials invoice securely online with any credit or debit card.</p>
     <div class="hero-split__actions">
       <a class="btn ghost" href="contact-us.html">Questions? Contact Us</a>
     </div>
@@ -153,58 +202,109 @@
 <section class="section" style="padding-top: 48px; padding-bottom: 0;">
   <div class="container">
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:32px; align-items:center; opacity:.65;">
-
       <div style="display:flex; align-items:center; gap:8px;">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#22c55e" stroke-width="2.5"><path d="M12 2l7 4v6c0 5-3 9-7 10-4-1-7-5-7-10V6l7-4z"/></svg>
         <span style="font-size:.8rem; font-weight:700; color:var(--text-secondary);">SSL Encrypted</span>
       </div>
-
       <div style="display:flex; align-items:center; gap:8px;">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#3b82f6" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
         <span style="font-size:.8rem; font-weight:700; color:var(--text-secondary);">Secured by Square</span>
       </div>
-
       <div style="display:flex; align-items:center; gap:8px;">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#f59e0b" stroke-width="2.5"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
-        <span style="font-size:.8rem; font-weight:700; color:var(--text-secondary);">Credit Cards Accepted</span>
+        <span style="font-size:.8rem; font-weight:700; color:var(--text-secondary);">Credit &amp; Debit Cards</span>
       </div>
-
       <div style="display:flex; align-items:center; gap:8px;">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#a78bfa" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
-        <span style="font-size:.8rem; font-weight:700; color:var(--text-secondary);">Fast &amp; Simple Checkout</span>
+        <span style="font-size:.8rem; font-weight:700; color:var(--text-secondary);">Instant Confirmation</span>
       </div>
-
     </div>
   </div>
 </section>
 
-<!-- PAYMENT -->
+<!-- PAYMENT FORM -->
 <section class="section">
   <div class="container">
     <div class="pay-wrap">
-      <div class="pay-panel reveal">
 
-        <div class="mini-kicker" style="margin-bottom:12px; display:inline-flex;">
+      <!-- Success Screen -->
+      <div id="paySuccess" class="pay-panel">
+        <div class="success-icon">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        </div>
+        <h2 class="success-title">Payment Received!</h2>
+        <p class="success-sub">Thank you for your payment to Montissol Essentials. A confirmation receipt is available below.</p>
+        <p class="success-ref">Payment ID: <span id="successTxId">—</span></p>
+        <p class="success-ref" id="successInvoiceRow" style="display:none;">Invoice #: <span id="successInvoice">—</span></p>
+        <a class="btn primary" id="receiptLink" href="#" target="_blank" rel="noopener" style="display:none; margin-bottom:12px;">View Receipt</a>
+        <a class="btn ghost" href="index.html">Return Home</a>
+      </div>
+
+      <!-- Payment Form -->
+      <div id="payFormWrap" class="pay-panel reveal">
+
+        <div class="mini-kicker" style="margin-bottom:12px;">
           <span class="dot"></span>
           <span>Montissol Essentials LLC</span>
         </div>
 
         <h2 class="pay-title">Invoice Payment</h2>
-        <p class="pay-subtitle">Click the button below to securely pay your invoice through Square. You can pay with any major credit or debit card.</p>
+        <p class="pay-subtitle">Enter your details and card information below to pay your invoice securely.</p>
+
+        <div id="payFormError"></div>
+
+        <div class="pay-grid">
+          <div class="field">
+            <label for="payName">Full Name <span class="req">*</span></label>
+            <input id="payName" type="text" placeholder="Your full name" required autocomplete="name">
+            <span class="field-error" id="payNameErr">Please enter your full name.</span>
+          </div>
+
+          <div class="field">
+            <label for="payEmail">Email Address <span class="req">*</span></label>
+            <input id="payEmail" type="email" placeholder="you@example.com" required autocomplete="email">
+            <span class="field-error" id="payEmailErr">Please enter a valid email address.</span>
+          </div>
+
+          <div class="field">
+            <label for="payInvoice">Invoice / Reference # <span style="color:var(--text-muted); font-weight:400;">(optional)</span></label>
+            <input id="payInvoice" type="text" placeholder="e.g. INV-2025-001" autocomplete="off">
+          </div>
+
+          <div class="field">
+            <label for="payAmount">Amount to Pay ($) <span class="req">*</span></label>
+            <input id="payAmount" type="number" placeholder="0.00" min="1" step="0.01" required autocomplete="off">
+            <span class="field-error" id="payAmountErr">Please enter a valid amount (minimum $1.00).</span>
+          </div>
+
+          <div class="field field-span-2">
+            <label for="payMemo">Description / Memo <span style="color:var(--text-muted); font-weight:400;">(optional)</span></label>
+            <textarea id="payMemo" placeholder="e.g. Janitorial services — March 2025" rows="3"></textarea>
+          </div>
+        </div>
+
+        <!-- Live amount preview -->
+        <div class="amount-display" id="amountPreview" style="display:none;">
+          <div>
+            <div class="amount-display__label">Amount Due</div>
+            <div style="font-size:.8rem; color:var(--text-muted); margin-top:2px;" id="amountPreviewInvoice"></div>
+          </div>
+          <div class="amount-display__value" id="amountPreviewValue">$0.00</div>
+        </div>
 
         <hr class="pay-divider">
 
-        <p class="pay-methods-label">Secure checkout via Square</p>
+        <p class="pay-methods-label">Enter your card details</p>
 
-        <a href="https://square.link/u/1BgL51At" target="_blank" rel="noopener noreferrer" class="square-btn">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M18.75 2.25H5.25A3 3 0 002.25 5.25v13.5a3 3 0 003 3h13.5a3 3 0 003-3V5.25a3 3 0 00-3-3zm-2.625 13.5a1.125 1.125 0 01-1.125 1.125H9a1.125 1.125 0 01-1.125-1.125V8.25A1.125 1.125 0 019 7.125h6a1.125 1.125 0 011.125 1.125v7.5z"/></svg>
-          Pay with Square
-        </a>
+        <!-- Square Card Form -->
+        <div id="card-container"></div>
 
-        <div class="pay-notice" style="margin-top:28px;">
+        <button type="button" id="payBtn" class="pay-btn" disabled>Pay Now</button>
+
+        <div class="pay-notice" style="margin-top:18px;">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
           <p>
-            <strong>Secure checkout powered by Square.</strong> You'll be redirected to Square's secure payment page where you can enter your payment amount and card details.
+            <strong>Your card details are secure.</strong> Card information is encrypted and processed directly by Square. Montissol Essentials never sees or stores your card number.
             Your payment goes directly to <strong>Montissol Essentials LLC</strong>.
           </p>
         </div>
@@ -219,6 +319,7 @@
         </div>
 
       </div>
+
     </div>
   </div>
 </section>
@@ -229,6 +330,151 @@
 
 <script src="assets/shared.js"></script>
 <script src="assets/app.js"></script>
+
+<script>
+(function () {
+  var amountInput  = document.getElementById('payAmount');
+  var invoiceInput = document.getElementById('payInvoice');
+  var previewBox   = document.getElementById('amountPreview');
+  var previewValue = document.getElementById('amountPreviewValue');
+  var previewInv   = document.getElementById('amountPreviewInvoice');
+  var payBtn       = document.getElementById('payBtn');
+  var card;
+
+  // Amount preview
+  function updatePreview() {
+    var val = parseFloat(amountInput.value);
+    if (!isNaN(val) && val >= 0.01) {
+      previewValue.textContent = '$' + val.toFixed(2);
+      previewInv.textContent = invoiceInput.value ? 'Invoice: ' + invoiceInput.value : '';
+      previewBox.style.display = 'flex';
+    } else {
+      previewBox.style.display = 'none';
+    }
+  }
+  amountInput.addEventListener('input', updatePreview);
+  invoiceInput.addEventListener('input', updatePreview);
+
+  // Validation
+  function validateForm() {
+    var valid = true;
+    var errorBanner = document.getElementById('payFormError');
+    errorBanner.style.display = 'none';
+
+    var name = document.getElementById('payName');
+    var nameErr = document.getElementById('payNameErr');
+    if (!name.value.trim()) {
+      name.classList.add('invalid'); nameErr.style.display = 'block'; valid = false;
+    } else {
+      name.classList.remove('invalid'); nameErr.style.display = 'none';
+    }
+
+    var email = document.getElementById('payEmail');
+    var emailErr = document.getElementById('payEmailErr');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim())) {
+      email.classList.add('invalid'); emailErr.style.display = 'block'; valid = false;
+    } else {
+      email.classList.remove('invalid'); emailErr.style.display = 'none';
+    }
+
+    var amount = parseFloat(amountInput.value);
+    var amtErr = document.getElementById('payAmountErr');
+    if (isNaN(amount) || amount < 1) {
+      amountInput.classList.add('invalid'); amtErr.style.display = 'block'; valid = false;
+    } else {
+      amountInput.classList.remove('invalid'); amtErr.style.display = 'none';
+    }
+
+    if (!valid) {
+      errorBanner.textContent = 'Please fill in all required fields before proceeding.';
+      errorBanner.style.display = 'block';
+    }
+    return valid;
+  }
+
+  // Initialize Square Web Payments
+  async function initSquare() {
+    if (typeof Square === 'undefined') {
+      document.getElementById('card-container').innerHTML =
+        '<div style="padding:16px; border-radius:12px; background:rgba(239,68,68,.08); border:1px solid rgba(239,68,68,.2); color:#f87171; font-size:.85rem;">' +
+        'Payment form could not be loaded. Please refresh the page or contact us at ' +
+        '<a href="mailto:Info@MontissolEssentials.com" style="color:var(--brand);">Info@MontissolEssentials.com</a>.' +
+        '</div>';
+      return;
+    }
+
+    var payments = Square.payments('sq0idp-exM4-5Tg6ZVEp0u8y_9IDA', 'L2ZNQXKVA5W9C');
+    card = await payments.card();
+    await card.attach('#card-container');
+    payBtn.disabled = false;
+  }
+
+  // Handle payment
+  payBtn.addEventListener('click', async function () {
+    if (!validateForm()) return;
+
+    var errorBanner = document.getElementById('payFormError');
+    errorBanner.style.display = 'none';
+    payBtn.disabled = true;
+    payBtn.textContent = 'Processing...';
+
+    try {
+      var result = await card.tokenize();
+      if (result.status !== 'OK') {
+        throw new Error(result.errors?.[0]?.message || 'Card tokenization failed.');
+      }
+
+      var response = await fetch('/api/square-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sourceId: result.token,
+          amount: parseFloat(amountInput.value).toFixed(2),
+          name: document.getElementById('payName').value.trim(),
+          email: document.getElementById('payEmail').value.trim(),
+          invoice: invoiceInput.value.trim(),
+          memo: document.getElementById('payMemo').value.trim(),
+        }),
+      });
+
+      var data = await response.json();
+
+      if (!data.ok) {
+        throw new Error(data.error || 'Payment failed.');
+      }
+
+      // Show success
+      document.getElementById('successTxId').textContent = data.paymentId || '—';
+      var inv = invoiceInput.value.trim();
+      if (inv) {
+        document.getElementById('successInvoice').textContent = inv;
+        document.getElementById('successInvoiceRow').style.display = 'block';
+      }
+      if (data.receiptUrl) {
+        var receiptLink = document.getElementById('receiptLink');
+        receiptLink.href = data.receiptUrl;
+        receiptLink.style.display = 'inline-block';
+      }
+      document.getElementById('payFormWrap').style.display = 'none';
+      document.getElementById('paySuccess').style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    } catch (err) {
+      errorBanner.textContent = err.message || 'Payment failed. Please try again.';
+      errorBanner.style.display = 'block';
+      payBtn.disabled = false;
+      payBtn.textContent = 'Pay Now';
+    }
+  });
+
+  // Init
+  if (document.readyState === 'complete') {
+    initSquare();
+  } else {
+    window.addEventListener('load', initSquare);
+  }
+})();
+</script>
 
 </body>
 </html>
