@@ -4,9 +4,9 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Pay Invoice - Montissol Essentials</title>
-  <meta name="description" content="Securely pay your Montissol Essentials invoice online via PayPal or credit card.">
+  <meta name="description" content="Securely pay your Montissol Essentials invoice online via Square.">
   <meta property="og:title" content="Pay Invoice - Montissol Essentials">
-  <meta property="og:description" content="Securely pay your Montissol Essentials invoice online via PayPal or credit card.">
+  <meta property="og:description" content="Securely pay your Montissol Essentials invoice online via Square.">
   <meta property="og:image" content="https://montissolessentials.com/assets/images/Header-logo.png">
   <meta property="og:url" content="https://montissolessentials.com/invoice.html">
   <meta property="og:type" content="website">
@@ -19,38 +19,7 @@
   <link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/images/favicon.png">
 
-  <!--
-    ============================================================
-    PAYPAL SETUP INSTRUCTIONS
-    ============================================================
-
-    STEP 1 — Get your PayPal Client ID:
-      1. Go to https://developer.paypal.com/dashboard/
-      2. Log in with your PayPal BUSINESS account
-         (Recommended: PayPal Business account so payments go
-          directly to your business — sign up at paypal.com/business)
-      3. Click "Apps & Credentials" in the left sidebar
-      4. Switch the toggle from "Sandbox" to "Live" (top right)
-      5. Click "Create App" (or use an existing app)
-      6. Copy the "Client ID" shown — it starts with "A..."
-
-    STEP 2 — Replace the placeholder below:
-      Find the line:  client-id=YOUR_PAYPAL_CLIENT_ID_HERE
-      Replace  YOUR_PAYPAL_CLIENT_ID_HERE  with your actual Live Client ID
-
-    STEP 3 — (Optional) Sandbox testing:
-      For testing before going live, use your Sandbox Client ID and
-      change  &intent=capture  to test with PayPal sandbox accounts.
-      Switch back to the Live Client ID when ready for real payments.
-
-    NOTE: Customers do NOT need a PayPal account — PayPal's checkout
-    also accepts credit/debit cards directly.
-    ============================================================
-  -->
-  <script src="https://www.paypal.com/sdk/js?client-id=Adt-7jQG0-a9hOUWfxHJHDA_l06-NjckC_0ZPQ5N73iZ7CdvtDzZEOnWsVjAlZn-o1jvR8lzoepLZ3g_&currency=USD&intent=capture" defer></script>
-
   <style>
-    /* ── Payment page–specific styles ── */
     .pay-wrap {
       max-width: 680px;
       margin: 0 auto;
@@ -62,6 +31,7 @@
       padding: 48px;
       border: 1px solid var(--border);
       backdrop-filter: blur(16px);
+      text-align: center;
     }
 
     .pay-title {
@@ -77,41 +47,6 @@
       line-height: 1.6;
     }
 
-    .pay-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-    }
-
-    .amount-display {
-      background: rgba(231, 77, 16, .08);
-      border: 1px solid rgba(231, 77, 16, .25);
-      border-radius: var(--radius);
-      padding: 16px 20px;
-      margin: 24px 0;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-    }
-
-    .amount-display__label {
-      font-size: .8rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .1em;
-      color: var(--text-secondary);
-    }
-
-    .amount-display__value {
-      font-size: 2rem;
-      font-weight: 900;
-      background: var(--gradient);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
     .pay-divider {
       border: none;
       border-top: 1px solid var(--border);
@@ -125,11 +60,36 @@
       letter-spacing: .12em;
       color: var(--text-muted);
       text-align: center;
-      margin-bottom: 16px;
+      margin-bottom: 20px;
     }
 
-    #paypal-button-container {
-      min-height: 55px;
+    .square-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 18px 48px;
+      border-radius: var(--radius-pill);
+      border: none;
+      background: #006aff;
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: 800;
+      font-family: inherit;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all .3s ease;
+      box-shadow: 0 4px 20px rgba(0,106,255,.3);
+    }
+
+    .square-btn:hover {
+      background: #0052cc;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 30px rgba(0,106,255,.4);
+    }
+
+    .square-btn svg {
+      flex-shrink: 0;
     }
 
     .pay-notice {
@@ -141,6 +101,7 @@
       border-radius: var(--radius);
       background: rgba(255,255,255,.03);
       border: 1px solid var(--border);
+      text-align: left;
     }
 
     .pay-notice svg {
@@ -160,82 +121,9 @@
       color: var(--text);
     }
 
-    /* Validation error state */
-    .field input.invalid,
-    .field textarea.invalid {
-      border-color: #ef4444;
-      box-shadow: 0 0 0 3px rgba(239,68,68,.12);
-    }
-
-    .field-error {
-      font-size: .75rem;
-      color: #ef4444;
-      font-weight: 600;
-      margin-top: 2px;
-      display: none;
-    }
-
-    /* Success screen */
-    #paySuccess {
-      display: none;
-      text-align: center;
-      padding: 60px 20px;
-    }
-
-    .success-icon {
-      width: 72px;
-      height: 72px;
-      border-radius: 50%;
-      background: rgba(34,197,94,.12);
-      display: grid;
-      place-items: center;
-      margin: 0 auto 24px;
-    }
-
-    .success-title {
-      font-size: 2rem;
-      font-weight: 900;
-      margin-bottom: 12px;
-    }
-
-    .success-sub {
-      font-size: 1rem;
-      line-height: 1.7;
-      max-width: 420px;
-      margin: 0 auto 12px;
-      color: var(--text-secondary);
-    }
-
-    .success-ref {
-      font-size: .85rem;
-      color: var(--text-muted);
-      margin-bottom: 28px;
-    }
-
-    .success-ref span {
-      color: var(--brand);
-      font-weight: 700;
-    }
-
-    /* Form error banner */
-    #payFormError {
-      display: none;
-      margin-bottom: 20px;
-      padding: 14px 18px;
-      border-radius: var(--radius);
-      background: rgba(239,68,68,.1);
-      border: 1px solid rgba(239,68,68,.25);
-      color: #f87171;
-      font-size: .88rem;
-      font-weight: 600;
-    }
-
     @media (max-width: 600px) {
       .pay-panel { padding: 28px 20px; }
-      .pay-grid { grid-template-columns: 1fr; }
-      .field-span-2 { grid-column: span 1; }
-      .amount-display { flex-direction: column; align-items: flex-start; gap: 6px; }
-      .amount-display__value { font-size: 1.6rem; }
+      .square-btn { padding: 16px 36px; font-size: 1rem; }
     }
   </style>
 </head>
@@ -254,7 +142,7 @@
   <div class="container hero-split__inner">
     <div class="hero-split__kicker"><span class="dot"></span><span>Secure Payment Portal</span></div>
     <h1 class="hero-split__headline">Pay Your Invoice</h1>
-    <p class="hero-split__sub">Pay your Montissol Essentials invoice securely online. We accept PayPal and all major credit &amp; debit cards — no PayPal account required.</p>
+    <p class="hero-split__sub">Pay your Montissol Essentials invoice securely online. We accept all major credit &amp; debit cards through Square.</p>
     <div class="hero-split__actions">
       <a class="btn ghost" href="contact-us.html">Questions? Contact Us</a>
     </div>
@@ -273,7 +161,7 @@
 
       <div style="display:flex; align-items:center; gap:8px;">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#3b82f6" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        <span style="font-size:.8rem; font-weight:700; color:var(--text-secondary);">Secured by PayPal</span>
+        <span style="font-size:.8rem; font-weight:700; color:var(--text-secondary);">Secured by Square</span>
       </div>
 
       <div style="display:flex; align-items:center; gap:8px;">
@@ -283,95 +171,40 @@
 
       <div style="display:flex; align-items:center; gap:8px;">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#a78bfa" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
-        <span style="font-size:.8rem; font-weight:700; color:var(--text-secondary);">No PayPal Account Required</span>
+        <span style="font-size:.8rem; font-weight:700; color:var(--text-secondary);">Fast &amp; Simple Checkout</span>
       </div>
 
     </div>
   </div>
 </section>
 
-<!-- PAYMENT FORM -->
+<!-- PAYMENT -->
 <section class="section">
   <div class="container">
     <div class="pay-wrap">
+      <div class="pay-panel reveal">
 
-      <!-- Success Screen (shown after payment) -->
-      <div id="paySuccess" class="pay-panel">
-        <div class="success-icon">
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-        </div>
-        <h2 class="success-title">Payment Received!</h2>
-        <p class="success-sub">Thank you for your payment to Montissol Essentials. A confirmation has been sent to your email by PayPal.</p>
-        <p class="success-ref">Transaction ID: <span id="successTxId">—</span></p>
-        <p class="success-ref" id="successInvoiceRow" style="display:none;">Invoice #: <span id="successInvoice">—</span></p>
-        <a class="btn primary" href="index.html">Return Home</a>
-      </div>
-
-      <!-- Payment Form -->
-      <div id="payFormWrap" class="pay-panel reveal">
-
-        <div class="mini-kicker" style="margin-bottom:12px;">
+        <div class="mini-kicker" style="margin-bottom:12px; display:inline-flex;">
           <span class="dot"></span>
           <span>Montissol Essentials LLC</span>
         </div>
 
         <h2 class="pay-title">Invoice Payment</h2>
-        <p class="pay-subtitle">Fill in your details below, then click the PayPal button to pay securely. You can pay with a credit card even without a PayPal account.</p>
-
-        <div id="payFormError"></div>
-
-        <div class="pay-grid">
-
-          <div class="field">
-            <label for="payName">Full Name <span class="req">*</span></label>
-            <input id="payName" name="payName" type="text" placeholder="Your full name" required autocomplete="name">
-            <span class="field-error" id="payNameErr">Please enter your full name.</span>
-          </div>
-
-          <div class="field">
-            <label for="payEmail">Email Address <span class="req">*</span></label>
-            <input id="payEmail" name="payEmail" type="email" placeholder="you@example.com" required autocomplete="email">
-            <span class="field-error" id="payEmailErr">Please enter a valid email address.</span>
-          </div>
-
-          <div class="field">
-            <label for="payInvoice">Invoice / Reference # <span style="color:var(--text-muted); font-weight:400;">(optional)</span></label>
-            <input id="payInvoice" name="payInvoice" type="text" placeholder="e.g. INV-2024-001" autocomplete="off">
-          </div>
-
-          <div class="field">
-            <label for="payAmount">Amount to Pay ($) <span class="req">*</span></label>
-            <input id="payAmount" name="payAmount" type="number" placeholder="0.00" min="1" step="0.01" required autocomplete="off">
-            <span class="field-error" id="payAmountErr">Please enter a valid amount (minimum $1.00).</span>
-          </div>
-
-          <div class="field field-span-2">
-            <label for="payMemo">Description / Memo <span style="color:var(--text-muted); font-weight:400;">(optional)</span></label>
-            <textarea id="payMemo" name="payMemo" placeholder="e.g. Janitorial services — March 2025" rows="3"></textarea>
-          </div>
-
-        </div>
-
-        <!-- Live amount preview -->
-        <div class="amount-display" id="amountPreview" style="display:none;">
-          <div>
-            <div class="amount-display__label">Amount Due</div>
-            <div style="font-size:.8rem; color:var(--text-muted); margin-top:2px;" id="amountPreviewInvoice"></div>
-          </div>
-          <div class="amount-display__value" id="amountPreviewValue">$0.00</div>
-        </div>
+        <p class="pay-subtitle">Click the button below to securely pay your invoice through Square. You can pay with any major credit or debit card.</p>
 
         <hr class="pay-divider">
 
-        <p class="pay-methods-label">Choose your payment method</p>
+        <p class="pay-methods-label">Secure checkout via Square</p>
 
-        <!-- PayPal Smart Payment Buttons -->
-        <div id="paypal-button-container"></div>
+        <a href="https://square.link/u/1BgL51At" target="_blank" rel="noopener noreferrer" class="square-btn">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M18.75 2.25H5.25A3 3 0 002.25 5.25v13.5a3 3 0 003 3h13.5a3 3 0 003-3V5.25a3 3 0 00-3-3zm-2.625 13.5a1.125 1.125 0 01-1.125 1.125H9a1.125 1.125 0 01-1.125-1.125V8.25A1.125 1.125 0 019 7.125h6a1.125 1.125 0 011.125 1.125v7.5z"/></svg>
+          Pay with Square
+        </a>
 
-        <div class="pay-notice" style="margin-top:18px;">
+        <div class="pay-notice" style="margin-top:28px;">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
           <p>
-            <strong>No PayPal account needed.</strong> After clicking the button above, PayPal's secure checkout will open — you can pay with any major credit or debit card as a guest, or log in with your PayPal account.
+            <strong>Secure checkout powered by Square.</strong> You'll be redirected to Square's secure payment page where you can enter your payment amount and card details.
             Your payment goes directly to <strong>Montissol Essentials LLC</strong>.
           </p>
         </div>
@@ -386,8 +219,6 @@
         </div>
 
       </div>
-      <!-- /payFormWrap -->
-
     </div>
   </div>
 </section>
@@ -398,178 +229,6 @@
 
 <script src="assets/shared.js"></script>
 <script src="assets/app.js"></script>
-
-<script>
-(function () {
-  // ── Amount preview ──
-  var amountInput   = document.getElementById('payAmount');
-  var invoiceInput  = document.getElementById('payInvoice');
-  var previewBox    = document.getElementById('amountPreview');
-  var previewValue  = document.getElementById('amountPreviewValue');
-  var previewInv    = document.getElementById('amountPreviewInvoice');
-
-  function updatePreview() {
-    var val = parseFloat(amountInput.value);
-    if (!isNaN(val) && val >= 0.01) {
-      previewValue.textContent = '$' + val.toFixed(2);
-      previewInv.textContent = invoiceInput.value ? 'Invoice: ' + invoiceInput.value : '';
-      previewBox.style.display = 'flex';
-    } else {
-      previewBox.style.display = 'none';
-    }
-  }
-
-  amountInput.addEventListener('input', updatePreview);
-  invoiceInput.addEventListener('input', updatePreview);
-
-  // ── Form validation ──
-  function validateForm() {
-    var valid = true;
-    var errorBanner = document.getElementById('payFormError');
-    errorBanner.style.display = 'none';
-
-    // Name
-    var name = document.getElementById('payName');
-    var nameErr = document.getElementById('payNameErr');
-    if (!name.value.trim()) {
-      name.classList.add('invalid');
-      nameErr.style.display = 'block';
-      valid = false;
-    } else {
-      name.classList.remove('invalid');
-      nameErr.style.display = 'none';
-    }
-
-    // Email
-    var email = document.getElementById('payEmail');
-    var emailErr = document.getElementById('payEmailErr');
-    var emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRe.test(email.value.trim())) {
-      email.classList.add('invalid');
-      emailErr.style.display = 'block';
-      valid = false;
-    } else {
-      email.classList.remove('invalid');
-      emailErr.style.display = 'none';
-    }
-
-    // Amount
-    var amount = parseFloat(amountInput.value);
-    var amtErr = document.getElementById('payAmountErr');
-    if (isNaN(amount) || amount < 1) {
-      amountInput.classList.add('invalid');
-      amtErr.style.display = 'block';
-      valid = false;
-    } else {
-      amountInput.classList.remove('invalid');
-      amtErr.style.display = 'none';
-    }
-
-    if (!valid) {
-      errorBanner.textContent = 'Please fill in all required fields before proceeding.';
-      errorBanner.style.display = 'block';
-    }
-
-    return valid;
-  }
-
-  // ── PayPal Smart Buttons ──
-  function initPayPal() {
-    if (typeof paypal === 'undefined') {
-      // SDK failed to load — show a fallback notice
-      document.getElementById('paypal-button-container').innerHTML =
-        '<div style="padding:16px; border-radius:12px; background:rgba(239,68,68,.08); border:1px solid rgba(239,68,68,.2); color:#f87171; font-size:.85rem;">' +
-        'PayPal could not be loaded. Please check your internet connection or contact us at ' +
-        '<a href="mailto:Info@MontissolEssentials.com" style="color:var(--brand);">Info@MontissolEssentials.com</a>.' +
-        '</div>';
-      return;
-    }
-
-    paypal.Buttons({
-      style: {
-        layout: 'vertical',   // stacks PayPal + debit/credit card buttons
-        color:  'gold',
-        shape:  'pill',
-        label:  'pay',
-        height: 50
-      },
-
-      // Called when the buyer clicks the button — validate first, then create the order
-      onClick: function (data, actions) {
-        if (!validateForm()) {
-          return actions.reject();  // Prevents PayPal popup from opening
-        }
-        return actions.resolve();
-      },
-
-      // Create the PayPal order with the entered amount
-      createOrder: function (data, actions) {
-        var amount   = parseFloat(amountInput.value).toFixed(2);
-        var invoice  = document.getElementById('payInvoice').value.trim();
-        var memo     = document.getElementById('payMemo').value.trim();
-        var desc     = 'Montissol Essentials – ' +
-                       (invoice ? 'Invoice ' + invoice : 'Payment') +
-                       (memo ? ' – ' + memo : '');
-
-        return actions.order.create({
-          purchase_units: [{
-            description: desc.substring(0, 127),   // PayPal max 127 chars
-            amount: {
-              currency_code: 'USD',
-              value: amount
-            },
-            // custom_id is stored on the PayPal transaction for your records
-            custom_id: invoice || undefined
-          }]
-        });
-      },
-
-      // Payment approved — capture funds
-      onApprove: function (data, actions) {
-        return actions.order.capture().then(function (details) {
-          var txId      = details.id || data.orderID || '—';
-          var invoice   = document.getElementById('payInvoice').value.trim();
-
-          // Show success screen
-          document.getElementById('successTxId').textContent = txId;
-          if (invoice) {
-            document.getElementById('successInvoice').textContent = invoice;
-            document.getElementById('successInvoiceRow').style.display = 'block';
-          }
-          document.getElementById('payFormWrap').style.display  = 'none';
-          document.getElementById('paySuccess').style.display   = 'block';
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
-      },
-
-      // Payment cancelled — do nothing (PayPal popup closes)
-      onCancel: function () { /* no-op */ },
-
-      // Payment error
-      onError: function (err) {
-        var errorBanner = document.getElementById('payFormError');
-        errorBanner.textContent =
-          'A payment error occurred. Please try again, or contact us at Info@MontissolEssentials.com.';
-        errorBanner.style.display = 'block';
-        console.error('PayPal error:', err);
-      }
-
-    }).render('#paypal-button-container');
-  }
-
-  // Wait for the PayPal SDK script to finish loading
-  var sdkScript = document.querySelector('script[src*="paypal.com/sdk"]');
-  if (sdkScript) {
-    // The SDK script has defer, so it loads after DOMContentLoaded.
-    // Use the window.onload event to be safe.
-    if (document.readyState === 'complete') {
-      initPayPal();
-    } else {
-      window.addEventListener('load', initPayPal);
-    }
-  }
-})();
-</script>
 
 </body>
 </html>
