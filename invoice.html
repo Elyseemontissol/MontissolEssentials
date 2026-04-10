@@ -294,17 +294,41 @@
 
         <hr class="pay-divider">
 
-        <p class="pay-methods-label">Enter your card details</p>
+        <p class="pay-methods-label">Choose your payment method</p>
 
-        <!-- Square Card Form -->
-        <div id="card-container"></div>
+        <!-- Payment method tabs -->
+        <div style="display:flex; gap:0; margin-bottom:24px; border-radius:var(--radius); overflow:hidden; border:1px solid var(--border);">
+          <button type="button" id="tabCard" class="pay-tab pay-tab--active" onclick="switchTab('card')" style="flex:1; padding:14px; border:none; background:rgba(231,77,16,.12); color:var(--brand); font-weight:700; font-size:.9rem; cursor:pointer; font-family:inherit; transition:all .2s;">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle; margin-right:6px;"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
+            Pay with Card
+          </button>
+          <button type="button" id="tabLink" class="pay-tab" onclick="switchTab('link')" style="flex:1; padding:14px; border:none; border-left:1px solid var(--border); background:transparent; color:var(--text-secondary); font-weight:700; font-size:.9rem; cursor:pointer; font-family:inherit; transition:all .2s;">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle; margin-right:6px;"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+            Pay via Link
+          </button>
+        </div>
 
-        <button type="button" id="payBtn" class="pay-btn" disabled>Pay Now</button>
+        <!-- Option 1: Card payment -->
+        <div id="cardSection">
+          <div id="card-container"></div>
+          <button type="button" id="payBtn" class="pay-btn" disabled>Pay Now</button>
+        </div>
+
+        <!-- Option 2: Square payment link -->
+        <div id="linkSection" style="display:none; text-align:center; padding:20px 0;">
+          <p style="color:var(--text-secondary); font-size:.95rem; margin-bottom:20px; line-height:1.6;">
+            Click below to pay securely through Square's hosted checkout page.
+          </p>
+          <a href="https://square.link/u/1BgL51At" target="_blank" rel="noopener noreferrer" style="display:inline-flex; align-items:center; justify-content:center; gap:10px; padding:18px 48px; border-radius:var(--radius-pill); border:none; background:#006aff; color:#fff; font-size:1.05rem; font-weight:800; font-family:inherit; cursor:pointer; text-decoration:none; transition:all .3s ease; box-shadow:0 4px 20px rgba(0,106,255,.3);">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M18.75 2.25H5.25A3 3 0 002.25 5.25v13.5a3 3 0 003 3h13.5a3 3 0 003-3V5.25a3 3 0 00-3-3zm-2.625 13.5a1.125 1.125 0 01-1.125 1.125H9a1.125 1.125 0 01-1.125-1.125V8.25A1.125 1.125 0 019 7.125h6a1.125 1.125 0 011.125 1.125v7.5z"/></svg>
+            Pay with Square
+          </a>
+        </div>
 
         <div class="pay-notice" style="margin-top:18px;">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
           <p>
-            <strong>Your card details are secure.</strong> Card information is encrypted and processed directly by Square. Montissol Essentials never sees or stores your card number.
+            <strong>Your payment is secure.</strong> Card details are encrypted and processed directly by Square. Montissol Essentials never sees or stores your card number.
             Your payment goes directly to <strong>Montissol Essentials LLC</strong>.
           </p>
         </div>
@@ -332,6 +356,30 @@
 <script src="assets/app.js"></script>
 
 <script>
+// Tab switching
+function switchTab(tab) {
+  var tabCard = document.getElementById('tabCard');
+  var tabLink = document.getElementById('tabLink');
+  var cardSection = document.getElementById('cardSection');
+  var linkSection = document.getElementById('linkSection');
+
+  if (tab === 'card') {
+    tabCard.style.background = 'rgba(231,77,16,.12)';
+    tabCard.style.color = 'var(--brand)';
+    tabLink.style.background = 'transparent';
+    tabLink.style.color = 'var(--text-secondary)';
+    cardSection.style.display = 'block';
+    linkSection.style.display = 'none';
+  } else {
+    tabLink.style.background = 'rgba(0,106,255,.12)';
+    tabLink.style.color = '#006aff';
+    tabCard.style.background = 'transparent';
+    tabCard.style.color = 'var(--text-secondary)';
+    cardSection.style.display = 'none';
+    linkSection.style.display = 'block';
+  }
+}
+
 (function () {
   var amountInput  = document.getElementById('payAmount');
   var invoiceInput = document.getElementById('payInvoice');
