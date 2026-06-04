@@ -852,7 +852,6 @@
     if (!inv) return;
     editingId = id;
     document.getElementById('newInvoiceId').value = inv.id;
-    document.getElementById('newInvoiceId').disabled = true;
     document.getElementById('newInvoiceAmount').value = inv.amount;
     document.getElementById('newInvoiceCustomer').value = inv.customer || '';
     document.getElementById('newInvoiceEmail').value = inv.email || '';
@@ -884,6 +883,14 @@
       return;
     }
 
+    if (editingId && body.id !== editingId) {
+      var ok = confirm(
+        'Change invoice number from "' + editingId + '" to "' + body.id + '"?\n\n' +
+        'Anyone using a payment link with the old number will no longer find this invoice.'
+      );
+      if (!ok) return;
+    }
+
     createBtn.disabled = true;
     createBtn.textContent = editingId ? 'Saving...' : 'Creating...';
 
@@ -893,6 +900,7 @@
         url = '/api/invoices?id=' + encodeURIComponent(editingId);
         method = 'PATCH';
         payload = {
+          newId: body.id,
           amount: body.amount,
           customer: body.customer,
           email: body.email,

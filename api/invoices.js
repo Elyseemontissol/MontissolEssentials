@@ -129,6 +129,26 @@ export default async function handler(req, res) {
         }
         invoice.amount = amt;
       }
+
+      if (body.newId !== undefined) {
+        const newId = String(body.newId).trim();
+        if (!newId) {
+          return res.status(400).json({ ok: false, error: 'Invoice number cannot be empty.' });
+        }
+        if (newId !== id) {
+          const existing = await redis.get(`invoice:${newId}`);
+          if (existing) {
+            return res.status(409).json({ ok: false, error: `Invoice number "${newId}" is already in use.` });
+          }
+          invoice.id = newId;
+          await redis.set(`invoice:${newId}`, invoice);
+          await redis.sadd('invoice:ids', newId);
+          await redis.del(`invoice:${id}`);
+          await redis.srem('invoice:ids', id);
+          return res.status(200).json({ ok: true, invoice });
+        }
+      }
+
       await redis.set(`invoice:${id}`, invoice);
       return res.status(200).json({ ok: true, invoice });
     }
