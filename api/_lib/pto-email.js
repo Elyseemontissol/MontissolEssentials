@@ -56,7 +56,7 @@ export function renderEmployeeDecisionEmail({ request, decision, newBalance }) {
 export async function sendOwnerAlert({ apiKey, to, subject, html }) {
   const resend = new Resend(apiKey);
   return resend.emails.send({
-    from: 'Montissol PTO <noreply@montissolessentials.com>',
+    from: 'Montissol Essentials PTO <noreply@montissolessentials.com>',
     to, subject, html,
   });
 }
@@ -64,7 +64,7 @@ export async function sendOwnerAlert({ apiKey, to, subject, html }) {
 export async function sendEmployeeDecision({ apiKey, to, subject, html }) {
   const resend = new Resend(apiKey);
   return resend.emails.send({
-    from: 'Montissol PTO <noreply@montissolessentials.com>',
+    from: 'Montissol Essentials PTO <noreply@montissolessentials.com>',
     to, subject, html,
   });
 }
