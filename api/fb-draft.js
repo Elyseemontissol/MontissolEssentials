@@ -34,9 +34,9 @@ async function appendHistory(entry) {
 function actionUrls(draftId, secret) {
   const base = appBaseUrl();
   return {
-    approveUrl: `${base}/api/fb-approve?token=${signToken(draftId, 'approve', secret)}`,
-    editUrl:    `${base}/api/fb-edit?token=${signToken(draftId, 'edit', secret)}`,
-    rejectUrl:  `${base}/api/fb-reject?token=${signToken(draftId, 'reject', secret)}`,
+    approveUrl: `${base}/api/fb-action?token=${signToken(draftId, 'approve', secret)}`,
+    editUrl:    `${base}/api/fb-action?token=${signToken(draftId, 'edit', secret)}`,
+    rejectUrl:  `${base}/api/fb-action?token=${signToken(draftId, 'reject', secret)}`,
   };
 }
 
