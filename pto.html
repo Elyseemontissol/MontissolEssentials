@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Employee Time Off — Montissol Essentials</title>
+  <meta name="robots" content="noindex">
+  <style>
+    :root{
+      --bg:#0a0a0a; --card:#141414; --text:#f1f1f1; --text-muted:#888;
+      --border:#2a2a2a; --brand:#e74d10; --radius:10px;
+    }
+    *{box-sizing:border-box;}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,"Segoe UI",sans-serif;line-height:1.5;}
+    main{max-width:680px;margin:48px auto;padding:24px;}
+    h1{margin:0 0 8px 0;font-size:1.6rem;}
+    h2{margin:24px 0 12px 0;font-size:1.2rem;}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:16px;}
+    label{display:block;font-size:.85rem;color:var(--text-muted);margin-bottom:6px;}
+    input,textarea{width:100%;padding:10px 12px;background:#0a0a0a;color:var(--text);border:1px solid var(--border);border-radius:8px;font-size:.95rem;}
+    textarea{min-height:80px;resize:vertical;}
+    button{padding:12px 24px;background:var(--brand);color:#fff;border:none;border-radius:8px;font-size:.95rem;font-weight:600;cursor:pointer;}
+    button:disabled{opacity:.5;cursor:not-allowed;}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+    .field{margin-bottom:12px;}
+    .err{color:#f87171;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:10px 14px;margin-bottom:12px;display:none;}
+    .balance{font-size:1.5rem;font-weight:700;color:var(--brand);}
+    .balance-sub{font-size:.85rem;color:var(--text-muted);}
+    .req{list-style:none;padding:0;margin:0;}
+    .req li{padding:10px 0;border-top:1px solid var(--border);font-size:.9rem;}
+    .req li:first-child{border-top:none;}
+    .status-pending{color:#fbbf24;}
+    .status-approved{color:#22c55e;}
+    .status-denied{color:#f87171;}
+    .note{font-size:.8rem;color:var(--text-muted);font-style:italic;margin-top:4px;}
+    .hidden{display:none;}
+  </style>
+</head>
+<body>
+<main>
+
+  <!-- Sign-in screen -->
+  <section id="signinView" class="card">
+    <h1>Employee Time Off</h1>
+    <p style="color:var(--text-muted);margin:0 0 16px 0;">Sign in to request paid time off.</p>
+    <div id="signinErr" class="err"></div>
+    <div class="field">
+      <label for="siName">Full name</label>
+      <input id="siName" type="text" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="siSsn">Last 4 of SSN</label>
+      <input id="siSsn" type="password" inputmode="numeric" maxlength="4" pattern="\d{4}" autocomplete="off">
+    </div>
+    <button id="signinBtn" type="button">Sign In</button>
+  </section>
+
+  <!-- Portal screen -->
+  <section id="portalView" class="card hidden">
+    <h1>Hello, <span id="empName"></span></h1>
+    <div class="balance"><span id="empBalance">5</span> day<span id="dayPlural">s</span> remaining</div>
+    <div class="balance-sub">5 PTO days per calendar year</div>
+
+    <h2>Request time off</h2>
+    <div id="reqErr" class="err"></div>
+    <div class="row">
+      <div class="field">
+        <label for="reqStart">Start date</label>
+        <input id="reqStart" type="date">
+      </div>
+      <div class="field">
+        <label for="reqEnd">End date</label>
+        <input id="reqEnd" type="date">
+      </div>
+    </div>
+    <div class="balance-sub" id="dayPreview"></div>
+    <div class="field" style="margin-top:12px;">
+      <label for="reqReason">Reason</label>
+      <textarea id="reqReason" maxlength="500" placeholder="Vacation, medical appointment, etc."></textarea>
+    </div>
+    <button id="submitBtn" type="button">Submit Request</button>
+
+    <h2>Your requests</h2>
+    <ul id="reqList" class="req"></ul>
+  </section>
+
+</main>
+<script type="module">
+  const $ = (id) => document.getElementById(id);
+  let creds = null; // { name, ssn4 }
+
+  function showErr(el, msg) { el.textContent = msg; el.style.display = 'block'; }
+  function hideErr(el) { el.style.display = 'none'; }
+
+  async function api(body) {
+    const res = await fetch('/api/pto-public', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    return { status: res.status, data: await res.json().catch(() => ({})) };
+  }
+
+  function fmtDate(s) {
+    if (!s) return '';
+    const d = new Date(s + 'T00:00:00Z');
+    return d.toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  function renderHistory(history) {
+    const ul = $('reqList');
+    if (!history.length) { ul.innerHTML = '<li style="color:var(--text-muted);">No requests yet.</li>'; return; }
+    ul.innerHTML = history.map(r => {
+      const cls = 'status-' + r.status;
+      const label = r.status[0].toUpperCase() + r.status.slice(1);
+      const note = r.status === 'denied' && r.decisionNote
+        ? `<div class="note">Note: ${escapeHtml(r.decisionNote)}</div>` : '';
+      return `<li>
+        <span class="${cls}">${label}</span> ·
+        ${fmtDate(r.startDate)} – ${fmtDate(r.endDate)} (${r.days} d) ·
+        <span style="color:var(--text-muted);">${escapeHtml(r.reason)}</span>
+        ${note}
+      </li>`;
+    }).join('');
+  }
+
+  function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, (c) => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+  }
+
+  function showPortal(emp, history) {
+    $('signinView').classList.add('hidden');
+    $('portalView').classList.remove('hidden');
+    $('empName').textContent = emp.name;
+    $('empBalance').textContent = emp.balanceDays;
+    $('dayPlural').textContent = emp.balanceDays === 1 ? '' : 's';
+    renderHistory(history);
+  }
+
+  function updateDayPreview() {
+    const s = $('reqStart').value, e = $('reqEnd').value;
+    if (!s || !e) { $('dayPreview').textContent = ''; return; }
+    const start = new Date(s + 'T00:00:00Z'), end = new Date(e + 'T00:00:00Z');
+    if (end < start) { $('dayPreview').textContent = 'End date is before start date.'; return; }
+    let days = 0;
+    for (let d = new Date(start); d <= end; d.setUTCDate(d.getUTCDate() + 1)) {
+      const dow = d.getUTCDay();
+      if (dow !== 0 && dow !== 6) days++;
+    }
+    $('dayPreview').textContent = `${days} weekday${days === 1 ? '' : 's'}`;
+  }
+  $('reqStart').addEventListener('change', updateDayPreview);
+  $('reqEnd').addEventListener('change', updateDayPreview);
+
+  $('signinBtn').addEventListener('click', async () => {
+    hideErr($('signinErr'));
+    const name = $('siName').value.trim();
+    const ssn4 = $('siSsn').value.trim();
+    if (!name || !/^\d{4}$/.test(ssn4)) {
+      showErr($('signinErr'), 'Enter your full name and last 4 of SSN.');
+      return;
+    }
+    $('signinBtn').disabled = true;
+    const { status, data } = await api({ action: 'login', name, ssn4 });
+    $('signinBtn').disabled = false;
+    if (!data.ok) { showErr($('signinErr'), data.error || 'Sign-in failed.'); return; }
+    creds = { name, ssn4 };
+    showPortal(data.employee, data.history || []);
+  });
+
+  $('submitBtn').addEventListener('click', async () => {
+    hideErr($('reqErr'));
+    const startDate = $('reqStart').value, endDate = $('reqEnd').value;
+    const reason = $('reqReason').value.trim();
+    if (!startDate || !endDate) { showErr($('reqErr'), 'Pick a start and end date.'); return; }
+    if (!reason) { showErr($('reqErr'), 'Please add a reason.'); return; }
+    $('submitBtn').disabled = true;
+    const { status, data } = await api({
+      action: 'request', name: creds.name, ssn4: creds.ssn4,
+      startDate, endDate, reason,
+    });
+    if (!data.ok) {
+      showErr($('reqErr'), data.error || 'Request failed.');
+      $('submitBtn').disabled = false;
+      return;
+    }
+    // Refresh portal from the server so balance + history reflect the new pending request.
+    const refresh = await api({ action: 'login', name: creds.name, ssn4: creds.ssn4 });
+    if (refresh.data.ok) {
+      $('empBalance').textContent = refresh.data.employee.balanceDays;
+      renderHistory(refresh.data.history || []);
+    }
+    $('reqStart').value = ''; $('reqEnd').value = ''; $('reqReason').value = '';
+    $('dayPreview').textContent = '';
+    $('submitBtn').disabled = false;
+    alert('Request submitted. You will receive an email once the owner decides.');
+  });
+</script>
+</body>
+</html>
