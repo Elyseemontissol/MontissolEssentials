@@ -662,7 +662,7 @@
     forgotStatus.style.display = 'none';
 
     try {
-      var res = await fetch('/api/admin-forgot', { method: 'POST' });
+      var res = await fetch('/api/admin-pwd?action=forgot', { method: 'POST' });
       var data = await res.json();
       if (data.ok) {
         forgotStatus.textContent = 'Reset email sent to ElyseeM@MontissolEssentials.com. Check your inbox.';
@@ -715,7 +715,7 @@
     resetBtn.textContent = 'Saving...';
 
     try {
-      var res = await fetch('/api/admin-reset', {
+      var res = await fetch('/api/admin-pwd?action=reset', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: token, newPassword: pwd }),
