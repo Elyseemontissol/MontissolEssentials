@@ -93,7 +93,7 @@
   function hideErr(el) { el.style.display = 'none'; }
 
   async function api(body) {
-    const res = await fetch('/api/pto-public', {
+    const res = await fetch('/api/pto', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
