@@ -8,6 +8,7 @@
     "@anthropic-ai/sdk": "^0.40.0",
     "@upstash/redis": "^1.37.0",
     "@vercel/blob": "^0.27.0",
+    "bcryptjs": "^2.4.3",
     "openai": "^4.80.0",
     "resend": "^4.0.0",
     "stripe": "^17.0.0"
