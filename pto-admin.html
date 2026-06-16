@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PTO Admin — Montissol Essentials</title>
+  <meta name="robots" content="noindex">
+  <style>
+    :root{
+      --bg:#0a0a0a; --card:#141414; --text:#f1f1f1; --text-muted:#888;
+      --border:#2a2a2a; --brand:#e74d10; --radius:10px;
+    }
+    *{box-sizing:border-box;}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,"Segoe UI",sans-serif;line-height:1.5;}
+    main{max-width:960px;margin:32px auto;padding:24px;}
+    h1{margin:0 0 16px 0;}
+    h2{margin:24px 0 12px 0;font-size:1.15rem;}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px;}
+    label{display:block;font-size:.85rem;color:var(--text-muted);margin-bottom:6px;}
+    input,textarea,select{width:100%;padding:9px 12px;background:#0a0a0a;color:var(--text);border:1px solid var(--border);border-radius:8px;font-size:.92rem;}
+    button{padding:9px 16px;background:var(--brand);color:#fff;border:none;border-radius:8px;font-size:.9rem;font-weight:600;cursor:pointer;}
+    button.ghost{background:transparent;border:1px solid var(--border);color:var(--text);}
+    button.green{background:#16a34a;}
+    button.red{background:#dc2626;}
+    button:disabled{opacity:.5;cursor:not-allowed;}
+    .row{display:grid;grid-template-columns:repeat(3, 1fr);gap:10px;margin-bottom:10px;}
+    .err{color:#f87171;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:10px 14px;margin-bottom:12px;display:none;}
+    table{width:100%;border-collapse:collapse;}
+    th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--border);font-size:.9rem;}
+    th{color:var(--text-muted);font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;}
+    .muted{color:var(--text-muted);}
+    .hidden{display:none;}
+    .actions{display:flex;gap:6px;flex-wrap:wrap;}
+  </style>
+</head>
+<body>
+<main>
+
+  <!-- Login -->
+  <section id="loginView" class="card">
+    <h1>PTO Admin</h1>
+    <div id="loginErr" class="err"></div>
+    <div style="margin-bottom:12px;">
+      <label for="pwd">Admin password</label>
+      <input id="pwd" type="password" autocomplete="current-password">
+    </div>
+    <button id="loginBtn" type="button">Sign In</button>
+  </section>
+
+  <!-- App -->
+  <section id="appView" class="hidden">
+    <h1>PTO Admin</h1>
+
+    <div class="card">
+      <h2>Pending requests (<span id="pendingCount">0</span>)</h2>
+      <div id="pendingList"></div>
+    </div>
+
+    <div class="card">
+      <h2>Employees (<span id="empCount">0</span>) <button id="showAddBtn" class="ghost" style="float:right;">+ Add Employee</button></h2>
+      <div id="addEmpForm" class="hidden" style="margin-bottom:16px;padding:14px;border:1px solid var(--border);border-radius:8px;">
+        <div class="row">
+          <div><label>Full name</label><input id="addName"></div>
+          <div><label>Email</label><input id="addEmail" type="email"></div>
+          <div><label>Last 4 SSN</label><input id="addSsn" maxlength="4" pattern="\d{4}" inputmode="numeric"></div>
+        </div>
+        <div id="addErr" class="err"></div>
+        <button id="addEmpBtn">Add Employee</button>
+        <button id="cancelAddBtn" class="ghost">Cancel</button>
+      </div>
+      <table id="empTable"><thead>
+        <tr><th>Name</th><th>Email</th><th>Balance</th><th></th></tr>
+      </thead><tbody id="empBody"></tbody></table>
+    </div>
+
+    <div class="card">
+      <h2>Decided (last 50)</h2>
+      <div id="decidedList"></div>
+    </div>
+  </section>
+
+</main>
+<script type="module">
+  const $ = (id) => document.getElementById(id);
+  let password = null;
+
+  function escape(s) {
+    return String(s || '').replace(/[&<>"']/g, (c) => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+  }
+  function fmtDate(s) {
+    if (!s) return '';
+    const d = new Date(s + 'T00:00:00Z');
+    return d.toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' });
+  }
+
+  async function api(path, opts = {}) {
+    opts.headers = { ...(opts.headers || {}), 'Authorization': 'Bearer ' + password };
+    if (opts.body && typeof opts.body !== 'string') {
+      opts.headers['Content-Type'] = 'application/json';
+      opts.body = JSON.stringify(opts.body);
+    }
+    const res = await fetch(path, opts);
+    return { status: res.status, data: await res.json().catch(() => ({})) };
+  }
+
+  $('loginBtn').addEventListener('click', async () => {
+    const pwd = $('pwd').value;
+    if (!pwd) return;
+    password = pwd;
+    const { status } = await api('/api/pto?resource=employees', { method: 'GET' });
+    if (status === 401) {
+      password = null;
+      $('loginErr').textContent = 'Wrong password.';
+      $('loginErr').style.display = 'block';
+      return;
+    }
+    $('loginView').classList.add('hidden');
+    $('appView').classList.remove('hidden');
+    await reloadAll();
+  });
+
+  async function reloadAll() {
+    await Promise.all([reloadEmployees(), reloadRequests()]);
+  }
+
+  async function reloadEmployees() {
+    const { data } = await api('/api/pto?resource=employees', { method: 'GET' });
+    const employees = data.employees || [];
+    $('empCount').textContent = employees.length;
+    $('empBody').innerHTML = employees.map(e => `
+      <tr data-id="${e.id}">
+        <td>${escape(e.name)}</td>
+        <td>${escape(e.email)}</td>
+        <td>${e.balanceDays} d</td>
+        <td class="actions">
+          <button class="ghost" data-act="adjust">Adjust</button>
+          <button class="ghost" data-act="ssn">Reset SSN</button>
+          <button class="ghost" data-act="del">🗑</button>
+        </td>
+      </tr>
+    `).join('') || '<tr><td colspan="4" class="muted">No employees yet.</td></tr>';
+    $('empBody').querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => handleEmpAction(btn));
+    });
+  }
+
+  async function handleEmpAction(btn) {
+    const id = btn.closest('tr').dataset.id;
+    const act = btn.dataset.act;
+    if (act === 'del') {
+      if (!confirm('Delete this employee? Their request history is preserved.')) return;
+      await api('/api/pto?resource=employees&id=' + encodeURIComponent(id), { method: 'DELETE' });
+      reloadEmployees();
+    } else if (act === 'adjust') {
+      const v = prompt('Set new PTO balance (days):');
+      if (v === null) return;
+      const n = Number(v);
+      if (!Number.isFinite(n) || n < 0) return alert('Must be a non-negative number.');
+      await api('/api/pto?resource=employees&id=' + encodeURIComponent(id), { method: 'PATCH', body: { balanceDays: n } });
+      reloadEmployees();
+    } else if (act === 'ssn') {
+      const v = prompt('New last 4 of SSN:');
+      if (v === null) return;
+      if (!/^\d{4}$/.test(v)) return alert('Must be exactly 4 digits.');
+      await api('/api/pto?resource=employees&id=' + encodeURIComponent(id), { method: 'PATCH', body: { ssn4: v } });
+      alert('SSN updated.');
+    }
+  }
+
+  async function reloadRequests() {
+    const { data: pendingRes } = await api('/api/pto?resource=requests&status=pending', { method: 'GET' });
+    const pending = pendingRes.requests || [];
+    $('pendingCount').textContent = pending.length;
+    $('pendingList').innerHTML = pending.map(r => `
+      <div style="padding:12px 0;border-bottom:1px solid var(--border);">
+        <div><strong>${escape(r.employeeName)}</strong> · ${fmtDate(r.startDate)} – ${fmtDate(r.endDate)} (${r.days} d)</div>
+        <div class="muted">${escape(r.reason)}</div>
+        <div class="actions" style="margin-top:8px;">
+          <button class="green" data-req="${r.id}" data-act="approve">✅ Approve</button>
+          <button class="red" data-req="${r.id}" data-act="deny">❌ Deny</button>
+        </div>
+      </div>
+    `).join('') || '<div class="muted">No pending requests.</div>';
+    $('pendingList').querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => handleDecide(btn));
+    });
+
+    const { data: allRes } = await api('/api/pto?resource=requests', { method: 'GET' });
+    const decided = (allRes.requests || []).filter(r => r.status !== 'pending');
+    $('decidedList').innerHTML = decided.map(r => `
+      <div style="padding:10px 0;border-bottom:1px solid var(--border);font-size:.9rem;">
+        <strong>${escape(r.employeeName)}</strong> · ${fmtDate(r.startDate)} – ${fmtDate(r.endDate)} (${r.days} d) ·
+        <span style="color:${r.status === 'approved' ? '#22c55e' : '#f87171'};">${r.status}</span>
+        ${r.decisionNote ? ` · <span class="muted">"${escape(r.decisionNote)}"</span>` : ''}
+      </div>
+    `).join('') || '<div class="muted">No decided requests.</div>';
+  }
+
+  async function handleDecide(btn) {
+    const id = btn.dataset.req;
+    const decision = btn.dataset.act;
+    let note = null;
+    if (decision === 'deny') {
+      note = prompt('Optional reason (visible to the employee):') || null;
+    }
+    btn.disabled = true;
+    const { status, data } = await api('/api/pto?resource=decide&id=' + encodeURIComponent(id), { method: 'POST', body: { decision, note } });
+    if (!data.ok) alert('Failed: ' + (data.error || status));
+    reloadAll();
+  }
+
+  $('showAddBtn').addEventListener('click', () => { $('addEmpForm').classList.toggle('hidden'); });
+  $('cancelAddBtn').addEventListener('click', () => { $('addEmpForm').classList.add('hidden'); });
+
+  $('addEmpBtn').addEventListener('click', async () => {
+    $('addErr').style.display = 'none';
+    const name = $('addName').value.trim();
+    const email = $('addEmail').value.trim();
+    const ssn4 = $('addSsn').value.trim();
+    if (!name || !email || !/^\d{4}$/.test(ssn4)) {
+      $('addErr').textContent = 'Name, email, and 4-digit SSN are required.';
+      $('addErr').style.display = 'block';
+      return;
+    }
+    const { data } = await api('/api/pto?resource=employees', { method: 'POST', body: { name, email, ssn4 } });
+    if (!data.ok) {
+      $('addErr').textContent = data.error || 'Failed to add.';
+      $('addErr').style.display = 'block';
+      return;
+    }
+    $('addName').value = ''; $('addEmail').value = ''; $('addSsn').value = '';
+    $('addEmpForm').classList.add('hidden');
+    reloadEmployees();
+  });
+</script>
+</body>
+</html>
