@@ -661,5 +661,190 @@ setInterval(rotateHero, 9000);
   requestAnimationFrame(tick);
 })();
 </script>
+
+<!-- Admin trigger button (floating, bottom-right) -->
+<button type="button" id="adminTriggerBtn" aria-label="Admin login" style="position:fixed; bottom:24px; right:24px; width:50px; height:50px; border-radius:50%; background:rgba(255,255,255,.06); border:1px solid var(--border); color:var(--text-muted); cursor:pointer; z-index:100; backdrop-filter:blur(12px); transition:all .2s; display:flex; align-items:center; justify-content:center;">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+</button>
+
+<!-- Admin Modal -->
+<div id="adminModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.85); z-index:1000; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(8px);">
+  <div style="background:var(--card); border-radius:var(--radius-xl); padding:40px; max-width:480px; width:100%; border:1px solid var(--border); position:relative;">
+    <button type="button" id="adminCloseBtn" aria-label="Close" style="position:absolute; top:16px; right:16px; background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.5rem; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center;">×</button>
+
+    <!-- Login screen -->
+    <div id="homeAdminLogin">
+      <h2 style="margin:0 0 8px 0; font-size:1.4rem;">Admin Sign-In</h2>
+      <p style="color:var(--text-muted); margin:0 0 20px 0; font-size:.9rem;">Sign in to manage invoices or PTO.</p>
+      <div id="homeLoginErr" style="display:none; padding:10px 14px; border-radius:8px; background:rgba(239,68,68,.08); border:1px solid rgba(239,68,68,.2); color:#f87171; font-size:.85rem; margin-bottom:12px;"></div>
+      <div style="margin-bottom:14px;">
+        <label for="homePwd" style="display:block; font-size:.8rem; color:var(--text-muted); margin-bottom:6px;">Admin password</label>
+        <input id="homePwd" type="password" autocomplete="current-password" style="width:100%; padding:12px 14px; background:#0a0a0a; color:var(--text); border:1px solid var(--border); border-radius:8px;">
+      </div>
+      <button id="homeLoginBtn" type="button" style="width:100%; padding:12px; background:var(--brand); color:#fff; border:none; border-radius:8px; font-weight:600; cursor:pointer;">Sign In</button>
+      <p style="text-align:center; margin-top:16px; font-size:.85rem;">
+        <a href="#" id="homeForgotLink" style="color:var(--text-muted);">Forgot password?</a>
+      </p>
+    </div>
+
+    <!-- Chooser screen -->
+    <div id="homeAdminChooser" style="display:none;">
+      <h2 style="margin:0 0 8px 0; font-size:1.4rem;">What would you like to manage?</h2>
+      <p style="color:var(--text-muted); margin:0 0 24px 0; font-size:.9rem;">Signed in. Pick a section below.</p>
+      <a href="invoice.html#admin" id="goInvoiceBtn" style="display:block; padding:20px; margin-bottom:12px; background:rgba(231,77,16,.08); border:1px solid rgba(231,77,16,.3); border-radius:12px; text-decoration:none; color:var(--text);">
+        <div style="font-weight:700; font-size:1.05rem; margin-bottom:4px;">📄 Manage Invoices</div>
+        <div style="font-size:.85rem; color:var(--text-muted);">View, edit, mark paid, and rename invoices.</div>
+      </a>
+      <a href="pto-admin.html" id="goPtoBtn" style="display:block; padding:20px; margin-bottom:16px; background:rgba(231,77,16,.08); border:1px solid rgba(231,77,16,.3); border-radius:12px; text-decoration:none; color:var(--text);">
+        <div style="font-weight:700; font-size:1.05rem; margin-bottom:4px;">🌴 Manage Employee PTO</div>
+        <div style="font-size:.85rem; color:var(--text-muted);">Add employees, approve or deny time-off requests.</div>
+      </a>
+      <p style="text-align:center; margin-top:12px;">
+        <a href="#" id="homeSignOutLink" style="color:var(--text-muted); font-size:.85rem;">Sign out</a>
+      </p>
+    </div>
+
+    <!-- Forgot screen -->
+    <div id="homeAdminForgot" style="display:none;">
+      <h2 style="margin:0 0 8px 0; font-size:1.4rem;">Forgot Password</h2>
+      <p style="color:var(--text-muted); margin:0 0 20px 0; font-size:.9rem;">A reset link will be emailed to the account on file.</p>
+      <div id="homeForgotStatus" style="display:none; padding:10px 14px; border-radius:8px; font-size:.85rem; margin-bottom:12px;"></div>
+      <button id="homeForgotBtn" type="button" style="width:100%; padding:12px; background:var(--brand); color:#fff; border:none; border-radius:8px; font-weight:600; cursor:pointer;">Send Reset Email</button>
+      <p style="text-align:center; margin-top:16px; font-size:.85rem;">
+        <a href="#" id="homeBackToLoginLink" style="color:var(--text-muted);">Back to sign-in</a>
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var trigger = document.getElementById('adminTriggerBtn');
+  var modal = document.getElementById('adminModal');
+  var closeBtn = document.getElementById('adminCloseBtn');
+  var loginView = document.getElementById('homeAdminLogin');
+  var chooserView = document.getElementById('homeAdminChooser');
+  var forgotView = document.getElementById('homeAdminForgot');
+  var pwdInput = document.getElementById('homePwd');
+  var loginBtn = document.getElementById('homeLoginBtn');
+  var loginErr = document.getElementById('homeLoginErr');
+  var forgotLink = document.getElementById('homeForgotLink');
+  var backLink = document.getElementById('homeBackToLoginLink');
+  var forgotBtn = document.getElementById('homeForgotBtn');
+  var forgotStatus = document.getElementById('homeForgotStatus');
+  var signOutLink = document.getElementById('homeSignOutLink');
+
+  function getToken() { return sessionStorage.getItem('me_admin_token'); }
+  function setToken(t) { sessionStorage.setItem('me_admin_token', t); }
+  function clearToken() { sessionStorage.removeItem('me_admin_token'); }
+
+  function hideAll() {
+    loginView.style.display = 'none';
+    chooserView.style.display = 'none';
+    forgotView.style.display = 'none';
+  }
+  function showLogin() {
+    hideAll();
+    loginView.style.display = 'block';
+    loginErr.style.display = 'none';
+    pwdInput.value = '';
+    setTimeout(function () { pwdInput.focus(); }, 100);
+  }
+  function showChooser() {
+    hideAll();
+    chooserView.style.display = 'block';
+  }
+  function showForgot() {
+    hideAll();
+    forgotView.style.display = 'block';
+    forgotStatus.style.display = 'none';
+  }
+
+  function openModal() {
+    modal.style.display = 'flex';
+    if (getToken()) showChooser();
+    else showLogin();
+  }
+  function closeModal() { modal.style.display = 'none'; }
+
+  trigger.addEventListener('click', openModal);
+  closeBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
+
+  async function tryLogin() {
+    var pwd = pwdInput.value.trim();
+    if (!pwd) return;
+    loginBtn.disabled = true;
+    loginBtn.textContent = 'Signing in...';
+    loginErr.style.display = 'none';
+    try {
+      // Validate against the invoices endpoint (same admin password as before).
+      var res = await fetch('/api/invoices', {
+        method: 'GET',
+        headers: { 'Authorization': 'Bearer ' + pwd },
+      });
+      if (res.status === 401) {
+        loginErr.textContent = 'Incorrect password.';
+        loginErr.style.display = 'block';
+      } else if (res.ok) {
+        setToken(pwd);
+        showChooser();
+      } else {
+        loginErr.textContent = 'Login failed. Please try again.';
+        loginErr.style.display = 'block';
+      }
+    } catch (err) {
+      loginErr.textContent = 'Network error. Please try again.';
+      loginErr.style.display = 'block';
+    } finally {
+      loginBtn.disabled = false;
+      loginBtn.textContent = 'Sign In';
+    }
+  }
+  loginBtn.addEventListener('click', tryLogin);
+  pwdInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); tryLogin(); } });
+
+  forgotLink.addEventListener('click', function (e) { e.preventDefault(); showForgot(); });
+  backLink.addEventListener('click', function (e) { e.preventDefault(); showLogin(); });
+
+  signOutLink.addEventListener('click', function (e) {
+    e.preventDefault();
+    clearToken();
+    showLogin();
+  });
+
+  forgotBtn.addEventListener('click', async function () {
+    forgotBtn.disabled = true;
+    forgotBtn.textContent = 'Sending...';
+    forgotStatus.style.display = 'none';
+    try {
+      var res = await fetch('/api/admin-pwd?action=forgot', { method: 'POST' });
+      var data = await res.json();
+      if (data.ok) {
+        forgotStatus.textContent = 'Reset email sent. Check your inbox.';
+        forgotStatus.style.background = 'rgba(34,197,94,.1)';
+        forgotStatus.style.border = '1px solid rgba(34,197,94,.25)';
+        forgotStatus.style.color = '#22c55e';
+      } else {
+        forgotStatus.textContent = data.error || 'Failed to send reset email.';
+        forgotStatus.style.background = 'rgba(239,68,68,.1)';
+        forgotStatus.style.border = '1px solid rgba(239,68,68,.25)';
+        forgotStatus.style.color = '#f87171';
+      }
+      forgotStatus.style.padding = '10px 14px';
+      forgotStatus.style.borderRadius = '8px';
+      forgotStatus.style.fontSize = '.85rem';
+      forgotStatus.style.display = 'block';
+    } catch (err) {
+      forgotStatus.textContent = 'Network error. Please try again.';
+      forgotStatus.style.display = 'block';
+    } finally {
+      forgotBtn.disabled = false;
+      forgotBtn.textContent = 'Send Reset Email';
+    }
+  });
+})();
+</script>
+
 </body>
 </html>

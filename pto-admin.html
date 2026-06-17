@@ -105,21 +105,38 @@
     return { status: res.status, data: await res.json().catch(() => ({})) };
   }
 
-  $('loginBtn').addEventListener('click', async () => {
-    const pwd = $('pwd').value;
-    if (!pwd) return;
+  async function attemptLogin(pwd) {
     password = pwd;
     const { status } = await api('/api/pto?resource=employees', { method: 'GET' });
     if (status === 401) {
       password = null;
-      $('loginErr').textContent = 'Wrong password.';
-      $('loginErr').style.display = 'block';
-      return;
+      return false;
     }
+    sessionStorage.setItem('me_admin_token', pwd);
     $('loginView').classList.add('hidden');
     $('appView').classList.remove('hidden');
     await reloadAll();
+    return true;
+  }
+
+  $('loginBtn').addEventListener('click', async () => {
+    const pwd = $('pwd').value;
+    if (!pwd) return;
+    const ok = await attemptLogin(pwd);
+    if (!ok) {
+      $('loginErr').textContent = 'Wrong password.';
+      $('loginErr').style.display = 'block';
+    }
   });
+
+  // Auto-login if a saved admin token is in this tab's session (set by either
+  // the homepage admin modal or the invoice.html admin modal).
+  (async function autoLogin() {
+    const saved = sessionStorage.getItem('me_admin_token');
+    if (!saved) return;
+    const ok = await attemptLogin(saved);
+    if (!ok) sessionStorage.removeItem('me_admin_token');
+  })();
 
   async function reloadAll() {
     await Promise.all([reloadEmployees(), reloadRequests()]);
