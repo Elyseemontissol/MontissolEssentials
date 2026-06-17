@@ -120,6 +120,39 @@ export async function getRequest(redis, id) {
   return typeof raw === 'string' ? JSON.parse(raw) : raw;
 }
 
+export async function cancelRequest(redis, requestId, employeeId) {
+  const req = await getRequest(redis, requestId);
+  if (!req) throw new Error('Request not found.');
+  if (req.employeeId !== employeeId) throw new Error('Not your request.');
+  if (req.status !== 'pending') throw new Error('Only pending requests can be cancelled.');
+  req.status = 'cancelled';
+  req.decidedAt = new Date().toISOString();
+  await redis.set(KEYS.request(requestId), JSON.stringify(req));
+  // Invalidate the owner's approve/deny magic-links so the email becomes inert.
+  await redis.del(KEYS.decisionClaim(requestId));
+  return req;
+}
+
+export async function editRequest(redis, { requestId, employee, startDate, endDate, reason }) {
+  const req = await getRequest(redis, requestId);
+  if (!req) throw new Error('Request not found.');
+  if (req.employeeId !== employee.id) throw new Error('Not your request.');
+  if (req.status !== 'pending') throw new Error('Only pending requests can be edited.');
+  const days = countWeekdays(startDate, endDate);
+  if (days <= 0) throw new Error('Request must include at least one weekday.');
+  if (days > employee.balanceDays) {
+    throw new Error(`Requested ${days} day(s) exceed your remaining balance of ${employee.balanceDays}.`);
+  }
+  if (!reason || !String(reason).trim()) throw new Error('Reason is required.');
+  req.startDate = startDate;
+  req.endDate = endDate;
+  req.days = days;
+  req.reason = String(reason).trim().slice(0, 500);
+  req.editedAt = new Date().toISOString();
+  await redis.set(KEYS.request(requestId), JSON.stringify(req));
+  return req;
+}
+
 export async function decideRequest(redis, requestId, decision, note) {
   if (decision !== 'approve' && decision !== 'deny') {
     throw new Error('decision must be "approve" or "deny"');

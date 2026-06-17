@@ -32,6 +32,9 @@
     .status-pending{color:#fbbf24;}
     .status-approved{color:#22c55e;}
     .status-denied{color:#f87171;}
+    .status-cancelled{color:var(--text-muted);text-decoration:line-through;}
+    .hist-btn{padding:4px 12px;background:transparent;border:1px solid var(--border);color:var(--text);border-radius:6px;font-size:.78rem;cursor:pointer;margin-right:6px;margin-top:6px;}
+    .hist-btn.danger{color:#f87171;}
     .note{font-size:.8rem;color:var(--text-muted);font-style:italic;margin-top:4px;}
     .hidden{display:none;}
   </style>
@@ -79,6 +82,7 @@
       <textarea id="reqReason" maxlength="500" placeholder="Vacation, medical appointment, etc."></textarea>
     </div>
     <button id="submitBtn" type="button">Submit Request</button>
+    <a href="#" id="cancelEditLink" style="display:none; margin-left:14px; color:var(--text-muted); font-size:.85rem;">Cancel edit</a>
 
     <h2>Your requests</h2>
     <ul id="reqList" class="req"></ul>
@@ -88,6 +92,8 @@
 <script type="module">
   const $ = (id) => document.getElementById(id);
   let creds = null; // { name, ssn4 }
+  let lastHistory = [];
+  let editingId = null;
 
   function showErr(el, msg) { el.textContent = msg; el.style.display = 'block'; }
   function hideErr(el) { el.style.display = 'none'; }
@@ -108,6 +114,7 @@
   }
 
   function renderHistory(history) {
+    lastHistory = history;
     const ul = $('reqList');
     if (!history.length) { ul.innerHTML = '<li style="color:var(--text-muted);">No requests yet.</li>'; return; }
     ul.innerHTML = history.map(r => {
@@ -115,13 +122,70 @@
       const label = r.status[0].toUpperCase() + r.status.slice(1);
       const note = r.status === 'denied' && r.decisionNote
         ? `<div class="note">Note: ${escapeHtml(r.decisionNote)}</div>` : '';
+      const edited = r.editedAt ? ` <span style="color:var(--text-muted);font-size:.75rem;">(edited)</span>` : '';
+      const actions = r.status === 'pending'
+        ? `<div>
+             <button class="hist-btn" data-act="edit" data-id="${escapeHtml(r.id)}">Edit</button>
+             <button class="hist-btn danger" data-act="cancel" data-id="${escapeHtml(r.id)}">Cancel request</button>
+           </div>`
+        : '';
       return `<li>
-        <span class="${cls}">${label}</span> ·
+        <span class="${cls}">${label}</span>${edited} ·
         ${fmtDate(r.startDate)} – ${fmtDate(r.endDate)} (${r.days} d) ·
         <span style="color:var(--text-muted);">${escapeHtml(r.reason)}</span>
         ${note}
+        ${actions}
       </li>`;
     }).join('');
+    ul.querySelectorAll('.hist-btn').forEach(btn => {
+      btn.addEventListener('click', () => handleHistoryAction(btn));
+    });
+  }
+
+  async function handleHistoryAction(btn) {
+    const id = btn.dataset.id;
+    const act = btn.dataset.act;
+    if (act === 'cancel') {
+      if (!confirm('Cancel this PTO request? This can\'t be undone.')) return;
+      btn.disabled = true;
+      const { data } = await api({ action: 'cancel-request', name: creds.name, ssn4: creds.ssn4, requestId: id });
+      if (!data.ok) { alert(data.error || 'Failed to cancel.'); btn.disabled = false; return; }
+      await refreshPortal();
+    } else if (act === 'edit') {
+      const req = lastHistory.find(r => r.id === id);
+      if (!req) return;
+      editingId = id;
+      $('reqStart').value = req.startDate;
+      $('reqEnd').value = req.endDate;
+      $('reqReason').value = req.reason;
+      updateDayPreview();
+      $('submitBtn').textContent = 'Save changes';
+      $('cancelEditLink').style.display = 'inline';
+      hideErr($('reqErr'));
+      document.querySelector('h2').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  function exitEditMode() {
+    editingId = null;
+    $('submitBtn').textContent = 'Submit Request';
+    $('cancelEditLink').style.display = 'none';
+    $('reqStart').value = '';
+    $('reqEnd').value = '';
+    $('reqReason').value = '';
+    $('dayPreview').textContent = '';
+    hideErr($('reqErr'));
+  }
+
+  $('cancelEditLink').addEventListener('click', (e) => { e.preventDefault(); exitEditMode(); });
+
+  async function refreshPortal() {
+    const refresh = await api({ action: 'login', name: creds.name, ssn4: creds.ssn4 });
+    if (refresh.data.ok) {
+      $('empBalance').textContent = refresh.data.employee.balanceDays;
+      $('dayPlural').textContent = refresh.data.employee.balanceDays === 1 ? '' : 's';
+      renderHistory(refresh.data.history || []);
+    }
   }
 
   function escapeHtml(s) {
@@ -176,26 +240,23 @@
     const reason = $('reqReason').value.trim();
     if (!startDate || !endDate) { showErr($('reqErr'), 'Pick a start and end date.'); return; }
     if (!reason) { showErr($('reqErr'), 'Please add a reason.'); return; }
+    const wasEditing = !!editingId;
     $('submitBtn').disabled = true;
-    const { status, data } = await api({
-      action: 'request', name: creds.name, ssn4: creds.ssn4,
-      startDate, endDate, reason,
-    });
+    const body = wasEditing
+      ? { action: 'edit-request', name: creds.name, ssn4: creds.ssn4, requestId: editingId, startDate, endDate, reason }
+      : { action: 'request',      name: creds.name, ssn4: creds.ssn4, startDate, endDate, reason };
+    const { status, data } = await api(body);
     if (!data.ok) {
-      showErr($('reqErr'), data.error || 'Request failed.');
+      showErr($('reqErr'), data.error || (wasEditing ? 'Update failed.' : 'Request failed.'));
       $('submitBtn').disabled = false;
       return;
     }
-    // Refresh portal from the server so balance + history reflect the new pending request.
-    const refresh = await api({ action: 'login', name: creds.name, ssn4: creds.ssn4 });
-    if (refresh.data.ok) {
-      $('empBalance').textContent = refresh.data.employee.balanceDays;
-      renderHistory(refresh.data.history || []);
-    }
-    $('reqStart').value = ''; $('reqEnd').value = ''; $('reqReason').value = '';
-    $('dayPreview').textContent = '';
+    exitEditMode();
+    await refreshPortal();
     $('submitBtn').disabled = false;
-    alert('Request submitted. You will receive an email once the owner decides.');
+    alert(wasEditing
+      ? 'Changes saved. The owner has been notified of the update.'
+      : 'Request submitted. You will receive an email once the owner decides.');
   });
 </script>
 </body>

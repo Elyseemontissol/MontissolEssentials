@@ -3,7 +3,7 @@ import { redis, KEYS } from './_lib/pto-redis.js';
 import {
   listEmployees, createEmployee, updateEmployee, deleteEmployee,
   adjustBalance, listRequests, getRequest, decideRequest, getEmployee,
-  listEmployeeRequests, createRequest,
+  listEmployeeRequests, createRequest, cancelRequest, editRequest,
 } from './_lib/pto-store.js';
 import { findEmployee } from './_lib/pto-auth.js';
 import { renderOwnerAlertEmail, renderEmployeeDecisionEmail, sendOwnerAlert, sendEmployeeDecision } from './_lib/pto-email.js';
@@ -206,6 +206,49 @@ async function handlePublic(req, res) {
       console.error('Owner alert email failed:', err.message);
     }
     return res.status(200).json({ ok: true, requestId: request.id });
+  }
+
+  if (action === 'cancel-request') {
+    const requestId = String(body.requestId || '');
+    try {
+      const updated = await cancelRequest(redis, requestId, employee.id);
+      return res.status(200).json({ ok: true, request: updated });
+    } catch (err) {
+      return res.status(400).json({ ok: false, error: err.message });
+    }
+  }
+
+  if (action === 'edit-request') {
+    const requestId = String(body.requestId || '');
+    let updated;
+    try {
+      updated = await editRequest(redis, {
+        requestId,
+        employee,
+        startDate: String(body.startDate || '').trim(),
+        endDate: String(body.endDate || '').trim(),
+        reason: String(body.reason || '').trim(),
+      });
+    } catch (err) {
+      return res.status(400).json({ ok: false, error: err.message });
+    }
+    try {
+      const urls = actionUrls(requestId, process.env.PTO_APPROVAL_SECRET);
+      const html = renderOwnerAlertEmail({
+        request: updated,
+        ...urls,
+        currentBalance: employee.balanceDays,
+      });
+      await sendOwnerAlert({
+        apiKey: process.env.RESEND_API_KEY,
+        to: process.env.OWNER_EMAIL,
+        subject: `PTO request EDITED: ${employee.name} — ${updated.startDate} to ${updated.endDate} (${updated.days} d)`,
+        html,
+      });
+    } catch (err) {
+      console.error('Owner alert (edit) email failed:', err.message);
+    }
+    return res.status(200).json({ ok: true, request: updated });
   }
 
   return res.status(400).json({ ok: false, error: 'Unknown action' });
