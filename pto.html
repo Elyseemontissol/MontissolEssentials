@@ -13,6 +13,9 @@
     *{box-sizing:border-box;}
     body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,"Segoe UI",sans-serif;line-height:1.5;}
     main{max-width:680px;margin:48px auto;padding:24px;}
+    .topbar{display:flex;justify-content:flex-end;margin-bottom:12px;}
+    .topbar a{color:var(--text-muted);text-decoration:none;font-size:.85rem;padding:6px 12px;border:1px solid var(--border);border-radius:8px;}
+    .topbar a:hover{color:var(--text);}
     h1{margin:0 0 8px 0;font-size:1.6rem;}
     h2{margin:24px 0 12px 0;font-size:1.2rem;}
     .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:16px;}
@@ -41,6 +44,8 @@
 </head>
 <body>
 <main>
+
+  <div class="topbar"><a href="/">← Home</a></div>
 
   <!-- Sign-in screen -->
   <section id="signinView" class="card">
@@ -131,6 +136,7 @@
            </div>`;
       } else if (r.status === 'approved') {
         actions = `<div>
+             <button class="hist-btn" data-act="edit" data-id="${escapeHtml(r.id)}">Edit</button>
              <button class="hist-btn danger" data-act="cancel" data-id="${escapeHtml(r.id)}">Cancel time off</button>
            </div>`;
       }
@@ -163,6 +169,12 @@
     } else if (act === 'edit') {
       const req = lastHistory.find(r => r.id === id);
       if (!req) return;
+      if (req.status === 'approved') {
+        const ok = confirm(
+          'Editing an approved request will return it to pending — the owner needs to re-approve the new dates. Your previously-deducted days will be restored to your balance while pending.\n\nContinue?'
+        );
+        if (!ok) return;
+      }
       editingId = id;
       $('reqStart').value = req.startDate;
       $('reqEnd').value = req.endDate;

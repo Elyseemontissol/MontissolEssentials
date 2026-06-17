@@ -149,18 +149,45 @@ export async function editRequest(redis, { requestId, employee, startDate, endDa
   const req = await getRequest(redis, requestId);
   if (!req) throw new Error('Request not found.');
   if (req.employeeId !== employee.id) throw new Error('Not your request.');
-  if (req.status !== 'pending') throw new Error('Only pending requests can be edited.');
+  if (req.status !== 'pending' && req.status !== 'approved') {
+    throw new Error('Only pending or approved requests can be edited.');
+  }
   const days = countWeekdays(startDate, endDate);
   if (days <= 0) throw new Error('Request must include at least one weekday.');
-  if (days > employee.balanceDays) {
-    throw new Error(`Requested ${days} day(s) exceed your remaining balance of ${employee.balanceDays}.`);
-  }
   if (!reason || !String(reason).trim()) throw new Error('Reason is required.');
+
+  const wasApproved = req.status === 'approved';
+  const oldDays = req.days;
+  // Effective balance: for an approved edit, the old days were already deducted —
+  // they become "available" once we revert the request to pending.
+  const effectiveBalance = wasApproved ? employee.balanceDays + oldDays : employee.balanceDays;
+  if (days > effectiveBalance) {
+    throw new Error(`Requested ${days} day(s) exceed your remaining balance of ${effectiveBalance}.`);
+  }
+
   req.startDate = startDate;
   req.endDate = endDate;
   req.days = days;
   req.reason = String(reason).trim().slice(0, 500);
   req.editedAt = new Date().toISOString();
+
+  if (wasApproved) {
+    // Revert to pending — the owner's original approval was for different details.
+    req.status = 'pending';
+    req.previousStatus = 'approved';
+    req.decidedAt = null;
+    req.decisionNote = null;
+    // Restore the originally-deducted days; the owner re-deducts on re-approve.
+    const year = new Date().getUTCFullYear();
+    const emp = await getEmployee(redis, employee.id, year);
+    if (emp) {
+      await adjustBalance(redis, employee.id, emp.balanceDays + oldDays, 'set');
+    }
+    // Recreate the decision-claim key so the fresh owner alert email's
+    // Approve/Deny magic-links work.
+    await redis.set(KEYS.decisionClaim(requestId), 'unused', { ex: REQUEST_TTL_SECONDS });
+  }
+
   await redis.set(KEYS.request(requestId), JSON.stringify(req));
   return req;
 }

@@ -259,10 +259,13 @@ async function handlePublic(req, res) {
         ...urls,
         currentBalance: employee.balanceDays,
       });
+      const prefix = updated.previousStatus === 'approved'
+        ? 'PTO RE-APPROVAL NEEDED'
+        : 'PTO request EDITED';
       await sendOwnerAlert({
         apiKey: process.env.RESEND_API_KEY,
         to: process.env.OWNER_EMAIL,
-        subject: `PTO request EDITED: ${employee.name} — ${updated.startDate} to ${updated.endDate} (${updated.days} d)`,
+        subject: `${prefix}: ${employee.name} — ${updated.startDate} to ${updated.endDate} (${updated.days} d)`,
         html,
       });
     } catch (err) {
