@@ -53,6 +53,24 @@ export function renderEmployeeDecisionEmail({ request, decision, newBalance }) {
   `;
 }
 
+export function renderApprovedCancelledEmail({ request, employeeName }) {
+  const newBalance = Number(request.newBalance);
+  const balanceLine = Number.isFinite(newBalance)
+    ? `<p>Their PTO balance has been restored to <strong>${newBalance} day${newBalance === 1 ? '' : 's'}</strong>. No further action needed.</p>`
+    : `<p>Their PTO balance has been restored. No further action needed.</p>`;
+  return `
+    <div style="font-family:-apple-system,Segoe UI,sans-serif;max-width:560px;margin:auto;padding:24px;">
+      <h2 style="color:#dc2626;margin:0 0 12px 0;">PTO cancelled</h2>
+      <p><strong>${escapeHtml(employeeName)}</strong> cancelled their previously-approved time off:</p>
+      <p style="background:#fef3c7;padding:12px;border-radius:6px;">
+        <strong>${escapeHtml(request.startDate)} – ${escapeHtml(request.endDate)}</strong> (${request.days} day${request.days === 1 ? '' : 's'})
+      </p>
+      ${balanceLine}
+      <p style="color:#666;margin-top:24px;">— Montissol Essentials PTO</p>
+    </div>
+  `;
+}
+
 export async function sendOwnerAlert({ apiKey, to, subject, html }) {
   const resend = new Resend(apiKey);
   return resend.emails.send({

@@ -123,12 +123,17 @@
       const note = r.status === 'denied' && r.decisionNote
         ? `<div class="note">Note: ${escapeHtml(r.decisionNote)}</div>` : '';
       const edited = r.editedAt ? ` <span style="color:var(--text-muted);font-size:.75rem;">(edited)</span>` : '';
-      const actions = r.status === 'pending'
-        ? `<div>
+      let actions = '';
+      if (r.status === 'pending') {
+        actions = `<div>
              <button class="hist-btn" data-act="edit" data-id="${escapeHtml(r.id)}">Edit</button>
              <button class="hist-btn danger" data-act="cancel" data-id="${escapeHtml(r.id)}">Cancel request</button>
-           </div>`
-        : '';
+           </div>`;
+      } else if (r.status === 'approved') {
+        actions = `<div>
+             <button class="hist-btn danger" data-act="cancel" data-id="${escapeHtml(r.id)}">Cancel time off</button>
+           </div>`;
+      }
       return `<li>
         <span class="${cls}">${label}</span>${edited} ·
         ${fmtDate(r.startDate)} – ${fmtDate(r.endDate)} (${r.days} d) ·
@@ -146,7 +151,11 @@
     const id = btn.dataset.id;
     const act = btn.dataset.act;
     if (act === 'cancel') {
-      if (!confirm('Cancel this PTO request? This can\'t be undone.')) return;
+      const req = lastHistory.find(r => r.id === id);
+      const msg = req && req.status === 'approved'
+        ? `Cancel this approved time off (${req.days} day${req.days === 1 ? '' : 's'})?\n\nYour balance will be restored and the owner will be notified.`
+        : 'Cancel this PTO request? This can\'t be undone.';
+      if (!confirm(msg)) return;
       btn.disabled = true;
       const { data } = await api({ action: 'cancel-request', name: creds.name, ssn4: creds.ssn4, requestId: id });
       if (!data.ok) { alert(data.error || 'Failed to cancel.'); btn.disabled = false; return; }

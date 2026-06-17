@@ -6,7 +6,7 @@ import {
   listEmployeeRequests, createRequest, cancelRequest, editRequest,
 } from './_lib/pto-store.js';
 import { findEmployee } from './_lib/pto-auth.js';
-import { renderOwnerAlertEmail, renderEmployeeDecisionEmail, sendOwnerAlert, sendEmployeeDecision } from './_lib/pto-email.js';
+import { renderOwnerAlertEmail, renderEmployeeDecisionEmail, renderApprovedCancelledEmail, sendOwnerAlert, sendEmployeeDecision } from './_lib/pto-email.js';
 import { signToken, verifyToken } from './_lib/pto-tokens.js';
 import { checkAndRecordAttempt, clearAttempts } from './_lib/pto-rate-limit.js';
 import { normalizeName } from './_lib/pto-redis.js';
@@ -210,12 +210,32 @@ async function handlePublic(req, res) {
 
   if (action === 'cancel-request') {
     const requestId = String(body.requestId || '');
+    let updated;
     try {
-      const updated = await cancelRequest(redis, requestId, employee.id);
-      return res.status(200).json({ ok: true, request: updated });
+      updated = await cancelRequest(redis, requestId, employee.id);
     } catch (err) {
       return res.status(400).json({ ok: false, error: err.message });
     }
+    // If an APPROVED request was cancelled, notify the owner (they planned around it).
+    // Pending cancels are silent (the owner just sees the request leave their pending list).
+    if (updated.previousStatus === 'approved') {
+      try {
+        const fresh = await getEmployee(redis, employee.id, new Date().getUTCFullYear());
+        const html = renderApprovedCancelledEmail({
+          request: { ...updated, newBalance: fresh ? fresh.balanceDays : undefined },
+          employeeName: employee.name,
+        });
+        await sendOwnerAlert({
+          apiKey: process.env.RESEND_API_KEY,
+          to: process.env.OWNER_EMAIL,
+          subject: `PTO CANCELLED: ${employee.name} — ${updated.startDate} to ${updated.endDate}`,
+          html,
+        });
+      } catch (err) {
+        console.error('Approved-cancel notify email failed:', err.message);
+      }
+    }
+    return res.status(200).json({ ok: true, request: updated });
   }
 
   if (action === 'edit-request') {

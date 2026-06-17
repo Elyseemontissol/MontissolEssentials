@@ -124,12 +124,24 @@ export async function cancelRequest(redis, requestId, employeeId) {
   const req = await getRequest(redis, requestId);
   if (!req) throw new Error('Request not found.');
   if (req.employeeId !== employeeId) throw new Error('Not your request.');
-  if (req.status !== 'pending') throw new Error('Only pending requests can be cancelled.');
+  if (req.status !== 'pending' && req.status !== 'approved') {
+    throw new Error('Only pending or approved requests can be cancelled.');
+  }
+  const wasApproved = req.status === 'approved';
+  req.previousStatus = req.status;
   req.status = 'cancelled';
-  req.decidedAt = new Date().toISOString();
+  req.cancelledAt = new Date().toISOString();
   await redis.set(KEYS.request(requestId), JSON.stringify(req));
   // Invalidate the owner's approve/deny magic-links so the email becomes inert.
   await redis.del(KEYS.decisionClaim(requestId));
+  if (wasApproved) {
+    // Restore the days that were deducted at approval time.
+    const year = new Date().getUTCFullYear();
+    const emp = await getEmployee(redis, employeeId, year);
+    if (emp) {
+      await adjustBalance(redis, employeeId, emp.balanceDays + req.days, 'set');
+    }
+  }
   return req;
 }
 
