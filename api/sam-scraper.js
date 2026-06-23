@@ -1,7 +1,5 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 const SAM_API_KEY = process.env.SAM_API_KEY;
 const SAM_BASE_URL = 'https://api.sam.gov/opportunities/v2/search';
 const RECIPIENT_EMAIL = 'elyseem@montissolessentials.com';
@@ -35,7 +33,9 @@ function formatDate(date) {
   return `${mm}/${dd}/${yyyy}`;
 }
 
-async function fetchOpportunities(ptype, ncode, postedFrom, postedTo) {
+// Default fetch adapter — hits the live SAM.gov API. Injected into
+// scanOpportunities so the scan logic can be tested without the network.
+async function fetchFromSamGov({ ptype, ncode, postedFrom, postedTo }) {
   const params = new URLSearchParams({
     api_key: SAM_API_KEY,
     postedFrom,
@@ -67,6 +67,60 @@ function deduplicateByNoticeId(opportunities) {
     seen.add(opp.noticeId);
     return true;
   });
+}
+
+// Runs the full scan over every notice-type / NAICS / keyword combination.
+// fetchFn is injected ({ ptype, ncode, postedFrom, postedTo }) => data so the
+// logic is testable without the network. Tracks how many sub-requests failed so
+// a dead API key (every request throws) is distinguishable from a genuine zero.
+export async function scanOpportunities({ fetchFn, postedFrom, postedTo }) {
+  let allOpportunities = [];
+  let totalRequests = 0;
+  let failedRequests = 0;
+
+  for (const { code: ptype, label } of NOTICE_TYPES) {
+    for (const ncode of NAICS_CODES) {
+      totalRequests++;
+      try {
+        const data = await fetchFn({ ptype, ncode, postedFrom, postedTo });
+        if (data.opportunitiesData) {
+          allOpportunities.push(
+            ...data.opportunitiesData.map((opp) => ({ ...opp, _searchType: label }))
+          );
+        }
+      } catch (err) {
+        failedRequests++;
+        console.error(`Error fetching ${label} for NAICS ${ncode}:`, err.message);
+      }
+    }
+
+    // Also search without NAICS to catch keyword matches
+    totalRequests++;
+    try {
+      const data = await fetchFn({ ptype, ncode: null, postedFrom, postedTo });
+      if (data.opportunitiesData) {
+        const keywordMatches = data.opportunitiesData
+          .filter((opp) => matchesKeywords(opp.title))
+          .map((opp) => ({ ...opp, _searchType: label }));
+        allOpportunities.push(...keywordMatches);
+      }
+    } catch (err) {
+      failedRequests++;
+      console.error(`Error fetching ${label} keyword search:`, err.message);
+    }
+  }
+
+  const opportunities = deduplicateByNoticeId(allOpportunities).sort((a, b) =>
+    (b.postedDate || '').localeCompare(a.postedDate || '')
+  );
+
+  return { opportunities, totalRequests, failedRequests };
+}
+
+// A scan is a *failure* (not a genuine zero) only when every request failed —
+// e.g. an expired SAM.gov API key returning 401 on all calls.
+export function isScanFailure({ totalRequests, failedRequests }) {
+  return totalRequests > 0 && failedRequests === totalRequests;
 }
 
 function buildEmailHtml(opportunities) {
@@ -123,6 +177,19 @@ function buildEmailHtml(opportunities) {
   `;
 }
 
+function buildAlertHtml({ totalRequests, failedRequests, postedTo }) {
+  return `
+    <div style="font-family:Arial,sans-serif; max-width:700px;">
+      <h2 style="color:#c53030;">⚠️ SAM.gov Scanner Failure</h2>
+      <p>The scanner could <strong>not</strong> reach SAM.gov — <strong>all ${failedRequests} of ${totalRequests}</strong>
+         API requests failed. This is <em>not</em> a "no opportunities" result; the scan never ran.</p>
+      <p>The most common cause is an expired or invalid <code>SAM_API_KEY</code> (SAM.gov keys deactivate after ~90 days).
+         Regenerate the key at sam.gov → Account Details → API Key and update it in Vercel.</p>
+      <p style="color:#999; font-size:12px;">Scan window ending ${esc(postedTo)} · Searched NAICS: ${NAICS_CODES.join(', ')}</p>
+    </div>
+  `;
+}
+
 export default async function handler(req, res) {
   if (!SAM_API_KEY) {
     return res.status(500).json({ ok: false, error: 'SAM_API_KEY not configured' });
@@ -130,66 +197,55 @@ export default async function handler(req, res) {
 
   try {
     const now = new Date();
-    const thirtyDaysAgo = new Date(now);
-    thirtyDaysAgo.setDate(now.getDate() - 7);
-    const postedFrom = formatDate(thirtyDaysAgo);
+    const windowStart = new Date(now);
+    windowStart.setDate(now.getDate() - 7);
+    const postedFrom = formatDate(windowStart);
     const postedTo = formatDate(now);
 
-    let allOpportunities = [];
+    const { opportunities, totalRequests, failedRequests } = await scanOpportunities({
+      fetchFn: fetchFromSamGov,
+      postedFrom,
+      postedTo,
+    });
 
-    // Search each combination of notice type and NAICS code
-    for (const { code: ptype, label } of NOTICE_TYPES) {
-      for (const ncode of NAICS_CODES) {
-        try {
-          const data = await fetchOpportunities(ptype, ncode, postedFrom, postedTo);
-          if (data.opportunitiesData) {
-            allOpportunities.push(
-              ...data.opportunitiesData.map((opp) => ({ ...opp, _searchType: label }))
-            );
-          }
-        } catch (err) {
-          console.error(`Error fetching ${label} for NAICS ${ncode}:`, err.message);
-        }
-      }
+    const resend = new Resend(process.env.RESEND_API_KEY);
 
-      // Also search without NAICS to catch keyword matches
-      try {
-        const data = await fetchOpportunities(ptype, null, postedFrom, postedTo);
-        if (data.opportunitiesData) {
-          const keywordMatches = data.opportunitiesData
-            .filter((opp) => matchesKeywords(opp.title))
-            .map((opp) => ({ ...opp, _searchType: label }));
-          allOpportunities.push(...keywordMatches);
-        }
-      } catch (err) {
-        console.error(`Error fetching ${label} keyword search:`, err.message);
-      }
+    // A total failure (e.g. dead API key) must NOT masquerade as "0 opportunities".
+    // Alert loudly instead of sending a cheerful "no solicitations found" digest.
+    if (isScanFailure({ totalRequests, failedRequests })) {
+      console.error(`SAM scan failed: all ${failedRequests}/${totalRequests} requests failed`);
+      const alertResult = await resend.emails.send({
+        from: 'Montissol SAM Scanner <noreply@montissolessentials.com>',
+        to: RECIPIENT_EMAIL,
+        subject: `[SAM.gov] ⚠️ Scanner FAILED — check API key — ${postedTo}`,
+        html: buildAlertHtml({ totalRequests, failedRequests, postedTo }),
+      });
+      return res.status(502).json({
+        ok: false,
+        error: 'SAM.gov scan failed: all API requests failed (likely invalid SAM_API_KEY)',
+        totalRequests,
+        failedRequests,
+        emailResult: alertResult,
+      });
     }
 
-    // Deduplicate
-    allOpportunities = deduplicateByNoticeId(allOpportunities);
-
-    // Sort by posted date descending
-    allOpportunities.sort((a, b) =>
-      (b.postedDate || '').localeCompare(a.postedDate || '')
-    );
-
-    // Send email
-    const html = buildEmailHtml(allOpportunities);
+    // Send digest
+    const html = buildEmailHtml(opportunities);
     console.log('Sending email via Resend...', { hasApiKey: !!process.env.RESEND_API_KEY });
     const emailResult = await resend.emails.send({
       from: 'Montissol SAM Scanner <noreply@montissolessentials.com>',
       to: RECIPIENT_EMAIL,
-      subject: `[SAM.gov] ${allOpportunities.length} Opportunities Found — ${postedTo}`,
+      subject: `[SAM.gov] ${opportunities.length} Opportunities Found — ${postedTo}`,
       html,
     });
     console.log('Resend response:', JSON.stringify(emailResult));
 
     return res.status(200).json({
       ok: true,
-      count: allOpportunities.length,
+      count: opportunities.length,
+      failedRequests,
       emailResult,
-      message: `Email sent to ${RECIPIENT_EMAIL} with ${allOpportunities.length} opportunities`,
+      message: `Email sent to ${RECIPIENT_EMAIL} with ${opportunities.length} opportunities`,
     });
   } catch (error) {
     console.error('SAM scraper error:', error);
