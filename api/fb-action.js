@@ -2,6 +2,7 @@ import { redis, KEYS } from './_lib/redis.js';
 import { verifyToken } from './_lib/tokens.js';
 import { advanceTheme } from './_lib/themes.js';
 import { postToPage } from './_lib/facebook.js';
+import { postToInstagram } from './_lib/instagram.js';
 
 // Single magic-link endpoint for all three FB draft actions.
 // The action (approve | edit | reject) is encoded in the HMAC token,
@@ -54,6 +55,50 @@ async function readBody(req) {
   return obj;
 }
 
+async function appendHistory(entry) {
+  await redis.lpush(KEYS.history, JSON.stringify(entry));
+  await redis.ltrim(KEYS.history, 0, 49);
+}
+
+async function publishSocial(message, imageUrl) {
+  const facebook = await postToPage({
+    pageId: process.env.FB_PAGE_ID,
+    accessToken: process.env.FB_PAGE_ACCESS_TOKEN,
+    message,
+    imageUrl,
+  });
+
+  if (!process.env.IG_USER_ID || !process.env.IG_ACCESS_TOKEN) {
+    return { facebook, instagram: null, instagramStatus: 'not_configured' };
+  }
+  if (!imageUrl) {
+    return { facebook, instagram: null, instagramStatus: 'skipped_no_image' };
+  }
+
+  try {
+    const instagram = await postToInstagram({
+      instagramUserId: process.env.IG_USER_ID,
+      accessToken: process.env.IG_ACCESS_TOKEN,
+      caption: message,
+      imageUrl,
+    });
+    return { facebook, instagram, instagramStatus: 'posted' };
+  } catch (error) {
+    return { facebook, instagram: null, instagramStatus: 'failed', instagramError: error.message };
+  }
+}
+
+function publishResultHtml(result) {
+  const fbId = result.facebook.id || result.facebook.post_id;
+  const instagramLine = result.instagramStatus === 'posted'
+    ? `<p>Instagram ID: <code>${escape(result.instagram.id)}</code></p>`
+    : `<p>Instagram: <strong>${escape(result.instagramStatus.replaceAll('_', ' '))}</strong></p>`;
+  const error = result.instagramError
+    ? `<pre>${escape(result.instagramError)}</pre><p>Facebook was already published, so this draft cannot be retried automatically without risking a duplicate.</p>`
+    : '';
+  return `<h1 class="ok">Published</h1><p>Facebook ID: <code>${escape(fbId)}</code></p>${instagramLine}${error}`;
+}
+
 // ── Approve ──
 async function handleApprove(payload, req, res) {
   const key = KEYS.draft(payload.draftId);
@@ -68,34 +113,30 @@ async function handleApprove(payload, req, res) {
 
   const message = [draft.caption, (draft.hashtags || []).join(' ')].filter(Boolean).join('\n\n');
   try {
-    const result = await postToPage({
-      pageId: process.env.FB_PAGE_ID,
-      accessToken: process.env.FB_PAGE_ACCESS_TOKEN,
-      message,
-      imageUrl: draft.image_url || null,
-    });
+    const result = await publishSocial(message, draft.image_url || null);
     await advanceTheme(redis);
-    await redis.lpush(KEYS.history, JSON.stringify({
+    await appendHistory({
       ts: new Date().toISOString(),
       theme: draft.theme,
       draft_id: payload.draftId,
-      status: 'posted',
-      fb_post_id: result.id || result.post_id,
+      status: result.instagramStatus === 'failed' ? 'posted_facebook_instagram_failed' : 'posted',
+      fb_post_id: result.facebook.id || result.facebook.post_id,
+      ig_post_id: result.instagram?.id || null,
+      instagram_status: result.instagramStatus,
+      instagram_error: result.instagramError || null,
       caption: draft.caption,
-    }));
-    await redis.ltrim(KEYS.history, 0, 49);
-    return send(res, htmlPage('Posted',
-      `<h1 class="ok">Posted ✓</h1><p>Facebook ID: <code>${escape(result.id || result.post_id)}</code></p>`));
+    });
+    return send(res, htmlPage('Published', publishResultHtml(result),
+      result.instagramStatus === 'failed' ? 207 : 200));
   } catch (err) {
     await redis.set(key, JSON.stringify(draft), { ex: 72 * 60 * 60 });
-    await redis.lpush(KEYS.history, JSON.stringify({
+    await appendHistory({
       ts: new Date().toISOString(),
       theme: draft.theme,
       draft_id: payload.draftId,
       status: 'error',
       error: err.message,
-    }));
-    await redis.ltrim(KEYS.history, 0, 49);
+    });
     return send(res, htmlPage('Post failed',
       `<h1 class="err">Facebook rejected the post</h1><pre>${escape(err.message)}</pre><p>Draft is preserved — fix the issue and click the link again.</p>`, 502));
   }
@@ -139,19 +180,18 @@ async function handleEdit(payload, token, req, res) {
     }
     const message = [newCaption, (draft.hashtags || []).join(' ')].filter(Boolean).join('\n\n');
     try {
-      const result = await postToPage({
-        pageId: process.env.FB_PAGE_ID,
-        accessToken: process.env.FB_PAGE_ACCESS_TOKEN,
-        message,
-        imageUrl: draft.image_url || null,
-      });
+      const result = await publishSocial(message, draft.image_url || null);
       await advanceTheme(redis);
-      await redis.lpush(KEYS.history, JSON.stringify({
+      await appendHistory({
         ts: new Date().toISOString(), theme: draft.theme, draft_id: payload.draftId,
-        status: 'posted_edited', fb_post_id: result.id || result.post_id, caption: newCaption,
-      }));
-      await redis.ltrim(KEYS.history, 0, 49);
-      return sendShell(res, 200, `<h1 style="color:#16a34a;">Posted ✓</h1>`);
+        status: result.instagramStatus === 'failed' ? 'posted_edited_facebook_instagram_failed' : 'posted_edited',
+        fb_post_id: result.facebook.id || result.facebook.post_id,
+        ig_post_id: result.instagram?.id || null,
+        instagram_status: result.instagramStatus,
+        instagram_error: result.instagramError || null,
+        caption: newCaption,
+      });
+      return sendShell(res, result.instagramStatus === 'failed' ? 207 : 200, publishResultHtml(result));
     } catch (err) {
       await redis.set(key, JSON.stringify({ ...draft, caption: newCaption }), { ex: 72 * 60 * 60 });
       return sendShell(res, 502, `<h1 style="color:#dc2626;">Post failed</h1><pre>${escape(err.message)}</pre>`);

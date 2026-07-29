@@ -18,18 +18,36 @@ export function parseCaptionResponse(raw) {
   };
 }
 
-export async function generateCaption({ theme, weekDate, recentCaptions, systemPrompt, apiKey }) {
+export async function generateCaption({
+  theme,
+  weekDate,
+  recentCaptions,
+  systemPrompt,
+  campaign,
+  apiKey,
+}) {
+  const campaignContext = campaign
+    ? [
+        '',
+        'Hiring campaign details (use only these supplied facts):',
+        `Project: ${campaign.project}`,
+        `Role: ${campaign.role}`,
+        `Location: ${campaign.location}`,
+        `Apply URL: ${campaign.applyUrl}`,
+      ]
+    : [];
   const client = new Anthropic({ apiKey });
   const userPrompt = [
-    `Generate a Facebook post for the Montissol Essentials Page.`,
+    `Generate one post suitable for both Instagram and Facebook for Montissol Essentials.`,
     `Theme: ${theme}`,
     `Week of: ${weekDate}`,
+    ...campaignContext,
     ``,
     `Recent posts (do not repeat hooks, phrases, or angles from these):`,
     ...recentCaptions.map((c, i) => `${i + 1}. ${c}`),
     ``,
     `Respond with ONLY a JSON object of the form:`,
-    `{"caption": "<80-250 words>", "image_prompt": "<short description for an image generator>", "hashtags": ["#Tag1", "#Tag2", "#Tag3"]}`,
+    `{"caption": "<60-180 words>", "image_prompt": "<short description for an image generator>", "hashtags": ["#Tag1", "#Tag2", "#Tag3"]}`,
     `No prose, no markdown, no commentary.`,
   ].join('\n');
   const resp = await client.messages.create({

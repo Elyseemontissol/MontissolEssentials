@@ -8,7 +8,7 @@
     },
     {
       "path": "/api/fb-draft",
-      "schedule": "0 13 * * 1"
+      "schedule": "0 13 * * 1,4"
     }
   ]
 }

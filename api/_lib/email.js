@@ -8,7 +8,7 @@ function escapeHtml(s) {
 
 export function renderApprovalEmail({ theme, weekDate, caption, hashtags, imageUrl, approveUrl, editUrl, rejectUrl, draftId, dryRun }) {
   const banner = dryRun
-    ? `<div style="background:#fef3c7;padding:12px 16px;border-radius:8px;margin-bottom:16px;font-weight:600;">TEST — would post to Facebook. No real publish.</div>`
+    ? `<div style="background:#fef3c7;padding:12px 16px;border-radius:8px;margin-bottom:16px;font-weight:600;">TEST - would post to Instagram and Facebook. No real publish.</div>`
     : '';
   const imageBlock = imageUrl
     ? `<img src="${imageUrl}" alt="" style="max-width:100%;border-radius:8px;margin:12px 0;"/>`
@@ -21,8 +21,8 @@ export function renderApprovalEmail({ theme, weekDate, caption, hashtags, imageU
   return `
     <div style="font-family:-apple-system,Segoe UI,sans-serif;max-width:620px;margin:auto;padding:24px;">
       ${banner}
-      <h2 style="margin:0 0 8px 0;">FB draft — theme: ${escapeHtml(theme)}</h2>
-      <p style="color:#666;margin:0 0 8px 0;">Week of ${escapeHtml(weekDate)} · Draft ID ${escapeHtml(draftId)}</p>
+      <h2 style="margin:0 0 8px 0;">Social draft - theme: ${escapeHtml(theme)}</h2>
+      <p style="color:#666;margin:0 0 8px 0;">Week of ${escapeHtml(weekDate)} - Draft ID ${escapeHtml(draftId)}</p>
       ${imageBlock}
       <div style="white-space:pre-wrap;line-height:1.5;">${escapeHtml(caption)}</div>
       ${tags}
@@ -38,10 +38,14 @@ export function renderApprovalEmail({ theme, weekDate, caption, hashtags, imageU
 
 export async function sendApprovalEmail({ apiKey, to, subject, html }) {
   const resend = new Resend(apiKey);
-  return resend.emails.send({
+  const result = await resend.emails.send({
     from: 'Montissol FB Agent <noreply@montissolessentials.com>',
     to,
     subject,
     html,
   });
+  if (result.error) {
+    throw new Error(`Resend email error: ${result.error.message || JSON.stringify(result.error)}`);
+  }
+  return result.data;
 }

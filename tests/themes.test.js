@@ -14,32 +14,33 @@ function makeRedisMock() {
 let mock;
 beforeEach(() => { mock = makeRedisMock(); });
 
-test('getNextTheme returns "contracts" on first call (empty redis)', async () => {
+test('getNextTheme returns the first editorial theme on first call', async () => {
   const { getNextTheme } = await import('../api/_lib/themes.js');
   const t = await getNextTheme(mock);
-  assert.equal(t, 'contracts');
+  assert.equal(t, 'business_inspiration');
 });
 
-test('advanceTheme cycles contracts -> recruiting -> community -> contracts', async () => {
+test('advanceTheme cycles through the social editorial themes', async () => {
   const { getNextTheme, advanceTheme } = await import('../api/_lib/themes.js');
-  assert.equal(await getNextTheme(mock), 'contracts');
+  assert.equal(await getNextTheme(mock), 'business_inspiration');
+  await advanceTheme(mock);
+  assert.equal(await getNextTheme(mock), 'employee_culture');
+  await advanceTheme(mock);
+  assert.equal(await getNextTheme(mock), 'why_work_here');
   await advanceTheme(mock);
   assert.equal(await getNextTheme(mock), 'recruiting');
   await advanceTheme(mock);
-  assert.equal(await getNextTheme(mock), 'community');
-  await advanceTheme(mock);
-  assert.equal(await getNextTheme(mock), 'contracts');
+  assert.equal(await getNextTheme(mock), 'business_inspiration');
 });
 
 test('getNextTheme is idempotent (does not advance)', async () => {
   const { getNextTheme } = await import('../api/_lib/themes.js');
-  assert.equal(await getNextTheme(mock), 'contracts');
-  assert.equal(await getNextTheme(mock), 'contracts');
-  assert.equal(await getNextTheme(mock), 'contracts');
+  assert.equal(await getNextTheme(mock), 'business_inspiration');
+  assert.equal(await getNextTheme(mock), 'business_inspiration');
 });
 
-test('getNextTheme returns "contracts" if redis value is unknown', async () => {
+test('getNextTheme returns the first theme if redis value is unknown', async () => {
   const { getNextTheme } = await import('../api/_lib/themes.js');
   await mock.set('fb:next_theme', 'garbage');
-  assert.equal(await getNextTheme(mock), 'contracts');
+  assert.equal(await getNextTheme(mock), 'business_inspiration');
 });

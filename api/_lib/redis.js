@@ -19,7 +19,12 @@ export const KEYS = {
   recruitingNextRole: 'fb:recruiting_next_role',
 };
 
-export const THEMES = ['contracts', 'recruiting', 'community'];
+export const THEMES = [
+  'business_inspiration',
+  'employee_culture',
+  'why_work_here',
+  'recruiting',
+];
 export const JOB_ROLES = [
   'janitorial-tech',
   'industrial-cleaning',
