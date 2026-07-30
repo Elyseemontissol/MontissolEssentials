@@ -10,5 +10,10 @@
       "path": "/api/fb-draft",
       "schedule": "0 13 * * 1,4"
     }
-  ]
+  ],
+  "functions": {
+    "api/job-image.js": {
+      "includeFiles": "api/_lib/fonts/**"
+    }
+  }
 }
