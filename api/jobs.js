@@ -69,8 +69,14 @@ function authorized(req) {
 
 async function handleSubmit(req, res) {
   const body = req.body || {};
-  if (body.website) return res.status(200).json({ ok: true });
-  if (typeof body.elapsedMs === 'number' && body.elapsedMs < 2500) {
+  if (body.website) {
+    console.warn('jobs POST: honeypot triggered, dropping silently');
+    return res.status(200).json({ ok: true });
+  }
+  // Real spam bots submit sub-second; humans take longer even when rushing.
+  // 1s is enough to stop bots without silently eating a fast-typing tester.
+  if (typeof body.elapsedMs === 'number' && body.elapsedMs < 1000) {
+    console.warn(`jobs POST: too-fast (${body.elapsedMs}ms), dropping silently`);
     return res.status(200).json({ ok: true });
   }
 
