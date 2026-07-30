@@ -5,30 +5,20 @@
 //
 //   GET /api/job-image?title=Janitors%20and%20Supervisor
 //
-// Font: Inter-Black.ttf is bundled into api/_lib/fonts/ and embedded as a
-// base64 data URI inside an @font-face rule in the SVG. This is required
-// because Vercel serverless functions don't ship with system fonts; without
-// this, librsvg falls back to tofu glyphs (boxes) for every character.
+// Font rendering: librsvg (sharp's SVG renderer) doesn't honor @font-face
+// with data URIs, so instead we pre-convert every text string to SVG
+// <path> outlines using text-to-svg + the bundled Inter-Black.ttf. Zero
+// runtime font lookup, guaranteed to render everywhere.
 import sharp from 'sharp';
-import { readFileSync } from 'node:fs';
+import TextToSVG from 'text-to-svg';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const FONT_BASE64 = readFileSync(path.join(HERE, '_lib/fonts/Inter-Black.ttf')).toString('base64');
-const FONT_DATA_URI = `data:font/truetype;charset=utf-8;base64,${FONT_BASE64}`;
+const textToSVG = TextToSVG.loadSync(path.join(HERE, '_lib/fonts/Inter-Black.ttf'));
 
-function escXml(value) {
-  return String(value)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
-}
-
-// Break the title into up to 2 lines so long titles wrap nicely. Simple
-// character-budget split at word boundaries — good enough for role names.
+// Split a title into up to 2 lines at word boundaries so long role names
+// wrap cleanly instead of overflowing the safe area.
 function wrap(text, maxCharsPerLine) {
   const trimmed = String(text).trim();
   if (trimmed.length <= maxCharsPerLine) return [trimmed];
@@ -43,6 +33,16 @@ function wrap(text, maxCharsPerLine) {
     }
   }
   return lines.slice(0, 2);
+}
+
+function textPath(text, options) {
+  const d = textToSVG.getD(text, {
+    x: options.x,
+    y: options.y,
+    fontSize: options.fontSize,
+    anchor: options.anchor || 'center middle',
+  });
+  return `<path d="${d}" fill="${options.fill}"/>`;
 }
 
 export default async function handler(req, res) {
@@ -60,36 +60,31 @@ export default async function handler(req, res) {
     }
     const baseBuf = Buffer.from(await baseRes.arrayBuffer());
 
-    // Job-Post.png has a large empty white area in the middle — drop the text
-    // there in the brand red so it lands on the design's intended headline
-    // zone instead of covering the photo panels at the bottom.
-    const lines = wrap(title, 18);
-    const roleFontSize = lines.length === 2 ? 78 : 96;
-    const lineHeight = roleFontSize + 12;
-    const totalRoleHeight = lineHeight * lines.length;
-    const roleTop = 540 - totalRoleHeight / 2 + roleFontSize * 0.85;
+    // Layout inside the white center area of Job-Post.png:
+    //   NOW HIRING            (small, dark, top)
+    //   ────────────           (thin red rule)
+    //   {ROLE NAME}           (large, brand red, 1-2 lines)
+    //   APPLY TODAY           (small, dark, bottom)
+    const nowHiring = textPath('NOW HIRING', { x: 540, y: 380, fontSize: 60, fill: '#111111' });
+    const applyToday = textPath('APPLY TODAY', { x: 540, y: 720, fontSize: 32, fill: '#111111' });
 
-    const titleSvgLines = lines.map((line, i) => {
-      const y = roleTop + i * lineHeight;
-      return `<text x="540" y="${y}" text-anchor="middle" font-family="Inter" font-weight="900" font-size="${roleFontSize}" fill="#B22222">${escXml(line)}</text>`;
-    }).join('\n');
+    const lines = wrap(title, 18);
+    const roleFontSize = lines.length === 2 ? 78 : 100;
+    const lineHeight = roleFontSize + 12;
+    const titleBlockCenterY = 540;
+    const firstLineY = titleBlockCenterY - ((lines.length - 1) * lineHeight) / 2;
+    const rolePaths = lines
+      .map((line, i) =>
+        textPath(line, { x: 540, y: firstLineY + i * lineHeight, fontSize: roleFontSize, fill: '#B22222' })
+      )
+      .join('\n');
 
     const svg = Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080">
-  <defs>
-    <style>
-      @font-face {
-        font-family: 'Inter';
-        font-weight: 900;
-        font-style: normal;
-        src: url('${FONT_DATA_URI}') format('truetype');
-      }
-    </style>
-  </defs>
-  <text x="540" y="410" text-anchor="middle" font-family="Inter" font-weight="900" font-size="52" fill="#111111" letter-spacing="8">NOW HIRING</text>
-  <line x1="380" y1="440" x2="700" y2="440" stroke="#B22222" stroke-width="4"/>
-  ${titleSvgLines}
-  <text x="540" y="700" text-anchor="middle" font-family="Inter" font-weight="900" font-size="26" fill="#111111" letter-spacing="4">APPLY TODAY</text>
+  ${nowHiring}
+  <line x1="380" y1="420" x2="700" y2="420" stroke="#B22222" stroke-width="4"/>
+  ${rolePaths}
+  ${applyToday}
 </svg>`);
 
     const output = await sharp(baseBuf)
