@@ -18,6 +18,43 @@ export function parseCaptionResponse(raw) {
   };
 }
 
+// Caption for a pre-designed inspirational post. The image already carries
+// the main line, so the LLM writes a short complementary caption — never
+// repeats the on-image text verbatim.
+export async function generateInspireCaption({
+  message,
+  visual,
+  systemPrompt,
+  apiKey,
+}) {
+  const client = new Anthropic({ apiKey });
+  const userPrompt = [
+    `Write a short Facebook/Instagram caption for a Montissol Essentials inspirational post.`,
+    ``,
+    `The IMAGE itself already carries this message (do NOT repeat it verbatim in the caption):`,
+    `"${message}"`,
+    `Image visual: ${visual}`,
+    ``,
+    `The caption should:`,
+    `- Complement, not duplicate, the image's line.`,
+    `- Be 2-3 sentences, brand voice, warm and confident.`,
+    `- Tie the message to Montissol's facility-services work when it fits naturally, but don't force it.`,
+    `- End with 3-4 relevant hashtags.`,
+    ``,
+    `Respond with ONLY a JSON object of the form:`,
+    `{"caption": "<40-120 words>", "image_prompt": "already-designed image, no generation needed", "hashtags": ["#Tag1", "#Tag2", "#Tag3"]}`,
+    `No prose, no markdown, no commentary.`,
+  ].join('\n');
+  const resp = await client.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 1000,
+    system: systemPrompt,
+    messages: [{ role: 'user', content: userPrompt }],
+  });
+  const text = resp.content.map((b) => (b.type === 'text' ? b.text : '')).join('');
+  return parseCaptionResponse(text);
+}
+
 export async function generateCaption({
   theme,
   weekDate,

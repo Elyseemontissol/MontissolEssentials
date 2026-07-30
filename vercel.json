@@ -9,6 +9,10 @@
     {
       "path": "/api/fb-draft",
       "schedule": "0 13 * * 1,4"
+    },
+    {
+      "path": "/api/fb-draft?type=inspire",
+      "schedule": "0 12 * * *"
     }
   ],
   "functions": {
