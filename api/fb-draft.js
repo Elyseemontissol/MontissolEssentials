@@ -126,8 +126,9 @@ export default async function handler(req, res) {
     let imageUrl;
     let pexelsAttribution = null;
     if (campaign) {
-      // All campaign posts (hiring pushes) use the branded Job-Post image.
-      imageUrl = `${appBaseUrl()}/assets/Social/Job-Post.png`;
+      // All campaign posts (hiring pushes) use the Job-Post.png base image
+      // with a "NOW HIRING - {role}" banner burned in by /api/job-image.
+      imageUrl = `${appBaseUrl()}/api/job-image?title=${encodeURIComponent(campaign.role)}`;
     } else {
       try {
         const pexels = await fetchPexelsImage(theme, process.env.PEXELS_API_KEY);

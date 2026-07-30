@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Hiring Candidates - Montissol Essentials</title>
+  <style>
+    :root { --bg:#0a0a0a; --panel:#151515; --text:#f4f4f4; --muted:#999; --border:#303030; --brand:#e74d10; --good:#35b879; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--text); font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    main { width:min(1120px,calc(100% - 32px)); margin:32px auto 64px; }
+    h1,h2,p { margin-top:0; }
+    .panel { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:24px; margin-bottom:18px; }
+    .hidden { display:none; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:24px; }
+    .topbar div { display:flex; gap:8px; }
+    input,select { width:100%; background:#0d0d0d; color:var(--text); border:1px solid var(--border); border-radius:6px; padding:11px 12px; font:inherit; }
+    label { display:block; color:var(--muted); font-size:.85rem; margin-bottom:6px; }
+    button,.button { border:0; border-radius:6px; background:var(--brand); color:#fff; padding:10px 16px; font:inherit; font-weight:700; cursor:pointer; text-decoration:none; }
+    .button.secondary,button.secondary { background:transparent; border:1px solid var(--border); }
+    .error { display:none; color:#ff8585; margin-top:12px; }
+    .login-shell { max-width:480px; margin:10vh auto 0; }
+    .login-button { width:100%; margin-top:12px; }
+    .login-link { display:block; margin-top:16px; color:var(--muted); text-align:center; }
+    .summary { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-bottom:18px; }
+    .metric { padding:18px; border:1px solid var(--border); border-radius:8px; }
+    .metric strong { display:block; font-size:1.8rem; color:var(--good); }
+    .metric span,.candidate-meta,.empty { color:var(--muted); }
+    .candidate { border-top:1px solid var(--border); padding:20px 0; }
+    .candidate:first-of-type { border-top:0; }
+    .candidate-head { display:flex; justify-content:space-between; gap:16px; align-items:start; }
+    .candidate h2 { margin-bottom:4px; font-size:1.1rem; }
+    .candidate-meta { font-size:.88rem; }
+    .candidate-contact { display:flex; flex-wrap:wrap; gap:8px 16px; margin:12px 0; }
+    .candidate-contact a { color:#ff8758; }
+    .experience { white-space:pre-wrap; color:#d5d5d5; }
+    @media (max-width:650px) {
+      main { margin-top:18px; }
+      .panel { padding:18px; }
+      .topbar,.candidate-head { align-items:stretch; flex-direction:column; }
+      .summary { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <section class="panel login-shell" id="loginView">
+    <h1>Admin Sign-In</h1>
+    <p>Sign in to manage invoices, PTO, or hiring candidates.</p>
+    <label for="password">Admin password</label>
+    <input id="password" type="password" autocomplete="current-password">
+    <button class="login-button" id="loginButton" type="button">Sign In</button>
+    <p class="error" id="loginError">The password was not accepted.</p>
+    <a class="login-link" href="#" id="forgotLink">Forgot password?</a>
+  </section>
+
+  <section class="panel login-shell hidden" id="forgotView">
+    <h1>Forgot Password</h1>
+    <p>A reset link will be emailed to the account on file.</p>
+    <p class="error" id="forgotStatus"></p>
+    <button class="login-button" id="forgotButton" type="button">Send Reset Email</button>
+    <a class="login-link" href="#" id="backToLoginLink">Back to sign-in</a>
+  </section>
+
+  <section class="hidden" id="dashboardView">
+    <div class="topbar">
+      <h1 style="margin:0;">Hiring Candidates</h1>
+      <div>
+        <a class="button secondary" href="/">Home</a>
+        <button class="secondary" id="signOutButton" type="button">Sign Out</button>
+      </div>
+    </div>
+    <div class="summary">
+      <div class="metric"><strong id="projectCount">0</strong><span>Projects with candidates</span></div>
+      <div class="metric"><strong id="candidateCount">0</strong><span>Total candidates</span></div>
+    </div>
+    <section class="panel">
+      <label for="projectFilter">Project</label>
+      <select id="projectFilter"></select>
+    </section>
+    <section class="panel" id="candidateList"></section>
+  </section>
+</main>
+
+<script>
+  (function () {
+    var token = sessionStorage.getItem('me_admin_token') || '';
+    var projects = [];
+    var loginView = document.getElementById('loginView');
+    var forgotView = document.getElementById('forgotView');
+    var dashboardView = document.getElementById('dashboardView');
+    var loginError = document.getElementById('loginError');
+    var filter = document.getElementById('projectFilter');
+    var list = document.getElementById('candidateList');
+
+    function escapeHtml(value) {
+      return String(value || '').replace(/[&<>"']/g, function (character) {
+        return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[character];
+      });
+    }
+    function formatDate(value) {
+      return new Date(value).toLocaleString('en-US', { dateStyle:'medium', timeStyle:'short' });
+    }
+    async function load(password) {
+      var response = await fetch('/api/jobs', {
+        headers: { Authorization: 'Bearer ' + password }
+      });
+      if (response.status === 401) return false;
+      var contentType = response.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        throw new Error('The candidate API is unavailable. Deploy the site or use the Vercel development server.');
+      }
+      var result = await response.json();
+      if (!response.ok || !result.ok) throw new Error(result.error || 'Could not load candidates.');
+      token = password;
+      projects = result.projects || [];
+      sessionStorage.setItem('me_admin_token', password);
+      loginView.classList.add('hidden');
+      dashboardView.classList.remove('hidden');
+      renderDashboard();
+      return true;
+    }
+    function renderDashboard() {
+      var total = projects.reduce(function (sum, project) { return sum + project.candidates.length; }, 0);
+      document.getElementById('projectCount').textContent = projects.length;
+      document.getElementById('candidateCount').textContent = total;
+      filter.innerHTML = projects.map(function (project) {
+        return '<option value="' + escapeHtml(project.id) + '">' + escapeHtml(project.name) +
+          ' (' + project.candidates.length + ')</option>';
+      }).join('');
+      renderCandidates();
+    }
+    function renderCandidates() {
+      var project = projects.find(function (item) { return item.id === filter.value; }) || projects[0];
+      if (!project) {
+        list.innerHTML = '<p class="empty">No candidate submissions yet.</p>';
+        return;
+      }
+      list.innerHTML = '<h2>' + escapeHtml(project.name) + '</h2>' + project.candidates.map(function (candidate) {
+        var phoneLink = String(candidate.phone || '').replace(/[^\d+]/g, '');
+        return '<article class="candidate"><div class="candidate-head"><div><h2>' +
+          escapeHtml(candidate.name) + '</h2><div class="candidate-meta">Submitted ' +
+          escapeHtml(formatDate(candidate.submittedAt)) + '</div></div></div>' +
+          '<div class="candidate-contact"><a href="mailto:' + encodeURIComponent(candidate.email) + '">' +
+          escapeHtml(candidate.email) + '</a><a href="tel:' + escapeHtml(phoneLink) + '">' +
+          escapeHtml(candidate.phone) + '</a></div>' +
+          '<div class="candidate-meta">Can perform essential duties: <strong>' +
+          escapeHtml(candidate.canPerform === 'yes' ? 'Yes' : (candidate.canPerform === 'no' ? 'No' : 'Not recorded')) + '</strong></div>' +
+          (candidate.workConstraints ? '<p><strong>Non-medical constraints</strong></p><div class="experience">' +
+          escapeHtml(candidate.workConstraints) + '</div>' : '') +
+          '<p><strong>Relevant experience</strong></p><div class="experience">' +
+          escapeHtml(candidate.experience) + '</div></article>';
+      }).join('');
+    }
+
+    document.getElementById('loginButton').addEventListener('click', async function () {
+      loginError.style.display = 'none';
+      try {
+        var accepted = await load(document.getElementById('password').value);
+        if (!accepted) loginError.style.display = 'block';
+      } catch (error) {
+        loginError.textContent = error.message;
+        loginError.style.display = 'block';
+      }
+    });
+    document.getElementById('password').addEventListener('keydown', function (event) {
+      if (event.key === 'Enter') document.getElementById('loginButton').click();
+    });
+    document.getElementById('forgotLink').addEventListener('click', function (event) {
+      event.preventDefault();
+      loginView.classList.add('hidden');
+      forgotView.classList.remove('hidden');
+      document.getElementById('forgotStatus').style.display = 'none';
+    });
+    document.getElementById('backToLoginLink').addEventListener('click', function (event) {
+      event.preventDefault();
+      forgotView.classList.add('hidden');
+      loginView.classList.remove('hidden');
+    });
+    document.getElementById('forgotButton').addEventListener('click', async function () {
+      var button = this;
+      var status = document.getElementById('forgotStatus');
+      button.disabled = true;
+      button.textContent = 'Sending...';
+      status.style.display = 'none';
+      try {
+        var response = await fetch('/api/admin-pwd?action=forgot', { method:'POST' });
+        var contentType = response.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) {
+          throw new Error('The password API is unavailable in this static preview.');
+        }
+        var result = await response.json();
+        status.textContent = result.ok ? 'Reset email sent. Check your inbox.' :
+          (result.error || 'Failed to send reset email.');
+        status.style.color = result.ok ? '#35b879' : '#ff8585';
+        status.style.display = 'block';
+      } catch (error) {
+        status.textContent = 'Network error. Please try again.';
+        status.style.display = 'block';
+      } finally {
+        button.disabled = false;
+        button.textContent = 'Send Reset Email';
+      }
+    });
+    document.getElementById('signOutButton').addEventListener('click', function () {
+      sessionStorage.removeItem('me_admin_token');
+      location.reload();
+    });
+    filter.addEventListener('change', renderCandidates);
+    if (token) load(token).catch(function () { sessionStorage.removeItem('me_admin_token'); });
+  })();
+</script>
+</body>
+</html>
