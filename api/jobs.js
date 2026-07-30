@@ -10,6 +10,7 @@ import { randomUUID, timingSafeEqual } from 'node:crypto';
 const PROJECTS = {
   'hop-brook-lake': 'Janitorial Services - Hop Brook Lake and Naugatuck River Basin, Middlebury, CT',
   'spo': 'Janitorial Services - Sault Project Office (SPO), St. Marys Falls Canal, Sault Ste. Marie, MI',
+  'ks019': 'Custodial Services - KS019 Army Reserve Facility, Manhattan, KS',
 };
 
 const redis = Redis.fromEnv();
