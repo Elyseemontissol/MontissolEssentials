@@ -37,6 +37,8 @@ function cleanCampaign(query = {}) {
     role: limit(query.role, 120) || 'Not specified',
     location: limit(query.location, 120) || 'Not specified',
     applyUrl: limit(query.apply_url, 300) || `${appBaseUrl()}/careers.html`,
+    description: limit(query.description, 600) || null,
+    isJobPost: true,
   };
 }
 
