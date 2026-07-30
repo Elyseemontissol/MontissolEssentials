@@ -3,7 +3,7 @@ import { redis, KEYS } from './_lib/redis.js';
 import { SYSTEM_PROMPT } from './_lib/system-prompt.js';
 import { getNextTheme } from './_lib/themes.js';
 import { generateCaption } from './_lib/caption.js';
-import { generateImage } from './_lib/image.js';
+import { fetchPexelsImage } from './_lib/pexels.js';
 import { signToken } from './_lib/tokens.js';
 import { renderApprovalEmail, sendApprovalEmail } from './_lib/email.js';
 
@@ -103,20 +103,28 @@ export default async function handler(req, res) {
 
     const draftId = randomUUID();
 
-    let imageUrl = campaign
-      ? `${appBaseUrl()}/assets/images/facility-operations.jpg`
-      : null;
-    if (!imageUrl) {
+    // Image strategy: campaigns bring their own image; everything else pulls a
+    // themed stock photo from Pexels (free API, credit appended to caption below).
+    // On any failure (API down, no results, missing key) we fall back to the
+    // static default so the flow still succeeds and Instagram still gets an image.
+    let imageUrl;
+    let pexelsAttribution = null;
+    if (campaign) {
+      imageUrl = `${appBaseUrl()}/assets/images/facility-operations.jpg`;
+    } else {
       try {
-        imageUrl = await generateImage({
-          prompt: captionResult.image_prompt,
-          draftId,
-          openaiKey: process.env.OPENAI_API_KEY,
-          blobToken: process.env.BLOB_READ_WRITE_TOKEN,
-        });
+        const pexels = await fetchPexelsImage(theme, process.env.PEXELS_API_KEY);
+        imageUrl = pexels.url;
+        pexelsAttribution = pexels.attribution;
       } catch (err) {
-        console.error('Image generation failed, continuing text-only:', err.message);
+        console.error('Pexels fetch failed, using default image:', err.message);
+        imageUrl = `${appBaseUrl()}/assets/social/default.jpg`;
       }
+    }
+
+    // Pexels' terms require photographer credit — append to the caption.
+    if (pexelsAttribution) {
+      captionResult.caption = `${captionResult.caption}\n\n${pexelsAttribution}`;
     }
 
     const draft = {
