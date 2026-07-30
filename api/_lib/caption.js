@@ -34,6 +34,19 @@ export async function generateCaption({
         `Role: ${campaign.role}`,
         `Location: ${campaign.location}`,
         `Apply URL: ${campaign.applyUrl}`,
+        ...(campaign.description
+          ? [`Extra details about this role (weave into the caption): ${campaign.description}`]
+          : []),
+        ...(campaign.isJobPost
+          ? [
+              '',
+              'This is a JOB POST. The caption should:',
+              `- Open with an eye-catching hiring announcement for "${campaign.role}".`,
+              '- Briefly describe the role in one or two sentences (use the extra details if supplied, otherwise use general knowledge about what this role does at a facility-services company).',
+              '- End with a clear call to action pointing to the Apply URL exactly as given.',
+              '- Include hashtags like #Hiring #NowHiring and one tied to the role name.',
+            ]
+          : []),
       ]
     : [];
   const client = new Anthropic({ apiKey });

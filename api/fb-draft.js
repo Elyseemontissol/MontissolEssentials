@@ -16,8 +16,22 @@ function appBaseUrl() {
 }
 
 function cleanCampaign(query = {}) {
-  if (!query.project && !query.role && !query.location && !query.apply_url) return null;
   const limit = (value, max) => String(value || '').trim().slice(0, max);
+
+  // Shorthand: ?job=Welders[&description=...] → hiring campaign for the given
+  // role at Hop Brook Lake, linking to the interest form. Uses Job-Post.png.
+  if (query.job) {
+    return {
+      project: 'Janitorial Services - Hop Brook Lake, Middlebury, CT',
+      role: limit(query.job, 120),
+      location: 'Middlebury, CT',
+      applyUrl: `${appBaseUrl()}/job-hop-brook-lake.html#interest-form`,
+      description: limit(query.description, 600) || null,
+      isJobPost: true,
+    };
+  }
+
+  if (!query.project && !query.role && !query.location && !query.apply_url) return null;
   return {
     project: limit(query.project, 120) || 'Not specified',
     role: limit(query.role, 120) || 'Not specified',
@@ -110,7 +124,8 @@ export default async function handler(req, res) {
     let imageUrl;
     let pexelsAttribution = null;
     if (campaign) {
-      imageUrl = `${appBaseUrl()}/assets/images/facility-operations.jpg`;
+      // All campaign posts (hiring pushes) use the branded Job-Post image.
+      imageUrl = `${appBaseUrl()}/assets/Social/Job-Post.png`;
     } else {
       try {
         const pexels = await fetchPexelsImage(theme, process.env.PEXELS_API_KEY);
