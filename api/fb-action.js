@@ -1,8 +1,7 @@
 import { redis, KEYS } from './_lib/redis.js';
 import { verifyToken } from './_lib/tokens.js';
 import { advanceTheme } from './_lib/themes.js';
-import { postToPage } from './_lib/facebook.js';
-import { postToInstagram } from './_lib/instagram.js';
+import { publishSocial } from './_lib/publish.js';
 
 // Single magic-link endpoint for all three FB draft actions.
 // The action (approve | edit | reject) is encoded in the HMAC token,
@@ -58,34 +57,6 @@ async function readBody(req) {
 async function appendHistory(entry) {
   await redis.lpush(KEYS.history, JSON.stringify(entry));
   await redis.ltrim(KEYS.history, 0, 49);
-}
-
-async function publishSocial(message, imageUrl) {
-  const facebook = await postToPage({
-    pageId: process.env.FB_PAGE_ID,
-    accessToken: process.env.FB_PAGE_ACCESS_TOKEN,
-    message,
-    imageUrl,
-  });
-
-  if (!process.env.IG_USER_ID || !process.env.IG_ACCESS_TOKEN) {
-    return { facebook, instagram: null, instagramStatus: 'not_configured' };
-  }
-  if (!imageUrl) {
-    return { facebook, instagram: null, instagramStatus: 'skipped_no_image' };
-  }
-
-  try {
-    const instagram = await postToInstagram({
-      instagramUserId: process.env.IG_USER_ID,
-      accessToken: process.env.IG_ACCESS_TOKEN,
-      caption: message,
-      imageUrl,
-    });
-    return { facebook, instagram, instagramStatus: 'posted' };
-  } catch (error) {
-    return { facebook, instagram: null, instagramStatus: 'failed', instagramError: error.message };
-  }
 }
 
 function publishResultHtml(result) {

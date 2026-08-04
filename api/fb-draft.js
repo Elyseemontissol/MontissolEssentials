@@ -5,6 +5,7 @@ import { getNextTheme } from './_lib/themes.js';
 import { generateCaption, generateInspireCaption } from './_lib/caption.js';
 import { fetchPexelsImage } from './_lib/pexels.js';
 import { INSPIRE_POSTS, INSPIRE_KEYS } from './_lib/inspire.js';
+import { publishSocial } from './_lib/publish.js';
 import { signToken } from './_lib/tokens.js';
 import { renderApprovalEmail, sendApprovalEmail } from './_lib/email.js';
 
@@ -127,63 +128,74 @@ async function handleInspire(req, res, dryRun) {
       });
     }
 
-    const draftId = randomUUID();
-    const weekDate = new Date().toISOString().slice(0, 10);
-    const draft = {
-      caption: captionResult.caption,
-      hashtags: captionResult.hashtags,
-      image_url: imageUrl,
-      theme: 'inspire',
-      created_at: new Date().toISOString(),
-      status: 'pending',
-      dry_run: dryRun,
-      inspire_index: next,
-    };
-    await redis.set(KEYS.draft(draftId), JSON.stringify(draft), { ex: DRAFT_TTL_SECONDS });
+    const message = `${captionResult.caption}${captionResult.hashtags?.length ? '\n\n' + captionResult.hashtags.join(' ') : ''}`;
 
-    const urls = actionUrls(draftId, process.env.FB_APPROVAL_SECRET);
-    const html = renderApprovalEmail({
-      theme: 'inspire',
-      weekDate,
-      caption: captionResult.caption,
-      hashtags: captionResult.hashtags,
-      imageUrl,
-      ...urls,
-      draftId,
-      dryRun,
-    });
+    // Dry-runs skip publishing AND skip advancing the counter; useful for
+    // eyeballing what today's caption would say without burning a slot.
+    if (dryRun) {
+      return res.status(200).json({
+        ok: true, dry_run: true, inspire_index: next,
+        image: post.image, caption: captionResult.caption, hashtags: captionResult.hashtags,
+      });
+    }
 
-    await sendApprovalEmail({
-      apiKey: process.env.RESEND_API_KEY,
-      to: process.env.OWNER_EMAIL || DEFAULT_OWNER_EMAIL,
-      subject: `${dryRun ? 'TEST - ' : ''}Inspire post ${next + 1}/${INSPIRE_POSTS.length} - ${weekDate}`,
-      html,
-    });
+    // Auto-publish — inspire posts skip the approval-email flow entirely.
+    // On FB failure we email an alert and DO NOT advance the counter so
+    // tomorrow's cron retries the same panel.
+    let publishResult;
+    try {
+      publishResult = await publishSocial(message, imageUrl);
+    } catch (publishErr) {
+      console.error('inspire publish failed:', publishErr);
+      await appendHistory({
+        ts: new Date().toISOString(),
+        theme: 'inspire',
+        status: 'inspire_publish_failed',
+        inspire_index: next,
+        caption: captionResult.caption,
+        error: publishErr.message,
+      });
+      try {
+        await sendApprovalEmail({
+          apiKey: process.env.RESEND_API_KEY,
+          to: process.env.OWNER_EMAIL || DEFAULT_OWNER_EMAIL,
+          subject: `Inspire auto-publish FAILED (panel ${next + 1}/${INSPIRE_POSTS.length})`,
+          html: `<p>Inspire auto-publish failed on panel <b>${next + 1}</b> (${post.image}). Counter not advanced — tomorrow's cron will retry the same panel.</p><pre>${publishErr.stack || publishErr.message}</pre>`,
+        });
+      } catch { /* swallow */ }
+      return res.status(502).json({ ok: false, inspire_index: next, error: publishErr.message });
+    }
 
     await appendHistory({
       ts: new Date().toISOString(),
       theme: 'inspire',
-      draft_id: draftId,
-      status: dryRun ? 'dry_run' : 'draft_emailed',
-      caption: captionResult.caption,
+      status: publishResult.instagramStatus === 'posted' ? 'inspire_posted' : 'inspire_posted_fb_only',
       inspire_index: next,
+      caption: captionResult.caption,
+      fb_post_id: publishResult.facebook?.id || publishResult.facebook?.post_id || null,
+      ig_post_id: publishResult.instagram?.id || null,
+      instagram_status: publishResult.instagramStatus,
+      instagram_error: publishResult.instagramError || null,
     });
 
-    // Advance the counter on real sends only. Dry-runs re-use the same
-    // slot so they can be exercised without burning a real panel.
-    if (!dryRun) {
-      await redis.set(INSPIRE_KEYS.next, next + 1);
-    }
+    // Advance counter now that FB succeeded (IG failure alone doesn't
+    // block advancing — the panel was already posted to FB).
+    await redis.set(INSPIRE_KEYS.next, next + 1);
 
-    return res.status(200).json({ ok: true, draftId, inspire_index: next, dry_run: dryRun });
+    return res.status(200).json({
+      ok: true, inspire_index: next,
+      fb_post_id: publishResult.facebook?.id || null,
+      ig_post_id: publishResult.instagram?.id || null,
+      instagram_status: publishResult.instagramStatus,
+    });
   } catch (err) {
-    console.error('inspire draft failed:', err);
+    console.error('inspire handler failed:', err);
     try {
       await sendApprovalEmail({
         apiKey: process.env.RESEND_API_KEY,
         to: process.env.OWNER_EMAIL || DEFAULT_OWNER_EMAIL,
-        subject: 'Inspire draft generation FAILED',
-        html: `<p>Inspire draft failed:</p><pre>${err.stack || err.message}</pre>`,
+        subject: 'Inspire auto-publish FAILED (caption generation)',
+        html: `<p>Inspire failed before publishing (likely caption generation). Counter not advanced.</p><pre>${err.stack || err.message}</pre>`,
       });
     } catch { /* swallow */ }
     return res.status(500).json({ ok: false, error: err.message });
