@@ -17,22 +17,23 @@ import path from 'node:path';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const textToSVG = TextToSVG.loadSync(path.join(HERE, '_lib/fonts/Inter-Black.ttf'));
 
-// Split a title into up to 2 lines at word boundaries so long role names
-// wrap cleanly instead of overflowing the safe area.
-function wrap(text, maxCharsPerLine) {
+// Break a title into up to `maxLines` lines at word boundaries. Uses a
+// character budget as a first pass; the caller measures actual width
+// afterward and re-wraps or shrinks the font if a line still overflows.
+function wrap(text, maxCharsPerLine, maxLines = 2) {
   const trimmed = String(text).trim();
   if (trimmed.length <= maxCharsPerLine) return [trimmed];
   const words = trimmed.split(/\s+/);
   const lines = [''];
   for (const w of words) {
     const candidate = lines[lines.length - 1] ? `${lines[lines.length - 1]} ${w}` : w;
-    if (candidate.length <= maxCharsPerLine || lines.length >= 2) {
+    if (candidate.length <= maxCharsPerLine || lines.length >= maxLines) {
       lines[lines.length - 1] = candidate;
     } else {
       lines.push(w);
     }
   }
-  return lines.slice(0, 2);
+  return lines.slice(0, maxLines);
 }
 
 function textPath(text, options) {
@@ -43,6 +44,28 @@ function textPath(text, options) {
     anchor: options.anchor || 'center middle',
   });
   return `<path d="${d}" fill="${options.fill}"/>`;
+}
+
+function widestLinePx(lines, fontSize) {
+  return Math.max(...lines.map((l) => textToSVG.getMetrics(l, { fontSize }).width));
+}
+
+// Fit the role text into a safe horizontal band inside Job-Post.png's
+// white center area. Try 2 lines at the preferred large size first; if
+// any line overflows, try 3 lines; if still overflowing, shrink the
+// font in 4px steps down to a legibility floor. Returns the layout
+// that will actually fit inside `maxWidth`.
+function fitRoleText(title, maxWidth) {
+  let lines = wrap(title, 22, 2);
+  let fontSize = lines.length === 2 ? 78 : 100;
+  if (widestLinePx(lines, fontSize) <= maxWidth) return { lines, fontSize };
+
+  lines = wrap(title, 16, 3);
+  fontSize = lines.length >= 3 ? 60 : lines.length === 2 ? 78 : 100;
+  while (widestLinePx(lines, fontSize) > maxWidth && fontSize > 40) {
+    fontSize -= 4;
+  }
+  return { lines, fontSize };
 }
 
 export default async function handler(req, res) {
@@ -63,19 +86,19 @@ export default async function handler(req, res) {
     // Layout inside the white center area of Job-Post.png:
     //   NOW HIRING            (small, dark, top)
     //   ────────────           (thin red rule)
-    //   {ROLE NAME}           (large, brand red, 1-2 lines)
+    //   {ROLE NAME}           (large, brand red, up to 3 lines, auto-fit)
     //   APPLY TODAY           (small, dark, bottom)
     const nowHiring = textPath('NOW HIRING', { x: 540, y: 380, fontSize: 60, fill: '#111111' });
     const applyToday = textPath('APPLY TODAY', { x: 540, y: 720, fontSize: 32, fill: '#111111' });
 
-    const lines = wrap(title, 18);
-    const roleFontSize = lines.length === 2 ? 78 : 100;
-    const lineHeight = roleFontSize + 12;
+    // Safe writing band = 940px (70px margin on each side of the 1080 canvas).
+    const { lines, fontSize } = fitRoleText(title, 940);
+    const lineHeight = fontSize + 12;
     const titleBlockCenterY = 540;
     const firstLineY = titleBlockCenterY - ((lines.length - 1) * lineHeight) / 2;
     const rolePaths = lines
       .map((line, i) =>
-        textPath(line, { x: 540, y: firstLineY + i * lineHeight, fontSize: roleFontSize, fill: '#B22222' })
+        textPath(line, { x: 540, y: firstLineY + i * lineHeight, fontSize, fill: '#B22222' })
       )
       .join('\n');
 
