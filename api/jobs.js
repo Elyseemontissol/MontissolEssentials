@@ -115,11 +115,14 @@ async function handleSubmit(req, res) {
     const resend = new Resend(process.env.RESEND_API_KEY);
     await resend.emails.send({
       from: 'Montissol Careers <noreply@montissolessentials.com>',
-      to: ['info@montissolessentials.com', 'ElyseeM@MontissolEssentials.com'],
+      to: ['elyseem@montissolessentials.com'],
       replyTo: email,
       subject: `[Job Interest] ${project} - ${name}`,
       html: `
         <h2>New Job Interest Submission</h2>
+        <p style="margin:0 0 20px 0;">
+          <a href="https://www.montissolessentials.com/job-candidates-admin.html" style="display:inline-block;background:#e74d10;color:#fff;text-decoration:none;padding:12px 22px;border-radius:6px;font-family:Arial,sans-serif;font-weight:700;">Open Job Candidates admin →</a>
+        </p>
         <table style="border-collapse:collapse;width:100%;max-width:640px;font-family:Arial,sans-serif;">
           <tr style="border-bottom:1px solid #eee;"><td style="padding:10px;font-weight:bold;width:150px;">Position</td><td style="padding:10px;">${esc(project)}</td></tr>
           <tr style="border-bottom:1px solid #eee;"><td style="padding:10px;font-weight:bold;">Name</td><td style="padding:10px;">${esc(name)}</td></tr>
@@ -129,7 +132,7 @@ async function handleSubmit(req, res) {
           <tr style="border-bottom:1px solid #eee;"><td style="padding:10px;font-weight:bold;vertical-align:top;">Non-medical constraints</td><td style="padding:10px;white-space:pre-wrap;">${esc(workConstraints || 'None provided')}</td></tr>
           <tr><td style="padding:10px;font-weight:bold;vertical-align:top;">Experience</td><td style="padding:10px;white-space:pre-wrap;">${esc(experience)}</td></tr>
         </table>
-        <p style="color:#777;font-size:12px;margin-top:24px;">Submitted through the Montissol Essentials careers website.</p>
+        <p style="color:#777;font-size:12px;margin-top:24px;">Submitted through the Montissol Essentials careers website. Reply to this email to respond to ${esc(name)} directly.</p>
       `,
     });
   } catch (error) {
