@@ -251,7 +251,10 @@ export default async function handler(req, res) {
     if (campaign) {
       // All campaign posts (hiring pushes) use the Job-Post.png base image
       // with a "NOW HIRING - {role}" banner burned in by /api/job-image.
-      imageUrl = `${appBaseUrl()}/api/job-image?title=${encodeURIComponent(campaign.role)}`;
+      // Draft-id in the URL guarantees Meta fetches a fresh render each
+      // time (busts any Vercel edge cache from a prior draft with the
+      // same role after code changes to the overlay renderer).
+      imageUrl = `${appBaseUrl()}/api/job-image?title=${encodeURIComponent(campaign.role)}&location=${encodeURIComponent(campaign.location || '')}&v=${Date.now()}`;
     } else {
       try {
         const pexels = await fetchPexelsImage(theme, process.env.PEXELS_API_KEY);
