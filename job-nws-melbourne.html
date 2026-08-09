@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Janitorial Services Interest - Melbourne, FL | Montissol Essentials</title>
+  <meta name="description" content="Express interest in janitorial services opportunities at the National Weather Service Office, 421 Croton Road, Melbourne, Florida.">
+  <meta property="og:title" content="Janitorial Services Opportunity - Melbourne, FL">
+  <meta property="og:description" content="Brevard County residents can express interest in janitorial services opportunities with Montissol Essentials at the National Weather Service Office in Melbourne, FL.">
+  <meta property="og:image" content="https://www.montissolessentials.com/assets/Social/Job-Post.png">
+  <meta property="og:url" content="https://www.montissolessentials.com/job-nws-melbourne.html">
+  <meta property="og:type" content="website">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/styles.css">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon.png">
+</head>
+<body>
+<div id="shared-header"></div>
+
+<main>
+  <section class="hero hero--services hero--zoom job-interest-hero">
+    <div class="hero-split__bg" style="background-image:url('assets/images/facility-operations.jpg');"></div>
+    <div class="hero-split__overlay"></div>
+    <div class="container hero-split__inner">
+      <div class="hero-split__kicker"><span class="dot"></span><span>Now Recruiting in Brevard County</span></div>
+      <h1 class="hero-split__headline">Janitorial Services</h1>
+      <p class="hero-split__sub">National Weather Service Office, 421 Croton Road, Melbourne, FL</p>
+      <div class="hero-split__actions">
+        <a class="btn primary" href="#interest-form">Express Interest</a>
+        <a class="btn outline" href="careers.html" style="border-color:#fff;color:#fff;">View Careers</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section job-interest-section">
+    <div class="container job-interest-layout">
+      <div class="job-interest-copy">
+        <div class="mini-kicker"><span class="dot"></span><span>Local Opportunity</span></div>
+        <h2>Support the National Weather Service in Melbourne</h2>
+        <p>Montissol Essentials is inviting residents in and around Melbourne, Florida, to express interest in two janitorial positions supporting the National Weather Service office at 421 Croton Road — one full-time role and one backup role to cover time off and busy weeks.</p>
+        <p>Work is performed in the evenings, Monday through Saturday, between 5:00 PM and 9:00 PM local time. The 4,500 sq ft facility includes offices, restrooms, a kitchen, and a computer-equipment room that requires specific damp-mop-only care. All required cleaning supplies must be environmentally friendly, unscented, non-toxic, and biodegradable. A Low Risk security background investigation and standard OSHA compliance are required before starting on site.</p>
+        <div class="job-interest-note">
+          <strong>What happens next</strong>
+          <p>Share your contact information and relevant experience. Our team will review your submission and contact qualified candidates as project staffing details become available.</p>
+        </div>
+      </div>
+
+      <div class="contact-form-panel job-interest-form-panel" id="interest-form">
+        <h2 class="contact-form-title">Express Your Interest</h2>
+        <p class="job-interest-form-intro">Fields marked with an asterisk are required.</p>
+        <form id="jobInterestForm" novalidate>
+          <input type="hidden" name="projectId" value="nws-melbourne">
+          <input class="form-honeypot" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+
+          <div class="field">
+            <label for="name">Full name <span class="req">*</span></label>
+            <input id="name" name="name" type="text" autocomplete="name" maxlength="120" required>
+          </div>
+          <div class="field">
+            <label for="email">Email address <span class="req">*</span></label>
+            <input id="email" name="email" type="email" autocomplete="email" maxlength="180" required>
+          </div>
+          <div class="field">
+            <label for="phone">Phone number <span class="req">*</span></label>
+            <input id="phone" name="phone" type="tel" autocomplete="tel" maxlength="40" required>
+          </div>
+          <div class="field">
+            <label for="experience">Relevant experience <span class="req">*</span></label>
+            <textarea id="experience" name="experience" minlength="20" maxlength="3000" required placeholder="Tell us about your janitorial, custodial, cleaning, or facility experience."></textarea>
+          </div>
+          <div class="field">
+            <label for="canPerform">Can you perform the essential duties of this janitorial role, with or without reasonable accommodation? <span class="req">*</span></label>
+            <select id="canPerform" name="canPerform" required>
+              <option value="">Select an answer</option>
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="workConstraints">Are there any non-medical scheduling, transportation, or work-location limitations we should consider?</label>
+            <textarea id="workConstraints" name="workConstraints" maxlength="1000" placeholder="Optional. Please do not provide medical or disability information."></textarea>
+          </div>
+
+          <button class="contact-submit job-interest-submit" type="submit">Submit Interest</button>
+          <p class="form-status" id="formStatus" role="status" aria-live="polite"></p>
+        </form>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="shared-footer"></div>
+<script src="assets/shared.js"></script>
+<script>
+  (function () {
+    var form = document.getElementById('jobInterestForm');
+    var status = document.getElementById('formStatus');
+    var button = form.querySelector('button[type="submit"]');
+    var startedAt = Date.now();
+
+    form.addEventListener('submit', async function (event) {
+      event.preventDefault();
+      if (!form.reportValidity()) return;
+
+      button.disabled = true;
+      button.textContent = 'Submitting...';
+      status.className = 'form-status';
+      status.textContent = '';
+
+      var data = Object.fromEntries(new FormData(form).entries());
+      data.elapsedMs = Date.now() - startedAt;
+
+      try {
+        var response = await fetch('/api/jobs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        var contentType = response.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) {
+          throw new Error('The application form is not available in this static preview.');
+        }
+        var result = await response.json();
+        if (!response.ok || !result.ok) throw new Error(result.error || 'Submission failed.');
+
+        form.reset();
+        status.className = 'form-status is-success';
+        status.textContent = 'Thank you. Your information has been received.';
+        button.textContent = 'Submitted';
+      } catch (error) {
+        status.className = 'form-status is-error';
+        status.textContent = error.message || 'We could not submit your information. Please try again.';
+        button.disabled = false;
+        button.textContent = 'Submit Interest';
+      }
+    });
+  })();
+</script>
+</body>
+</html>

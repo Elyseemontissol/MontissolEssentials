@@ -11,6 +11,7 @@ const PROJECTS = {
   'hop-brook-lake': 'Janitorial Services - Hop Brook Lake and Naugatuck River Basin, Middlebury, CT',
   'spo': 'Janitorial Services - Sault Project Office (SPO), St. Marys Falls Canal, Sault Ste. Marie, MI',
   'ks019': 'Custodial Services - KS019 Army Reserve Facility, Manhattan, KS',
+  'nws-melbourne': 'Janitorial Services - National Weather Service Office, Melbourne, FL',
 };
 
 const redis = Redis.fromEnv();
