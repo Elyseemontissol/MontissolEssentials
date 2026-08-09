@@ -1,8 +1,15 @@
-// Unified job-interest + candidate-admin endpoint.
-//   POST /api/jobs   → public form submission (rate-limited via hidden fields).
-//   GET  /api/jobs   → admin-authed candidate list.
-// Adding a new hiring project? Extend PROJECTS below and add a matching
-// public page like /job-<projectId>.html.
+// Unified job endpoint. Modes:
+//   GET  /api/jobs?id=<slug>&page=1   → renders the public job page HTML,
+//                                       or a "Position closed" page if the
+//                                       job's Redis meta has expired (30d).
+//   GET  /api/jobs                    → admin-authed candidate list (JSON).
+//   POST /api/jobs                    → public form submission.
+//
+// Job metadata lives in Redis under `jobs:meta:<projectId>` with a 30-day
+// TTL. When it expires the meta vanishes automatically — the page renderer
+// then serves a 410 Gone with a friendly message. Candidate lists live
+// under `jobs:candidates:<projectId>` with NO TTL, so historical
+// applicants stay visible in the admin panel forever.
 import { Resend } from 'resend';
 import { Redis } from '@upstash/redis';
 import { randomUUID, timingSafeEqual } from 'node:crypto';
@@ -16,6 +23,9 @@ const PROJECTS = {
 
 const redis = Redis.fromEnv();
 
+// 30 days in seconds — job page + form availability window.
+const JOB_META_TTL_SECONDS = 30 * 24 * 60 * 60;
+
 function clean(value, max) {
   return String(value || '').trim().slice(0, max);
 }
@@ -27,6 +37,33 @@ function esc(value) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+
+function metaKey(projectId) {
+  return `jobs:meta:${projectId}`;
+}
+
+// Called from api/fb-draft.js when a campaign draft is created (non-dry).
+// Writes the full page metadata to Redis with a 30d TTL so the dynamic
+// page renderer + form submissions work for the next month, then expire
+// automatically.
+export async function saveJobMeta(meta) {
+  if (!meta.projectId) throw new Error('saveJobMeta requires projectId');
+  const payload = {
+    ...meta,
+    postedAt: meta.postedAt || new Date().toISOString(),
+  };
+  await redis.set(metaKey(meta.projectId), JSON.stringify(payload), { ex: JOB_META_TTL_SECONDS });
+}
+
+async function readJobMeta(projectId) {
+  const raw = await redis.get(metaKey(projectId));
+  if (!raw) return null;
+  try {
+    return typeof raw === 'string' ? JSON.parse(raw) : raw;
+  } catch {
+    return null;
+  }
 }
 
 export function validateInterest(body = {}) {
@@ -75,8 +112,6 @@ async function handleSubmit(req, res) {
     console.warn('jobs POST: honeypot triggered, dropping silently');
     return res.status(200).json({ ok: true });
   }
-  // Real spam bots submit sub-second; humans take longer even when rushing.
-  // 1s is enough to stop bots without silently eating a fast-typing tester.
   if (typeof body.elapsedMs === 'number' && body.elapsedMs < 1000) {
     console.warn(`jobs POST: too-fast (${body.elapsedMs}ms), dropping silently`);
     return res.status(200).json({ ok: true });
@@ -84,6 +119,17 @@ async function handleSubmit(req, res) {
 
   const result = validateInterest(body);
   if (result.error) return res.status(400).json({ ok: false, error: result.error });
+
+  // Reject submissions for jobs whose 30-day meta window has closed.
+  // Belt-and-suspenders on top of the page-render 410 — protects against
+  // stale FB/IG post links being submitted via curl or a cached form.
+  const meta = await readJobMeta(result.data.projectId);
+  if (!meta) {
+    return res.status(410).json({
+      ok: false,
+      error: 'This position is no longer accepting applications.',
+    });
+  }
 
   const { project, name, email, phone, experience, canPerform, workConstraints } = result.data;
   const candidate = {
@@ -168,8 +214,225 @@ async function handleAdminList(req, res) {
   }
 }
 
+// ────────────────────────────────────────────────────────────────────────
+// Dynamic job-page rendering
+// ────────────────────────────────────────────────────────────────────────
+
+function jobPageJsonLd(meta) {
+  const {
+    projectId, projectName, headline, city, state, streetAddress, postalCode,
+    paragraph1, paragraph2, postedAt,
+  } = meta;
+  const validThrough = new Date(new Date(postedAt).getTime() + JOB_META_TTL_SECONDS * 1000)
+    .toISOString().slice(0, 10);
+  const addr = {
+    '@type': 'PostalAddress',
+    addressLocality: city,
+    addressRegion: state,
+    addressCountry: 'US',
+  };
+  if (streetAddress) addr.streetAddress = streetAddress;
+  if (postalCode) addr.postalCode = postalCode;
+  const descHtml = `<p>${esc(paragraph1)}</p>` + (paragraph2 ? `<p>${esc(paragraph2)}</p>` : '');
+  return {
+    '@context': 'https://schema.org/',
+    '@type': 'JobPosting',
+    title: `${headline} — ${city}, ${state}`,
+    description: descHtml,
+    identifier: { '@type': 'PropertyValue', name: 'Montissol Essentials LLC', value: projectId },
+    datePosted: postedAt.slice(0, 10),
+    validThrough,
+    employmentType: 'FULL_TIME',
+    hiringOrganization: {
+      '@type': 'Organization',
+      name: 'Montissol Essentials LLC',
+      sameAs: 'https://www.montissolessentials.com',
+      logo: 'https://www.montissolessentials.com/assets/images/Header-logo.png',
+    },
+    jobLocation: { '@type': 'Place', address: addr },
+    applicantLocationRequirements: { '@type': 'Country', name: 'US' },
+    industry: 'Facility Services / Janitorial',
+    directApply: true,
+    url: `https://www.montissolessentials.com/job-${projectId}.html`,
+  };
+}
+
+function renderJobPageHtml(meta) {
+  const {
+    projectId, projectName, headline, subheadline, kicker,
+    city, state, h2, paragraph1, paragraph2,
+  } = meta;
+  const pageTitle = `${headline} - ${city}, ${state} | Montissol Essentials`;
+  const jsonLd = JSON.stringify(jobPageJsonLd(meta));
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>${esc(pageTitle)}</title>
+  <meta name="description" content="${esc(`Express interest in ${headline.toLowerCase()} opportunities with Montissol Essentials in ${city}, ${state}.`)}">
+  <meta property="og:title" content="${esc(headline)} - ${esc(city)}, ${esc(state)}">
+  <meta property="og:description" content="${esc(subheadline)}">
+  <meta property="og:image" content="https://www.montissolessentials.com/assets/Social/Job-Post.png">
+  <meta property="og:url" content="https://www.montissolessentials.com/job-${esc(projectId)}.html">
+  <meta property="og:type" content="website">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/styles.css">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon.png">
+  <script type="application/ld+json">${jsonLd}</script>
+</head>
+<body>
+<div id="shared-header"></div>
+
+<main>
+  <section class="hero hero--services hero--zoom job-interest-hero">
+    <div class="hero-split__bg" style="background-image:url('/assets/images/facility-operations.jpg');"></div>
+    <div class="hero-split__overlay"></div>
+    <div class="container hero-split__inner">
+      <div class="hero-split__kicker"><span class="dot"></span><span>${esc(kicker)}</span></div>
+      <h1 class="hero-split__headline">${esc(headline)}</h1>
+      <p class="hero-split__sub">${esc(subheadline)}</p>
+      <div class="hero-split__actions">
+        <a class="btn primary" href="#interest-form">Express Interest</a>
+        <a class="btn outline" href="/careers.html" style="border-color:#fff;color:#fff;">View Careers</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section job-interest-section">
+    <div class="container job-interest-layout">
+      <div class="job-interest-copy">
+        <div class="mini-kicker"><span class="dot"></span><span>Local Opportunity</span></div>
+        <h2>${esc(h2)}</h2>
+        <p>${esc(paragraph1)}</p>
+        ${paragraph2 ? `<p>${esc(paragraph2)}</p>` : ''}
+        <div class="job-interest-note">
+          <strong>What happens next</strong>
+          <p>Share your contact information and relevant experience. Our team will review your submission and contact qualified candidates as project staffing details become available.</p>
+        </div>
+      </div>
+
+      <div class="contact-form-panel job-interest-form-panel" id="interest-form">
+        <h2 class="contact-form-title">Express Your Interest</h2>
+        <p class="job-interest-form-intro">Fields marked with an asterisk are required.</p>
+        <form id="jobInterestForm" novalidate>
+          <input type="hidden" name="projectId" value="${esc(projectId)}">
+          <input class="form-honeypot" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+          <div class="field"><label for="name">Full name <span class="req">*</span></label><input id="name" name="name" type="text" autocomplete="name" maxlength="120" required></div>
+          <div class="field"><label for="email">Email address <span class="req">*</span></label><input id="email" name="email" type="email" autocomplete="email" maxlength="180" required></div>
+          <div class="field"><label for="phone">Phone number <span class="req">*</span></label><input id="phone" name="phone" type="tel" autocomplete="tel" maxlength="40" required></div>
+          <div class="field"><label for="experience">Relevant experience <span class="req">*</span></label><textarea id="experience" name="experience" minlength="20" maxlength="3000" required placeholder="Tell us about your janitorial, custodial, cleaning, or facility experience."></textarea></div>
+          <div class="field"><label for="canPerform">Can you perform the essential duties of this role, with or without reasonable accommodation? <span class="req">*</span></label><select id="canPerform" name="canPerform" required><option value="">Select an answer</option><option value="yes">Yes</option><option value="no">No</option></select></div>
+          <div class="field"><label for="workConstraints">Are there any non-medical scheduling, transportation, or work-location limitations we should consider?</label><textarea id="workConstraints" name="workConstraints" maxlength="1000" placeholder="Optional. Please do not provide medical or disability information."></textarea></div>
+          <button class="contact-submit job-interest-submit" type="submit">Submit Interest</button>
+          <p class="form-status" id="formStatus" role="status" aria-live="polite"></p>
+        </form>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="shared-footer"></div>
+<script src="/assets/shared.js"></script>
+<script>
+  (function () {
+    var form = document.getElementById('jobInterestForm');
+    var status = document.getElementById('formStatus');
+    var button = form.querySelector('button[type="submit"]');
+    var startedAt = Date.now();
+    form.addEventListener('submit', async function (event) {
+      event.preventDefault();
+      if (!form.reportValidity()) return;
+      button.disabled = true;
+      button.textContent = 'Submitting...';
+      status.className = 'form-status';
+      status.textContent = '';
+      var data = Object.fromEntries(new FormData(form).entries());
+      data.elapsedMs = Date.now() - startedAt;
+      try {
+        var response = await fetch('/api/jobs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        var contentType = response.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) {
+          throw new Error('The application form is not available in this static preview.');
+        }
+        var result = await response.json();
+        if (!response.ok || !result.ok) throw new Error(result.error || 'Submission failed.');
+        form.reset();
+        status.className = 'form-status is-success';
+        status.textContent = 'Thank you. Your information has been received.';
+        button.textContent = 'Submitted';
+      } catch (error) {
+        status.className = 'form-status is-error';
+        status.textContent = error.message || 'We could not submit your information. Please try again.';
+        button.disabled = false;
+        button.textContent = 'Submit Interest';
+      }
+    });
+  })();
+</script>
+</body>
+</html>`;
+}
+
+function renderExpiredHtml(projectId) {
+  const projectName = PROJECTS[projectId] || '';
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Position Closed | Montissol Essentials</title>
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/styles.css">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon.png">
+</head>
+<body>
+<div id="shared-header"></div>
+<main>
+  <section class="section" style="min-height:60vh;display:flex;align-items:center;justify-content:center;padding:80px 24px;">
+    <div style="max-width:560px;text-align:center;">
+      <h1 style="margin:0 0 12px 0;">Position Closed</h1>
+      ${projectName ? `<p style="color:#666;margin:0 0 12px 0;">${esc(projectName)}</p>` : ''}
+      <p style="margin:0 0 32px 0;">This job posting is no longer accepting applications. Check our current openings below or contact us directly.</p>
+      <a href="/careers.html" class="btn primary">View Current Openings</a>
+    </div>
+  </section>
+</main>
+<div id="shared-footer"></div>
+<script src="/assets/shared.js"></script>
+</body>
+</html>`;
+}
+
+async function handleJobPage(req, res) {
+  const projectId = String(req.query?.id || '').trim().slice(0, 80);
+  if (!projectId) {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    return res.status(404).send(renderExpiredHtml(''));
+  }
+  const meta = await readJobMeta(projectId);
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  if (!meta) {
+    // Either never posted or 30-day TTL expired. Same friendly page either way.
+    return res.status(410).send(renderExpiredHtml(projectId));
+  }
+  return res.status(200).send(renderJobPageHtml(meta));
+}
+
 export default async function handler(req, res) {
   if (req.method === 'POST') return handleSubmit(req, res);
-  if (req.method === 'GET') return handleAdminList(req, res);
+  if (req.method === 'GET') {
+    if (req.query?.page === '1') return handleJobPage(req, res);
+    return handleAdminList(req, res);
+  }
   return res.status(405).json({ ok: false, error: 'Method Not Allowed' });
 }

@@ -19,5 +19,11 @@
     "api/job-image.js": {
       "includeFiles": "api/_lib/fonts/**"
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/job-:slug.html",
+      "destination": "/api/jobs?id=:slug&page=1"
+    }
+  ]
 }

@@ -8,6 +8,7 @@ import { INSPIRE_POSTS, INSPIRE_KEYS } from './_lib/inspire.js';
 import { publishSocial } from './_lib/publish.js';
 import { signToken } from './_lib/tokens.js';
 import { renderApprovalEmail, sendApprovalEmail } from './_lib/email.js';
+import { saveJobMeta } from './jobs.js';
 
 const DRAFT_TTL_SECONDS = 72 * 60 * 60;
 const DEFAULT_OWNER_EMAIL = 'Info@MontissolEssentials.com';
@@ -17,6 +18,43 @@ function appBaseUrl() {
   return process.env.PUBLIC_BASE_URL || 'https://www.montissolessentials.com';
 }
 
+// Derive the projectId slug from an apply URL like
+// `https://.../job-<slug>.html#interest-form`. Returns null for URLs that
+// aren't in our /job-<slug>.html pattern (e.g. careers.html fallback).
+function projectIdFromApplyUrl(applyUrl) {
+  const m = String(applyUrl || '').match(/\/job-([a-z0-9-]+)\.html/i);
+  return m ? m[1].toLowerCase() : null;
+}
+
+// Derive page metadata (headline, kicker, city/state, copy) from the
+// campaign params. Called by fb-draft handler when a real (non-dry)
+// campaign draft is created so the dynamic /job-<slug>.html page can
+// render for the next 30 days.
+function buildJobMeta(campaign) {
+  const projectId = campaign.projectId || projectIdFromApplyUrl(campaign.applyUrl);
+  if (!projectId) return null;
+  const [city, state] = String(campaign.location || '').split(',').map((s) => s.trim());
+  // Pull "Janitorial Services" / "Custodial Services" out of the project name if present.
+  const headlineMatch = String(campaign.project || '').match(/\b(janitorial|custodial)\s+services\b/i);
+  const headline = headlineMatch ? headlineMatch[0].replace(/\w\S*/g, (w) => w[0].toUpperCase() + w.slice(1).toLowerCase()) : 'Facility Services';
+  const kicker = state ? `Now Recruiting in ${state}` : 'Now Recruiting';
+  const h2 = `Now Hiring: ${campaign.role}`;
+  const paragraph1 = `Montissol Essentials is inviting residents in and around ${city || 'the local area'}${state ? ', ' + state : ''} to express interest in ${campaign.role} opportunities supporting ${campaign.project}.`;
+  const paragraph2 = campaign.description || 'We want to hear from dependable people who take pride in helping keep public spaces clean, safe, and welcoming.';
+  return {
+    projectId,
+    projectName: campaign.project,
+    headline,
+    subheadline: campaign.project,
+    kicker,
+    city: city || '',
+    state: state || '',
+    h2,
+    paragraph1,
+    paragraph2,
+  };
+}
+
 function cleanCampaign(query = {}) {
   const limit = (value, max) => String(value || '').trim().slice(0, max);
 
@@ -24,6 +62,7 @@ function cleanCampaign(query = {}) {
   // role at Hop Brook Lake, linking to the interest form. Uses Job-Post.png.
   if (query.job) {
     return {
+      projectId: 'hop-brook-lake',
       project: 'Janitorial Services - Hop Brook Lake, Middlebury, CT',
       role: limit(query.job, 120),
       location: 'Middlebury, CT',
@@ -34,11 +73,13 @@ function cleanCampaign(query = {}) {
   }
 
   if (!query.project && !query.role && !query.location && !query.apply_url) return null;
+  const applyUrl = limit(query.apply_url, 300) || `${appBaseUrl()}/careers.html`;
   return {
+    projectId: limit(query.project_id, 80) || projectIdFromApplyUrl(applyUrl),
     project: limit(query.project, 120) || 'Not specified',
     role: limit(query.role, 120) || 'Not specified',
     location: limit(query.location, 120) || 'Not specified',
-    applyUrl: limit(query.apply_url, 300) || `${appBaseUrl()}/careers.html`,
+    applyUrl,
     description: limit(query.description, 600) || null,
     isJobPost: true,
   };
@@ -241,6 +282,21 @@ export default async function handler(req, res) {
     }
 
     const draftId = randomUUID();
+
+    // Real campaigns: save the /job-<slug>.html page metadata to Redis
+    // with a 30-day TTL so the dynamic page renderer + interest form
+    // are live for the next month, then auto-expire. Dry runs skip this
+    // (they're for previewing captions, not creating live pages).
+    if (campaign && !dryRun) {
+      const meta = buildJobMeta(campaign);
+      if (meta) {
+        try {
+          await saveJobMeta(meta);
+        } catch (err) {
+          console.error('saveJobMeta failed (non-fatal, draft continues):', err.message);
+        }
+      }
+    }
 
     // Image strategy: campaigns bring their own image; everything else pulls a
     // themed stock photo from Pexels (free API, credit appended to caption below).
