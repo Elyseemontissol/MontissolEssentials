@@ -19,6 +19,7 @@ const PROJECTS = {
   'spo': 'Janitorial Services - Sault Project Office (SPO), St. Marys Falls Canal, Sault Ste. Marie, MI',
   'ks019': 'Custodial Services - KS019 Army Reserve Facility, Manhattan, KS',
   'nws-melbourne': 'Janitorial Services - National Weather Service Office, Melbourne, FL',
+  'hords-creek-lake': 'Park Cleaning Services - Hords Creek Lake, Coleman, TX',
 };
 
 const redis = Redis.fromEnv();
