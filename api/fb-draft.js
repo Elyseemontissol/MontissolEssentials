@@ -243,8 +243,55 @@ async function handleInspire(req, res, dryRun) {
   }
 }
 
+// One-off manual publish, bypassing AI caption generation and the
+// approval-email flow. Bearer-authed with ADMIN_PASSWORD so the owner
+// (or a script they control) can push an exact-text FB/IG post without
+// touching code every time. Body:
+//   { "message": "<full caption>", "image_url": "<optional public url>" }
+// If image_url is omitted the FB post is text-only and IG is skipped
+// (Meta rejects text-only for IG feed posts).
+async function handleRawPost(req, res) {
+  const auth = String(req.headers?.authorization || '').replace(/^Bearer\s+/i, '');
+  const expected = process.env.ADMIN_PASSWORD || '';
+  if (!expected || auth !== expected) {
+    return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  }
+  const body = req.body || {};
+  const message = String(body.message || '').trim();
+  const imageUrl = body.image_url ? String(body.image_url).trim() : null;
+  if (!message) return res.status(400).json({ ok: false, error: 'message is required' });
+  if (message.length > 60000) return res.status(400).json({ ok: false, error: 'message exceeds 60000 chars' });
+
+  try {
+    const result = await publishSocial(message, imageUrl);
+    await appendHistory({
+      ts: new Date().toISOString(),
+      theme: 'manual',
+      status: result.instagramStatus === 'posted' ? 'manual_posted' : 'manual_posted_fb_only',
+      caption: message.slice(0, 500),
+      fb_post_id: result.facebook?.id || result.facebook?.post_id || null,
+      ig_post_id: result.instagram?.id || null,
+      instagram_status: result.instagramStatus,
+      instagram_error: result.instagramError || null,
+    });
+    return res.status(200).json({
+      ok: true,
+      fb_post_id: result.facebook?.id || result.facebook?.post_id || null,
+      ig_post_id: result.instagram?.id || null,
+      instagram_status: result.instagramStatus,
+      instagram_error: result.instagramError || null,
+    });
+  } catch (err) {
+    console.error('raw-post failed:', err);
+    return res.status(502).json({ ok: false, error: err.message });
+  }
+}
+
 export default async function handler(req, res) {
   const dryRun = req.query?.dry === '1';
+  if (req.query?.raw_post === '1') {
+    return handleRawPost(req, res);
+  }
   if (req.query?.type === 'inspire') {
     return handleInspire(req, res, dryRun);
   }
