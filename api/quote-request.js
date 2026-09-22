@@ -144,7 +144,7 @@ async function handleVendorQuestionnaire(req, res) {
   try {
     await resend.emails.send({
       from: 'Montissol Essentials <noreply@montissolessentials.com>',
-      to: ['elyseem@montissolessentials.com'],
+      to: ['info@MontissolEssentials.com'],
       replyTo: contactEmail,
       subject: `[Vendor Questionnaire] ${companyName} — ${contactName}`,
       html: `
@@ -172,7 +172,7 @@ async function handleVendorQuestionnaire(req, res) {
     await resend.emails.send({
       from: 'Montissol Essentials <noreply@montissolessentials.com>',
       to: [contactEmail],
-      replyTo: 'elyseem@montissolessentials.com',
+      replyTo: 'info@MontissolEssentials.com',
       subject: 'Questionnaire received — Montissol Essentials',
       html: `
         <p>Hello ${esc(contactName)},</p>
