@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Aviation Vendor Pre-Qualification Questionnaire | Montissol Essentials</title>
+  <meta name="description" content="Aviation vendor questionnaire for Montissol Essentials' UN air transportation opportunities.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/styles.css">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon.png">
+  <style>
+    .vendor-form { max-width: 820px; margin: 0 auto; }
+    .vendor-form h2 { margin-top: 40px; padding-bottom: 8px; border-bottom: 2px solid #e74d10; }
+    .vendor-form .section-intro { color: #666; font-size: .9rem; margin: 8px 0 20px 0; }
+    .vendor-form .field { margin-bottom: 18px; }
+    .vendor-form label { display: block; font-weight: 600; margin-bottom: 6px; }
+    .vendor-form .req { color: #e74d10; }
+    .vendor-form .helper { display:block; color: #666; font-size: .85rem; margin-top: 4px; font-weight: 400; }
+    .vendor-form input[type="text"],
+    .vendor-form input[type="email"],
+    .vendor-form input[type="tel"],
+    .vendor-form input[type="number"],
+    .vendor-form textarea,
+    .vendor-form select {
+      width: 100%; padding: 10px 12px; border: 1px solid #ccc; border-radius: 6px;
+      font: inherit; box-sizing: border-box;
+    }
+    .vendor-form textarea { min-height: 96px; resize: vertical; }
+    .vendor-form .choices { display: flex; flex-wrap: wrap; gap: 14px 24px; margin-top: 4px; }
+    .vendor-form .choices label { font-weight: 400; display: flex; align-items: center; gap: 8px; margin-bottom: 0; }
+    .vendor-form .callout { background: #fff5f0; border-left: 3px solid #e74d10; padding: 14px 18px; margin: 12px 0 24px 0; border-radius: 4px; font-size: .9rem; }
+    .vendor-form .form-actions { margin-top: 32px; text-align: center; }
+    .vendor-form .submit-btn { background: #e74d10; color: #fff; border: 0; border-radius: 6px; padding: 14px 40px; font-size: 1rem; font-weight: 700; cursor: pointer; }
+    .vendor-form .submit-btn:disabled { opacity: .6; cursor: not-allowed; }
+    .vendor-form .form-status { margin-top: 16px; padding: 12px 16px; border-radius: 6px; display: none; }
+    .vendor-form .form-status.is-success { display: block; background: #e6f7ec; color: #167c3e; border: 1px solid #b4e2c4; }
+    .vendor-form .form-status.is-error { display: block; background: #fde7e7; color: #a02020; border: 1px solid #f3b0b0; }
+    .vendor-form .form-honeypot { position: absolute; left: -9999px; height: 0; width: 0; overflow: hidden; }
+  </style>
+</head>
+<body>
+<div id="shared-header"></div>
+
+<main>
+  <section class="section">
+    <div class="container vendor-form">
+      <div class="mini-kicker"><span class="dot"></span><span>Vendor Pre-Qualification</span></div>
+      <h1>Aviation Vendor Pre-Qualification Questionnaire</h1>
+      <p>Montissol Essentials LLC is pursuing a United Nations air-transportation opportunity supporting operations into Port-au-Prince, Haiti (PAP). We are seeking pre-qualified air operators willing to provide services as a subcontractor. Please complete the questionnaire below; your responses will be sent directly to our team as a PDF.</p>
+
+      <div class="callout">
+        <strong>Field marked <span class="req">*</span> are required.</strong> If a question is not applicable, enter "N/A".
+      </div>
+
+      <form id="vendorForm" novalidate>
+        <input class="form-honeypot" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+
+        <h2>Vendor Information</h2>
+        <p class="section-intro">Tell us who you are so we can follow up.</p>
+
+        <div class="field">
+          <label for="companyName">Company Name <span class="req">*</span></label>
+          <input id="companyName" name="companyName" type="text" maxlength="200" required>
+        </div>
+        <div class="field">
+          <label for="contactName">Focal Point — Full Name <span class="req">*</span></label>
+          <input id="contactName" name="contactName" type="text" maxlength="120" required>
+        </div>
+        <div class="field">
+          <label for="contactEmail">Focal Point — Email <span class="req">*</span></label>
+          <input id="contactEmail" name="contactEmail" type="email" maxlength="180" required>
+        </div>
+        <div class="field">
+          <label for="contactPhone">Focal Point — Phone <span class="req">*</span></label>
+          <input id="contactPhone" name="contactPhone" type="tel" maxlength="40" required>
+        </div>
+
+        <h2>UN Pre-Qualification Status</h2>
+
+        <div class="field">
+          <label>Are you a pre-qualified Air Operator with the UN Secretariat? <span class="req">*</span>
+            <span class="helper">Details at <a href="https://www.un.org/Depts/ptd/aviation" target="_blank" rel="noopener">https://www.un.org/Depts/ptd/aviation</a>. If not pre-qualified, you are encouraged to initiate the process.</span>
+          </label>
+          <div class="choices">
+            <label><input type="radio" name="q3_unPreQualified" value="Yes" required> Yes</label>
+            <label><input type="radio" name="q3_unPreQualified" value="No"> No</label>
+            <label><input type="radio" name="q3_unPreQualified" value="In Progress"> In Progress</label>
+          </div>
+        </div>
+
+        <h2>Aircraft &amp; Fleet</h2>
+
+        <div class="field">
+          <label for="q5_aircraftDetails">Aircraft details comparable to the following <span class="req">*</span>
+            <span class="helper">For each type available, provide: Aircraft type, Seating capacity, Year of manufacture, Registration country.</span>
+          </label>
+          <textarea id="q5_aircraftDetails" name="q5_aircraftDetails" required placeholder="(i) Airbus A330 series&#10;(ii) Boeing 767 or 787 series&#10;(iii) Boeing 737 series&#10;(iv) Airbus A320 series&#10;(v) Hercules C-130 or L-382 (Lockheed L-100)&#10;(vi) Other equivalent aircraft"></textarea>
+        </div>
+
+        <div class="field">
+          <label>Are the aircraft <span class="req">*</span>
+            <span class="helper">Select all that apply.</span>
+          </label>
+          <div class="choices">
+            <label><input type="checkbox" name="q6_ownership" value="Owned"> Owned</label>
+            <label><input type="checkbox" name="q6_ownership" value="Leased"> Leased</label>
+            <label><input type="checkbox" name="q6_ownership" value="Subcontracted"> Subcontracted</label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="q11_fleetList">List of aircraft (Fixed-Wing Jet/Propeller) available <span class="req">*</span>
+            <span class="helper">Indicate how many aircraft could be available for the next 18 months.</span>
+          </label>
+          <textarea id="q11_fleetList" name="q11_fleetList" required></textarea>
+        </div>
+
+        <div class="field">
+          <label for="q12_paxCapacity">Passenger capacity per aircraft <span class="req">*</span>
+            <span class="helper">Assume one adult passenger with an entitlement of up to 100 kg of personal luggage.</span>
+          </label>
+          <input id="q12_paxCapacity" name="q12_paxCapacity" type="text" maxlength="200" required>
+        </div>
+
+        <h2>Certifications, Safety &amp; Insurance</h2>
+
+        <div class="field">
+          <label for="q7_aoc">AOC number and issuing Civil Aviation Authority <span class="req">*</span></label>
+          <input id="q7_aoc" name="q7_aoc" type="text" maxlength="300" required>
+        </div>
+
+        <div class="field">
+          <label>Is your AOC endorsed for the transportation of Dangerous Goods? <span class="req">*</span></label>
+          <div class="choices">
+            <label><input type="radio" name="q8_dangerousGoods" value="Yes" required> Yes</label>
+            <label><input type="radio" name="q8_dangerousGoods" value="No"> No</label>
+            <label><input type="radio" name="q8_dangerousGoods" value="Other"> Other</label>
+          </div>
+        </div>
+        <div class="field">
+          <label for="q8_dangerousGoodsNote">If "Other" (e.g. endorsement in progress), please provide the expected completion timeline or details</label>
+          <textarea id="q8_dangerousGoodsNote" name="q8_dangerousGoodsNote"></textarea>
+        </div>
+
+        <div class="field">
+          <label>Do you confirm you have no safety concerns from ICAO? <span class="req">*</span></label>
+          <div class="choices">
+            <label><input type="radio" name="q9_icao" value="No safety concerns" required> No safety concerns</label>
+            <label><input type="radio" name="q9_icao" value="Yes, there are concerns"> Yes, there are concerns</label>
+            <label><input type="radio" name="q9_icao" value="Other"> Other</label>
+          </div>
+        </div>
+        <div class="field">
+          <label for="q9_icaoNote">If "Yes" or "Other", please provide details</label>
+          <textarea id="q9_icaoNote" name="q9_icaoNote"></textarea>
+        </div>
+
+        <div class="field">
+          <label>Can you comply with UN insurance requirements? <span class="req">*</span>
+            <span class="helper">Requirements include: (i) Comprehensive third-party general aviation liability, min. US$50,000,000 per occurrence; (ii) War-risk liability, min. US$50,000,000 (AVN 52D/52E); (iii) All-risk hull insurance; (iv) Hull war risks &amp; allied perils (LSW555D), covering hijacking &amp; confiscation for the operations area; (v) Workers' compensation or equivalent.</span>
+          </label>
+          <div class="choices">
+            <label><input type="radio" name="q13_insurance" value="Yes" required> Yes</label>
+            <label><input type="radio" name="q13_insurance" value="No"> No</label>
+            <label><input type="radio" name="q13_insurance" value="Other"> Other</label>
+          </div>
+        </div>
+        <div class="field">
+          <label for="q13_insuranceNote">If "No" or "Other", please explain</label>
+          <textarea id="q13_insuranceNote" name="q13_insuranceNote"></textarea>
+        </div>
+
+        <h2>Operations</h2>
+
+        <div class="field">
+          <label for="q10_mob">Main Operating Base (MOB) location <span class="req">*</span></label>
+          <input id="q10_mob" name="q10_mob" type="text" maxlength="200" required>
+        </div>
+
+        <div class="field">
+          <label>Are you currently authorized and willing to operate passenger flights into Port-au-Prince, Haiti (PAP)? <span class="req">*</span></label>
+          <div class="choices">
+            <label><input type="radio" name="q14_pap" value="Yes" required> Yes</label>
+            <label><input type="radio" name="q14_pap" value="No"> No</label>
+            <label><input type="radio" name="q14_pap" value="Maybe"> Maybe</label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="q15_papApprovals">If not currently operating into PAP, what approvals or conditions would be required?</label>
+          <textarea id="q15_papApprovals" name="q15_papApprovals"></textarea>
+        </div>
+
+        <div class="field">
+          <label>Have you operated into PAP within the last 24 months? <span class="req">*</span></label>
+          <div class="choices">
+            <label><input type="radio" name="q16_papRecent" value="Yes" required> Yes</label>
+            <label><input type="radio" name="q16_papRecent" value="No"> No</label>
+          </div>
+        </div>
+        <div class="field">
+          <label for="q16_papRecentDetails">If "Yes", please provide details</label>
+          <textarea id="q16_papRecentDetails" name="q16_papRecentDetails"></textarea>
+        </div>
+
+        <div class="field">
+          <label>Which of the following operations can you support? <span class="helper">Select all that apply.</span></label>
+          <div class="choices">
+            <label><input type="checkbox" name="q17_routes" value="Central American countries to PAP"> Central American countries to PAP</label>
+            <label><input type="checkbox" name="q17_routes" value="Barahona, Dominican Republic (BRX) to PAP"> Barahona, Dominican Republic (BRX) to PAP</label>
+            <label><input type="checkbox" name="q17_routes" value="Cap-Haïtien, Haiti (CAP) to PAP"> Cap-Haïtien, Haiti (CAP) to PAP</label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>If your Civil Aviation Authority currently prohibits operation in Port-au-Prince, will you be exempted and cleared to operate there? <span class="req">*</span></label>
+          <div class="choices">
+            <label><input type="radio" name="q21_caaExemption" value="Yes" required> Yes</label>
+            <label><input type="radio" name="q21_caaExemption" value="No"> No</label>
+            <label><input type="radio" name="q21_caaExemption" value="N/A"> N/A (no prohibition)</label>
+          </div>
+        </div>
+
+        <h2>Availability &amp; Cost</h2>
+
+        <div class="field">
+          <label>What is your typical response time to mobilize aircraft after contract award or tasking? <span class="req">*</span></label>
+          <div class="choices">
+            <label><input type="radio" name="q18_responseTime" value="3 days" required> 3 days</label>
+            <label><input type="radio" name="q18_responseTime" value="5 days"> 5 days</label>
+            <label><input type="radio" name="q18_responseTime" value="Other"> Other</label>
+          </div>
+        </div>
+        <div class="field">
+          <label for="q18_responseTimeOther">If "Other", please specify</label>
+          <input id="q18_responseTimeOther" name="q18_responseTimeOther" type="text" maxlength="120">
+        </div>
+
+        <div class="field">
+          <label for="q19_unRequirements">Anything the UN would need to provide to ensure your commitment and availability, if contracted?</label>
+          <textarea id="q19_unRequirements" name="q19_unRequirements"></textarea>
+        </div>
+
+        <div class="field">
+          <label for="q20_flightHourCost">Flight Hour Cost <span class="req">*</span>
+            <span class="helper">Include all operating costs excluding fuel: insurance, embarking fees, en route/overflight/landing clearances, airport/handling charges, oil, maintenance, accommodation, crew prepositioning/visas, subsistence, ground transportation of crew. Exclude any charges the UN is exempt from under Section 7 of the Convention on the Privileges and Immunities of the UN, and Article 17 of Annex A, General Conditions.</span>
+          </label>
+          <textarea id="q20_flightHourCost" name="q20_flightHourCost" required></textarea>
+        </div>
+
+        <h2>Additional Notes</h2>
+
+        <div class="field">
+          <label for="q22_additional">Any additional information you'd like to share about your services or ability to perform</label>
+          <textarea id="q22_additional" name="q22_additional"></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button class="submit-btn" type="submit">Submit Questionnaire</button>
+          <p class="form-status" id="formStatus" role="status" aria-live="polite"></p>
+        </div>
+      </form>
+    </div>
+  </section>
+</main>
+
+<div id="shared-footer"></div>
+<script src="assets/shared.js"></script>
+<script>
+  (function () {
+    var form = document.getElementById('vendorForm');
+    var status = document.getElementById('formStatus');
+    var button = form.querySelector('button[type="submit"]');
+    var startedAt = Date.now();
+
+    function collectFormData(form) {
+      var data = {};
+      var seenMulti = {};
+      var elements = form.querySelectorAll('input, textarea, select');
+      elements.forEach(function (el) {
+        if (!el.name) return;
+        if (el.type === 'checkbox') {
+          if (!Array.isArray(data[el.name])) { data[el.name] = []; seenMulti[el.name] = true; }
+          if (el.checked) data[el.name].push(el.value);
+        } else if (el.type === 'radio') {
+          if (el.checked) data[el.name] = el.value;
+        } else {
+          data[el.name] = el.value;
+        }
+      });
+      // Preserve empty-array for checkbox groups where nothing was checked
+      Object.keys(seenMulti).forEach(function (k) { if (!data[k]) data[k] = []; });
+      return data;
+    }
+
+    form.addEventListener('submit', async function (event) {
+      event.preventDefault();
+      if (!form.reportValidity()) return;
+
+      button.disabled = true;
+      button.textContent = 'Submitting…';
+      status.className = 'form-status';
+      status.textContent = '';
+
+      var data = collectFormData(form);
+      data.elapsedMs = Date.now() - startedAt;
+
+      try {
+        var response = await fetch('/api/quote-request?type=vendor-questionnaire', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+        var contentType = response.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) {
+          throw new Error('The questionnaire is not available in this static preview.');
+        }
+        var result = await response.json();
+        if (!response.ok || !result.ok) throw new Error(result.error || 'Submission failed.');
+
+        form.reset();
+        status.className = 'form-status is-success';
+        status.textContent = 'Thank you. Your questionnaire has been submitted. Montissol Essentials will be in touch.';
+        button.textContent = 'Submitted';
+      } catch (error) {
+        status.className = 'form-status is-error';
+        status.textContent = error.message || 'We could not submit your questionnaire. Please try again.';
+        button.disabled = false;
+        button.textContent = 'Submit Questionnaire';
+      }
+    });
+  })();
+</script>
+</body>
+</html>
