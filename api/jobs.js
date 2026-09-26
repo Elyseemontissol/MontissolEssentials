@@ -690,7 +690,9 @@ async function handleJobDirectory(req, res) {
 
 export default async function handler(req, res) {
   if (req.method === 'POST') return handleSubmit(req, res);
-  if (req.method === 'GET') {
+  // Treat HEAD like GET so crawlers / uptime pings don't see spurious
+  // 405s. The response.send() body is discarded by the runtime for HEAD.
+  if (req.method === 'GET' || req.method === 'HEAD') {
     if (req.query?.directory === '1') return handleJobDirectory(req, res);
     if (req.query?.page === '1') return handleJobPage(req, res);
     return handleAdminList(req, res);
