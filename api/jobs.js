@@ -479,6 +479,45 @@ async function handleAdminList(req, res) {
   }
 }
 
+// POST /api/jobs?admin=purge-tests (admin-authed) → walks every
+// jobs:candidates:<id> list, drops entries without a resumeFilename
+// (i.e. smoke tests / bot noise), and RPUSHes the survivors back in
+// their original order. Returns a per-project breakdown.
+async function handleAdminPurgeTests(req, res) {
+  if (!authorized(req)) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  try {
+    const projectIds = await redis.smembers('jobs:projects');
+    let totalPurged = 0;
+    let totalKept = 0;
+    const perProject = [];
+    for (const projectId of projectIds) {
+      const raw = await redis.lrange(`jobs:candidates:${projectId}`, 0, 999);
+      const parsed = raw.map((entry) => {
+        try { return typeof entry === 'string' ? JSON.parse(entry) : entry; } catch { return null; }
+      }).filter(Boolean);
+      const kept = parsed.filter((c) => c && c.resumeFilename);
+      const purged = parsed.length - kept.length;
+      if (purged > 0) {
+        // Rewrite atomically: delete the list and rpush the survivors in
+        // their original order (LRANGE 0..N returns newest→oldest; rpush
+        // preserves that same order at indices 0..N).
+        await redis.del(`jobs:candidates:${projectId}`);
+        if (kept.length > 0) {
+          const serialized = kept.map((c) => JSON.stringify(c));
+          await redis.rpush(`jobs:candidates:${projectId}`, ...serialized);
+        }
+        perProject.push({ id: projectId, purged, kept: kept.length });
+      }
+      totalPurged += purged;
+      totalKept += kept.length;
+    }
+    return res.status(200).json({ ok: true, totalPurged, totalKept, perProject });
+  } catch (error) {
+    console.error('Admin purge tests error:', error);
+    return res.status(500).json({ ok: false, error: 'Could not purge test submissions.' });
+  }
+}
+
 // ────────────────────────────────────────────────────────────────────────
 // Postings admin: list / create / update / close job listings
 // ────────────────────────────────────────────────────────────────────────
@@ -1009,6 +1048,7 @@ async function handleJobDirectory(req, res) {
 export default async function handler(req, res) {
   if (req.method === 'POST') {
     if (req.query?.admin === 'parse-pws') return handleAdminParsePws(req, res);
+    if (req.query?.admin === 'purge-tests') return handleAdminPurgeTests(req, res);
     return handleSubmit(req, res);
   }
   if (req.method === 'PUT') return handleAdminSavePosting(req, res);

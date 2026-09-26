@@ -67,6 +67,7 @@
     <div class="topbar">
       <h1 style="margin:0;">Hiring Candidates</h1>
       <div>
+        <button class="secondary" id="purgeTestsButton" type="button" title="Permanently delete every candidate entry that has no resume attached">Purge test submissions</button>
         <a class="button secondary" href="/">Home</a>
         <button class="secondary" id="signOutButton" type="button">Sign Out</button>
       </div>
@@ -213,6 +214,28 @@
     document.getElementById('signOutButton').addEventListener('click', function () {
       sessionStorage.removeItem('me_admin_token');
       location.reload();
+    });
+    document.getElementById('purgeTestsButton').addEventListener('click', async function () {
+      var btn = this;
+      if (!confirm('Permanently delete every candidate entry that has NO resume attached?\n\nThis removes smoke-test submissions from Redis. Real applicants (with a resume) are kept. This cannot be undone.')) return;
+      btn.disabled = true;
+      var originalLabel = btn.textContent;
+      btn.textContent = 'Purging…';
+      try {
+        var res = await fetch('/api/jobs?admin=purge-tests', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token },
+        });
+        var json = await res.json();
+        if (!res.ok || !json.ok) throw new Error(json.error || 'Purge failed (' + res.status + ')');
+        alert('Purge complete.\n\nRemoved: ' + json.totalPurged + ' test submission' + (json.totalPurged === 1 ? '' : 's') + '\nKept: ' + json.totalKept + ' real applicant' + (json.totalKept === 1 ? '' : 's'));
+        await load(token);
+      } catch (err) {
+        alert('Error: ' + (err.message || 'Purge failed.'));
+      } finally {
+        btn.disabled = false;
+        btn.textContent = originalLabel;
+      }
     });
     filter.addEventListener('change', renderCandidates);
     if (token) load(token).catch(function () { sessionStorage.removeItem('me_admin_token'); });
