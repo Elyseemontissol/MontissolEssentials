@@ -359,7 +359,7 @@ function jobPageJsonLd(meta) {
     applicantLocationRequirements: { '@type': 'Country', name: 'US' },
     industry: 'Facility Services / Janitorial',
     directApply: true,
-    url: `https://www.montissolessentials.com/job-${projectId}.html`,
+    url: `https://www.montissolessentials.com/job-${projectId}`,
   };
 }
 
@@ -380,7 +380,7 @@ function renderJobPageHtml(meta) {
   <meta property="og:title" content="${esc(headline)} - ${esc(city)}, ${esc(state)}">
   <meta property="og:description" content="${esc(subheadline)}">
   <meta property="og:image" content="https://www.montissolessentials.com/assets/Social/Job-Post.png">
-  <meta property="og:url" content="https://www.montissolessentials.com/job-${esc(projectId)}.html">
+  <meta property="og:url" content="https://www.montissolessentials.com/job-${esc(projectId)}">
   <meta property="og:type" content="website">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

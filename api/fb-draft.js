@@ -22,7 +22,7 @@ function appBaseUrl() {
 // `https://.../job-<slug>.html#interest-form`. Returns null for URLs that
 // aren't in our /job-<slug>.html pattern (e.g. /careers fallback).
 function projectIdFromApplyUrl(applyUrl) {
-  const m = String(applyUrl || '').match(/\/job-([a-z0-9-]+)\.html/i);
+  const m = String(applyUrl || '').match(/\/job-([a-z0-9-]+)(?:\.html)?(?:[#?]|$)/i);
   return m ? m[1].toLowerCase() : null;
 }
 

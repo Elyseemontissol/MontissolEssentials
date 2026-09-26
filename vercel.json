@@ -1,6 +1,8 @@
 {
   "buildCommand": "",
   "outputDirectory": ".",
+  "cleanUrls": true,
+  "trailingSlash": false,
   "crons": [
     {
       "path": "/api/sam-scraper",
@@ -22,15 +24,11 @@
   },
   "rewrites": [
     {
-      "source": "/job-:slug.html",
+      "source": "/job-:slug",
       "destination": "/api/jobs?id=:slug&page=1"
     },
     {
       "source": "/careers",
-      "destination": "/api/jobs?directory=1"
-    },
-    {
-      "source": "/careers.html",
       "destination": "/api/jobs?directory=1"
     }
   ],
