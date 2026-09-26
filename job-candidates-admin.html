@@ -134,17 +134,24 @@
     function renderCandidates() {
       var project = projects.find(function (item) { return item.id === filter.value; }) || projects[0];
       if (!project) {
-        list.innerHTML = '<p class="empty">No candidate submissions yet.</p>';
+        list.innerHTML = '<p class="empty">No candidates with a resume yet. Test submissions without a resume are hidden — a real applicant\'s file is required to appear here.</p>';
         return;
       }
       list.innerHTML = '<h2>' + escapeHtml(project.name) + '</h2>' + project.candidates.map(function (candidate) {
         var phoneLink = String(candidate.phone || '').replace(/[^\d+]/g, '');
+        var resumeSizeKb = candidate.resumeSize ? Math.max(1, Math.round(candidate.resumeSize / 1024)) : null;
+        var resumeLine = candidate.resumeFilename
+          ? '<div class="candidate-meta">📎 Resume attached: <strong>' + escapeHtml(candidate.resumeFilename) + '</strong>' +
+            (resumeSizeKb ? ' <span style="color:#888;">(' + resumeSizeKb + ' KB)</span>' : '') +
+            ' <span style="color:#888;">— emailed to elyseem@montissolessentials.com when submitted</span></div>'
+          : '';
         return '<article class="candidate"><div class="candidate-head"><div><h2>' +
           escapeHtml(candidate.name) + '</h2><div class="candidate-meta">Submitted ' +
           escapeHtml(formatDate(candidate.submittedAt)) + '</div></div></div>' +
           '<div class="candidate-contact"><a href="mailto:' + encodeURIComponent(candidate.email) + '">' +
           escapeHtml(candidate.email) + '</a><a href="tel:' + escapeHtml(phoneLink) + '">' +
           escapeHtml(candidate.phone) + '</a></div>' +
+          resumeLine +
           '<div class="candidate-meta">Can perform essential duties: <strong>' +
           escapeHtml(candidate.canPerform === 'yes' ? 'Yes' : (candidate.canPerform === 'no' ? 'No' : 'Not recorded')) + '</strong></div>' +
           (candidate.workConstraints ? '<p><strong>Non-medical constraints</strong></p><div class="experience">' +

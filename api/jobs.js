@@ -452,20 +452,27 @@ async function handleAdminList(req, res) {
   try {
     const projectsMap = await getAllProjects();
     const projectIds = await redis.smembers('jobs:projects');
+    // Real applicants always attach a resume — the job page's file input
+    // is required in practice. Smoke tests / bot noise don't. So we only
+    // surface entries with a resumeFilename, and hide projects whose
+    // entire list was smoke tests. Set ?includeAll=1 to bypass the filter.
+    const includeAll = req.query?.includeAll === '1' || req.query?.includeAll === 'true';
     const projects = await Promise.all(projectIds.map(async (projectId) => {
       const raw = await redis.lrange(`jobs:candidates:${projectId}`, 0, 999);
-      const candidates = raw.map((entry) => {
+      const parsed = raw.map((entry) => {
         if (typeof entry !== 'string') return entry;
         try { return JSON.parse(entry); } catch { return null; }
       }).filter(Boolean);
+      const candidates = includeAll ? parsed : parsed.filter((c) => c && c.resumeFilename);
       return {
         id: projectId,
-        name: candidates[0]?.project || projectsMap[projectId] || projectId,
+        name: parsed[0]?.project || projectsMap[projectId] || projectId,
         candidates,
       };
     }));
-    projects.sort((a, b) => a.name.localeCompare(b.name));
-    return res.status(200).json({ ok: true, projects });
+    const visible = projects.filter((p) => p.candidates.length > 0);
+    visible.sort((a, b) => a.name.localeCompare(b.name));
+    return res.status(200).json({ ok: true, projects: visible });
   } catch (error) {
     console.error('Candidate dashboard error:', error);
     return res.status(500).json({ ok: false, error: 'Could not load candidates.' });
