@@ -10,6 +10,7 @@
     "@vercel/blob": "^0.27.0",
     "bcryptjs": "^2.4.3",
     "busboy": "^1.6.0",
+    "mammoth": "^1.12.3",
     "openai": "^4.80.0",
     "pdfkit": "^0.20.2",
     "resend": "^4.0.0",

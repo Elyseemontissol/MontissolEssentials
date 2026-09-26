@@ -15,6 +15,7 @@ import { Redis } from '@upstash/redis';
 import { randomUUID, timingSafeEqual } from 'node:crypto';
 import Busboy from 'busboy';
 import Anthropic from '@anthropic-ai/sdk';
+import mammoth from 'mammoth';
 
 // Vercel's Node runtime auto-parses JSON bodies for us (req.body arrives
 // as an object). Multipart/form-data is NOT auto-parsed — req arrives as
@@ -38,9 +39,13 @@ const RESUME_ALLOWED_MIME = new Set([
   'text/plain',
 ]);
 
-// PWS upload (admin auto-fill) — PDF only, capped just below Vercel's
-// ~4.5 MB serverless request body limit.
+// PWS/SOW upload (admin auto-fill) — PDF or DOCX, capped just below
+// Vercel's ~4.5 MB serverless request body limit.
 const PWS_MAX_BYTES = 4 * 1024 * 1024;
+const PWS_ALLOWED_MIME = new Set([
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+]);
 
 const redis = Redis.fromEnv();
 
@@ -191,8 +196,8 @@ function parseMultipartBody(req) {
   });
 }
 
-// Same shape as parseMultipartBody(), but for a single PDF field named
-// `pws`. Kept separate so the resume path stays untouched.
+// Same shape as parseMultipartBody(), but for a single PDF or DOCX
+// field named `pws`. Kept separate so the resume path stays untouched.
 function parsePwsUpload(req) {
   return new Promise((resolve, reject) => {
     let bb;
@@ -203,8 +208,9 @@ function parsePwsUpload(req) {
     let sizeLimitHit = false;
     let typeRejected = null;
     bb.on('file', (name, stream, info) => {
-      if (name !== 'pws' || (info.mimeType && info.mimeType !== 'application/pdf')) {
-        if (info.mimeType && info.mimeType !== 'application/pdf') typeRejected = info.mimeType;
+      const mime = info.mimeType || '';
+      if (name !== 'pws' || (mime && !PWS_ALLOWED_MIME.has(mime))) {
+        if (mime && !PWS_ALLOWED_MIME.has(mime)) typeRejected = mime;
         stream.resume();
         return;
       }
@@ -213,15 +219,15 @@ function parsePwsUpload(req) {
       stream.on('limit', () => { sizeLimitHit = true; });
       stream.on('end', () => {
         if (!sizeLimitHit && !typeRejected) {
-          pws = { buffer: Buffer.concat(chunks), filename: info.filename || 'pws.pdf' };
+          pws = { buffer: Buffer.concat(chunks), filename: info.filename || 'pws', mimeType: mime };
         }
       });
     });
     bb.on('error', reject);
     bb.on('close', () => {
-      if (sizeLimitHit) return reject(new Error('PWS file is larger than 4 MB. Try a smaller PDF or extract the relevant pages.'));
-      if (typeRejected) return reject(new Error(`PWS file type not accepted (${typeRejected}). Upload a PDF.`));
-      if (!pws) return reject(new Error('No PDF file was received.'));
+      if (sizeLimitHit) return reject(new Error('File is larger than 4 MB. Try a smaller file or extract the relevant pages.'));
+      if (typeRejected) return reject(new Error(`File type not accepted (${typeRejected}). Upload a PDF or DOCX.`));
+      if (!pws) return reject(new Error('No PDF or DOCX file was received.'));
       resolve(pws);
     });
     req.pipe(bb);
@@ -244,7 +250,7 @@ async function handleAdminParsePws(req, res) {
   }
 
   const instruction = [
-    'You are extracting a job posting draft from a government Performance Work Statement (PWS) PDF for Montissol Essentials LLC, a facility-services contractor.',
+    'You are extracting a job posting draft from a government Performance Work Statement (PWS) or Statement of Work (SOW) document for Montissol Essentials LLC, a facility-services contractor.',
     '',
     'Return ONLY a JSON object with these exact keys (no prose, no code fences):',
     '{',
@@ -255,32 +261,52 @@ async function handleAdminParsePws(req, res) {
     '  "subheadline": "<Facility name, City, ST>",',
     '  "city": "<City>",',
     '  "state": "<Two-letter state code>",',
-    '  "streetAddress": "<Street address if the PWS provides one, else empty string>",',
+    '  "streetAddress": "<Street address if the document provides one, else empty string>",',
     '  "postalCode": "<ZIP if provided, else empty string>",',
     '  "h2": "<One-line section heading welcoming applicants>",',
-    '  "paragraph1": "<2-4 sentence description of the role/facility drawn from the PWS. Plain prose, no bullets.>",',
-    '  "paragraph2": "<2-4 sentence paragraph about required qualifications / schedule / who should apply, drawn from the PWS. Plain prose, no bullets. Empty string if nothing applicable.>"',
+    '  "paragraph1": "<2-4 sentence description of the role/facility drawn from the document. Plain prose, no bullets.>",',
+    '  "paragraph2": "<2-4 sentence paragraph about required qualifications / schedule / who should apply, drawn from the document. Plain prose, no bullets. Empty string if nothing applicable.>"',
     '}',
     '',
     'Rules:',
-    '- Only use facts from the PWS. Do NOT invent salaries, benefits, or dates.',
+    '- Only use facts from the document. Do NOT invent salaries, benefits, or dates.',
     '- projectId: pick something short and memorable from the facility name (e.g. "albany-va-parking", "spo", "hords-creek-lake"). No spaces.',
     '- Write in the voice of the hiring company (Montissol Essentials), addressed to prospective employees.',
     '- Never include phone numbers, emails, URLs, or solicitation numbers in the paragraphs.',
   ].join('\n');
+
+  // PDF → send as base64 document (Anthropic native support).
+  // DOCX → extract raw text with mammoth, send as text (Anthropic has no
+  // native DOCX type). Either way the same instruction applies.
+  let content;
+  if (pws.mimeType === 'application/pdf') {
+    content = [
+      { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: pws.buffer.toString('base64') } },
+      { type: 'text', text: instruction },
+    ];
+  } else {
+    let docxText = '';
+    try {
+      const result = await mammoth.extractRawText({ buffer: pws.buffer });
+      docxText = (result?.value || '').trim();
+    } catch (err) {
+      console.error('DOCX extract failed:', err);
+      return res.status(400).json({ ok: false, error: 'Could not read that DOCX file. It may be password-protected or corrupted.' });
+    }
+    if (!docxText) {
+      return res.status(400).json({ ok: false, error: 'The DOCX file appears to be empty.' });
+    }
+    content = [
+      { type: 'text', text: `Below is the full text of a Performance Work Statement / Statement of Work extracted from a DOCX file. Use it as your source document.\n\n---\n${docxText.slice(0, 60000)}\n---\n\n${instruction}` },
+    ];
+  }
 
   try {
     const client = new Anthropic({ apiKey });
     const resp = await client.messages.create({
       model: 'claude-sonnet-4-5',
       max_tokens: 1500,
-      messages: [{
-        role: 'user',
-        content: [
-          { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: pws.buffer.toString('base64') } },
-          { type: 'text', text: instruction },
-        ],
-      }],
+      messages: [{ role: 'user', content }],
     });
     const text = resp.content.map((b) => (b.type === 'text' ? b.text : '')).join('').trim();
     let parsed;

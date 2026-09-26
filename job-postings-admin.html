@@ -91,12 +91,12 @@
         <div id="pwsBox" class="full" style="margin-bottom:18px; padding:16px; border:1px dashed var(--border); border-radius:8px; background:rgba(231,77,16,.05);">
           <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
             <div style="flex:1; min-width:220px;">
-              <div style="font-weight:700; margin-bottom:2px;">📄 Auto-fill from PWS</div>
-              <div class="field-hint" style="margin:0;">Upload a Performance Work Statement PDF (up to 4 MB) and Claude will draft every field below. You can edit before saving.</div>
+              <div style="font-weight:700; margin-bottom:2px;">📄 Auto-fill from PWS or SOW</div>
+              <div class="field-hint" style="margin:0;">Upload a Performance Work Statement or Statement of Work — PDF or DOCX, up to 4 MB — and Claude will draft every field below. You can edit before saving.</div>
             </div>
             <div style="display:flex; gap:8px; align-items:center;">
-              <input type="file" id="pwsFile" accept="application/pdf" style="display:none;">
-              <button type="button" id="pwsPickBtn" class="secondary">Choose PDF…</button>
+              <input type="file" id="pwsFile" accept="application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.pdf,.docx" style="display:none;">
+              <button type="button" id="pwsPickBtn" class="secondary">Choose file…</button>
               <button type="button" id="pwsUploadBtn" disabled>Extract fields</button>
             </div>
           </div>
@@ -422,12 +422,14 @@
   pwsFile.addEventListener('change', function () {
     var f = pwsFile.files && pwsFile.files[0];
     if (!f) { pwsUploadBtn.disabled = true; pwsStatus.textContent = ''; return; }
-    if (f.type && f.type !== 'application/pdf') {
-      pwsStatus.textContent = 'That doesn\'t look like a PDF. Please choose a PDF file.';
+    var okTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    var okExt = /\.(pdf|docx)$/i.test(f.name);
+    if (f.type && okTypes.indexOf(f.type) === -1 && !okExt) {
+      pwsStatus.textContent = 'That doesn\'t look like a PDF or DOCX. Please choose a PDF or a modern Word (.docx) file.';
       pwsUploadBtn.disabled = true; return;
     }
     if (f.size > 4 * 1024 * 1024) {
-      pwsStatus.textContent = 'PDF is over 4 MB. Try trimming pages or use a smaller file.';
+      pwsStatus.textContent = 'File is over 4 MB. Try trimming pages or use a smaller file.';
       pwsUploadBtn.disabled = true; return;
     }
     pwsStatus.textContent = 'Selected: ' + f.name + ' (' + Math.round(f.size / 1024) + ' KB). Click "Extract fields" to auto-fill.';
