@@ -88,6 +88,20 @@
     </div>
     <form id="editForm">
       <div class="dialog-body">
+        <div id="pwsBox" class="full" style="margin-bottom:18px; padding:16px; border:1px dashed var(--border); border-radius:8px; background:rgba(231,77,16,.05);">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+            <div style="flex:1; min-width:220px;">
+              <div style="font-weight:700; margin-bottom:2px;">📄 Auto-fill from PWS</div>
+              <div class="field-hint" style="margin:0;">Upload a Performance Work Statement PDF (up to 4 MB) and Claude will draft every field below. You can edit before saving.</div>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <input type="file" id="pwsFile" accept="application/pdf" style="display:none;">
+              <button type="button" id="pwsPickBtn" class="secondary">Choose PDF…</button>
+              <button type="button" id="pwsUploadBtn" disabled>Extract fields</button>
+            </div>
+          </div>
+          <p id="pwsStatus" class="field-hint" style="margin-top:10px;"></p>
+        </div>
         <div class="grid-fields">
           <div class="full">
             <label for="fProjectId">Project ID (slug) <span style="color:var(--brand);">*</span></label>
@@ -280,7 +294,8 @@
         +   '</div>'
         +   '<div class="posting__actions">'
         +     '<button data-action="edit" data-id="' + esc(p.id) + '">' + (p.hasMeta ? 'Edit' : 'Reopen') + '</button>'
-        +     (p.hasMeta ? '<button class="danger" data-action="close" data-id="' + esc(p.id) + '">Close</button>' : '')
+        +     (p.hasMeta ? '<button class="secondary" data-action="close" data-id="' + esc(p.id) + '">Close</button>' : '')
+        +     '<button class="danger" data-action="delete" data-id="' + esc(p.id) + '" data-name="' + esc(p.name) + '" data-candidates="' + (p.candidateCount || 0) + '">Delete permanently</button>'
         +   '</div>'
         + '</div>';
     });
@@ -294,6 +309,8 @@
           openDialog(p);
         } else if (action === 'close') {
           closePosting(id);
+        } else if (action === 'delete') {
+          deletePosting(id, btn.getAttribute('data-name') || id, Number(btn.getAttribute('data-candidates') || 0));
         }
       });
     });
@@ -306,6 +323,14 @@
     var isNew = !posting;
     dialogTitle.textContent = isNew ? 'New Position' : (posting.hasMeta ? 'Edit posting' : 'Reopen posting');
     fProjectId.readOnly = !isNew;
+    // PWS auto-fill only makes sense on new postings.
+    var pwsBox = document.getElementById('pwsBox');
+    if (pwsBox) pwsBox.style.display = isNew ? '' : 'none';
+    if (isNew) {
+      pwsFile.value = '';
+      pwsUploadBtn.disabled = true;
+      pwsStatus.textContent = '';
+    }
     var meta = (posting && posting.meta) || {};
     if (posting) {
       fProjectId.value = posting.id;
@@ -368,6 +393,84 @@
       alert(err.message || 'Could not close posting.');
     }
   }
+
+  async function deletePosting(id, name, candidateCount) {
+    var warn = 'DELETE the posting "' + name + '" permanently?\n\n'
+      + 'This removes:\n'
+      + '  • the /job-' + id + ' page\n'
+      + '  • the entry from the candidates admin dropdown\n'
+      + (candidateCount ? '  • ' + candidateCount + ' saved candidate submission' + (candidateCount === 1 ? '' : 's') + ' (irreversible)\n' : '')
+      + '\nUse "Close" instead if you want to keep candidate records. Continue?';
+    if (!confirm(warn)) return;
+    var typed = prompt('Type the project ID "' + id + '" to confirm permanent deletion:');
+    if (typed !== id) { alert('Deletion cancelled.'); return; }
+    try {
+      await apiFetch('/api/jobs?id=' + encodeURIComponent(id) + '&purge=1', { method: 'DELETE' });
+      load();
+    } catch (err) {
+      alert(err.message || 'Could not delete posting.');
+    }
+  }
+
+  // ── PWS auto-fill ────────────────────────────────────────────────
+  var pwsFile      = document.getElementById('pwsFile');
+  var pwsPickBtn   = document.getElementById('pwsPickBtn');
+  var pwsUploadBtn = document.getElementById('pwsUploadBtn');
+  var pwsStatus    = document.getElementById('pwsStatus');
+
+  pwsPickBtn.addEventListener('click', function () { pwsFile.click(); });
+  pwsFile.addEventListener('change', function () {
+    var f = pwsFile.files && pwsFile.files[0];
+    if (!f) { pwsUploadBtn.disabled = true; pwsStatus.textContent = ''; return; }
+    if (f.type && f.type !== 'application/pdf') {
+      pwsStatus.textContent = 'That doesn\'t look like a PDF. Please choose a PDF file.';
+      pwsUploadBtn.disabled = true; return;
+    }
+    if (f.size > 4 * 1024 * 1024) {
+      pwsStatus.textContent = 'PDF is over 4 MB. Try trimming pages or use a smaller file.';
+      pwsUploadBtn.disabled = true; return;
+    }
+    pwsStatus.textContent = 'Selected: ' + f.name + ' (' + Math.round(f.size / 1024) + ' KB). Click "Extract fields" to auto-fill.';
+    pwsUploadBtn.disabled = false;
+  });
+
+  pwsUploadBtn.addEventListener('click', async function () {
+    var f = pwsFile.files && pwsFile.files[0];
+    if (!f) return;
+    pwsUploadBtn.disabled = true;
+    pwsPickBtn.disabled = true;
+    pwsStatus.textContent = 'Uploading and extracting… (this can take 15-30 seconds)';
+    var fd = new FormData();
+    fd.append('pws', f);
+    try {
+      var res = await fetch('/api/jobs?admin=parse-pws', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + getToken() },
+        body: fd,
+      });
+      var json = await res.json();
+      if (!res.ok || !json.ok) throw new Error(json.error || ('Extraction failed (' + res.status + ')'));
+      var fields = json.fields || {};
+      if (fields.projectId) fProjectId.value = fields.projectId;
+      if (fields.projectName) document.getElementById('fProjectName').value = fields.projectName;
+      if (fields.headline) document.getElementById('fHeadline').value = fields.headline;
+      if (fields.kicker) document.getElementById('fKicker').value = fields.kicker;
+      if (fields.subheadline) document.getElementById('fSubheadline').value = fields.subheadline;
+      if (fields.city) document.getElementById('fCity').value = fields.city;
+      if (fields.state) document.getElementById('fState').value = fields.state;
+      if (fields.streetAddress) document.getElementById('fStreetAddress').value = fields.streetAddress;
+      if (fields.postalCode) document.getElementById('fPostalCode').value = fields.postalCode;
+      if (fields.h2) document.getElementById('fH2').value = fields.h2;
+      if (fields.paragraph1) document.getElementById('fParagraph1').value = fields.paragraph1;
+      if (fields.paragraph2) document.getElementById('fParagraph2').value = fields.paragraph2;
+      pwsStatus.textContent = 'Filled from PWS. Review each field before saving.';
+    } catch (err) {
+      pwsStatus.textContent = 'Error: ' + (err.message || 'Extraction failed.');
+    } finally {
+      pwsPickBtn.disabled = false;
+      pwsUploadBtn.disabled = false;
+    }
+  });
 
   // Boot
   if (getToken()) {

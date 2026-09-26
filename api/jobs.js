@@ -14,6 +14,7 @@ import { Resend } from 'resend';
 import { Redis } from '@upstash/redis';
 import { randomUUID, timingSafeEqual } from 'node:crypto';
 import Busboy from 'busboy';
+import Anthropic from '@anthropic-ai/sdk';
 
 // Vercel's Node runtime auto-parses JSON bodies for us (req.body arrives
 // as an object). Multipart/form-data is NOT auto-parsed — req arrives as
@@ -36,6 +37,10 @@ const RESUME_ALLOWED_MIME = new Set([
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   'text/plain',
 ]);
+
+// PWS upload (admin auto-fill) — PDF only, capped just below Vercel's
+// ~4.5 MB serverless request body limit.
+const PWS_MAX_BYTES = 4 * 1024 * 1024;
 
 const redis = Redis.fromEnv();
 
@@ -184,6 +189,132 @@ function parseMultipartBody(req) {
     });
     req.pipe(bb);
   });
+}
+
+// Same shape as parseMultipartBody(), but for a single PDF field named
+// `pws`. Kept separate so the resume path stays untouched.
+function parsePwsUpload(req) {
+  return new Promise((resolve, reject) => {
+    let bb;
+    try {
+      bb = Busboy({ headers: req.headers, limits: { files: 1, fileSize: PWS_MAX_BYTES } });
+    } catch (err) { return reject(err); }
+    let pws = null;
+    let sizeLimitHit = false;
+    let typeRejected = null;
+    bb.on('file', (name, stream, info) => {
+      if (name !== 'pws' || (info.mimeType && info.mimeType !== 'application/pdf')) {
+        if (info.mimeType && info.mimeType !== 'application/pdf') typeRejected = info.mimeType;
+        stream.resume();
+        return;
+      }
+      const chunks = [];
+      stream.on('data', (c) => chunks.push(c));
+      stream.on('limit', () => { sizeLimitHit = true; });
+      stream.on('end', () => {
+        if (!sizeLimitHit && !typeRejected) {
+          pws = { buffer: Buffer.concat(chunks), filename: info.filename || 'pws.pdf' };
+        }
+      });
+    });
+    bb.on('error', reject);
+    bb.on('close', () => {
+      if (sizeLimitHit) return reject(new Error('PWS file is larger than 4 MB. Try a smaller PDF or extract the relevant pages.'));
+      if (typeRejected) return reject(new Error(`PWS file type not accepted (${typeRejected}). Upload a PDF.`));
+      if (!pws) return reject(new Error('No PDF file was received.'));
+      resolve(pws);
+    });
+    req.pipe(bb);
+  });
+}
+
+// POST /api/jobs?admin=parse-pws (multipart, admin-authed) → sends the
+// uploaded PDF to Claude and returns a structured JSON draft the admin
+// panel can drop straight into the New Position form.
+async function handleAdminParsePws(req, res) {
+  if (!authorized(req)) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return res.status(500).json({ ok: false, error: 'ANTHROPIC_API_KEY not configured.' });
+
+  let pws;
+  try {
+    pws = await parsePwsUpload(req);
+  } catch (err) {
+    return res.status(400).json({ ok: false, error: err.message || 'Could not read the PDF.' });
+  }
+
+  const instruction = [
+    'You are extracting a job posting draft from a government Performance Work Statement (PWS) PDF for Montissol Essentials LLC, a facility-services contractor.',
+    '',
+    'Return ONLY a JSON object with these exact keys (no prose, no code fences):',
+    '{',
+    '  "projectId": "<kebab-case slug, 3-40 chars, lowercase letters/digits/hyphens>",',
+    '  "projectName": "<Service Type - Facility, City, ST>",',
+    '  "headline": "<short role name, e.g. Janitorial Services>",',
+    '  "kicker": "<Now Recruiting in <State> or similar>",',
+    '  "subheadline": "<Facility name, City, ST>",',
+    '  "city": "<City>",',
+    '  "state": "<Two-letter state code>",',
+    '  "streetAddress": "<Street address if the PWS provides one, else empty string>",',
+    '  "postalCode": "<ZIP if provided, else empty string>",',
+    '  "h2": "<One-line section heading welcoming applicants>",',
+    '  "paragraph1": "<2-4 sentence description of the role/facility drawn from the PWS. Plain prose, no bullets.>",',
+    '  "paragraph2": "<2-4 sentence paragraph about required qualifications / schedule / who should apply, drawn from the PWS. Plain prose, no bullets. Empty string if nothing applicable.>"',
+    '}',
+    '',
+    'Rules:',
+    '- Only use facts from the PWS. Do NOT invent salaries, benefits, or dates.',
+    '- projectId: pick something short and memorable from the facility name (e.g. "albany-va-parking", "spo", "hords-creek-lake"). No spaces.',
+    '- Write in the voice of the hiring company (Montissol Essentials), addressed to prospective employees.',
+    '- Never include phone numbers, emails, URLs, or solicitation numbers in the paragraphs.',
+  ].join('\n');
+
+  try {
+    const client = new Anthropic({ apiKey });
+    const resp = await client.messages.create({
+      model: 'claude-sonnet-4-5',
+      max_tokens: 1500,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: pws.buffer.toString('base64') } },
+          { type: 'text', text: instruction },
+        ],
+      }],
+    });
+    const text = resp.content.map((b) => (b.type === 'text' ? b.text : '')).join('').trim();
+    let parsed;
+    try {
+      const fenced = text.match(/^```(?:json)?\s*\n?([\s\S]*?)\n?```$/);
+      parsed = JSON.parse(fenced ? fenced[1] : text);
+    } catch (err) {
+      console.error('PWS parse: JSON decode failed. Raw:', text.slice(0, 500));
+      return res.status(502).json({ ok: false, error: 'The model did not return valid JSON. Try again or fill the form manually.' });
+    }
+    // Trim/normalize to match server-side validation limits.
+    const slugify = (v) => String(v || '').toLowerCase().trim().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
+    const fields = {
+      projectId: slugify(parsed.projectId),
+      projectName: clean(parsed.projectName, 200),
+      headline: clean(parsed.headline, 120),
+      kicker: clean(parsed.kicker, 80),
+      subheadline: clean(parsed.subheadline, 200),
+      city: clean(parsed.city, 80),
+      state: clean(parsed.state, 40),
+      streetAddress: clean(parsed.streetAddress, 200),
+      postalCode: clean(parsed.postalCode, 20),
+      h2: clean(parsed.h2, 200),
+      paragraph1: clean(parsed.paragraph1, 4000),
+      paragraph2: clean(parsed.paragraph2, 4000),
+    };
+    return res.status(200).json({ ok: true, fields });
+  } catch (err) {
+    console.error('PWS parse: Anthropic call failed:', err);
+    const msg = err?.status === 413 || /too large/i.test(err?.message || '')
+      ? 'The PDF is too large or has too many pages for the extraction model.'
+      : 'Could not process the PDF. Check the file and try again.';
+    return res.status(502).json({ ok: false, error: msg });
+  }
 }
 
 async function handleSubmit(req, res) {
@@ -464,11 +595,26 @@ async function handleAdminSavePosting(req, res) {
 // /job-<slug> URL immediately serves the "Position Closed" page and the
 // /careers directory drops it. Keeps the projects_map entry so candidates
 // submitted while the position was open still show a friendly name.
+//
+// DELETE /api/jobs?id=<slug>&purge=1 → hard delete. Also removes the
+// jobs:projects_map entry, the jobs:candidates:<slug> list, and the
+// jobs:projects set membership. Used from the postings admin's
+// "Delete permanently" action.
 async function handleAdminClosePosting(req, res) {
   if (!authorized(req)) return res.status(401).json({ ok: false, error: 'Unauthorized' });
   const projectId = cleanSlug(req.query?.id);
   if (!projectId) return res.status(400).json({ ok: false, error: 'projectId is required.' });
+  const purge = req.query?.purge === '1' || req.query?.purge === 'true';
   try {
+    if (purge) {
+      await Promise.all([
+        redis.del(metaKey(projectId)),
+        redis.hdel('jobs:projects_map', projectId),
+        redis.del(`jobs:candidates:${projectId}`),
+        redis.srem('jobs:projects', projectId),
+      ]);
+      return res.status(200).json({ ok: true, id: projectId, purged: true });
+    }
     await redis.del(metaKey(projectId));
     return res.status(200).json({ ok: true, id: projectId });
   } catch (error) {
@@ -847,7 +993,10 @@ async function handleJobDirectory(req, res) {
 }
 
 export default async function handler(req, res) {
-  if (req.method === 'POST') return handleSubmit(req, res);
+  if (req.method === 'POST') {
+    if (req.query?.admin === 'parse-pws') return handleAdminParsePws(req, res);
+    return handleSubmit(req, res);
+  }
   if (req.method === 'PUT') return handleAdminSavePosting(req, res);
   if (req.method === 'DELETE') return handleAdminClosePosting(req, res);
   // Treat HEAD like GET so crawlers / uptime pings don't see spurious
