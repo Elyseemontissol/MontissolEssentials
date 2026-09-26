@@ -13,6 +13,11 @@
 import { Resend } from 'resend';
 import { Redis } from '@upstash/redis';
 import { randomUUID, timingSafeEqual } from 'node:crypto';
+import Busboy from 'busboy';
+
+// Vercel's Node runtime auto-parses JSON bodies for us (req.body arrives
+// as an object). Multipart/form-data is NOT auto-parsed — req arrives as
+// a raw stream that we feed through busboy in parseMultipartBody() below.
 
 const PROJECTS = {
   'hop-brook-lake': 'Janitorial Services - Hop Brook Lake and Naugatuck River Basin, Middlebury, CT',
@@ -20,7 +25,17 @@ const PROJECTS = {
   'ks019': 'Custodial Services - KS019 Army Reserve Facility, Manhattan, KS',
   'nws-melbourne': 'Janitorial Services - National Weather Service Office, Melbourne, FL',
   'hords-creek-lake': 'Park Cleaning Services - Hords Creek Lake, Coleman, TX',
+  'albany-va-parking': 'Patient Assisted Parking Services - Samuel S. Stratton VA Medical Center, Albany, NY',
 };
+
+// Resume upload limits + accepted types.
+const RESUME_MAX_BYTES = 4 * 1024 * 1024; // 4 MB (well under Vercel's request limit)
+const RESUME_ALLOWED_MIME = new Set([
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'text/plain',
+]);
 
 const redis = Redis.fromEnv();
 
@@ -107,8 +122,71 @@ function authorized(req) {
   return left.length === right.length && timingSafeEqual(left, right);
 }
 
+// Read a multipart/form-data POST into { fields, resume }. Fields come
+// back as strings; the single accepted file is buffered up to
+// RESUME_MAX_BYTES. Extra files or an oversize resume are rejected.
+function parseMultipartBody(req) {
+  return new Promise((resolve, reject) => {
+    let bb;
+    try {
+      bb = Busboy({ headers: req.headers, limits: { files: 1, fileSize: RESUME_MAX_BYTES } });
+    } catch (err) { return reject(err); }
+    const fields = {};
+    let resume = null;
+    let sizeLimitHit = false;
+    let typeRejected = null;
+
+    bb.on('field', (name, value) => { fields[name] = value; });
+    bb.on('file', (name, stream, info) => {
+      if (name !== 'resume') { stream.resume(); return; }
+      if (info.mimeType && !RESUME_ALLOWED_MIME.has(info.mimeType)) {
+        typeRejected = info.mimeType;
+        stream.resume();
+        return;
+      }
+      const chunks = [];
+      stream.on('data', (c) => chunks.push(c));
+      stream.on('limit', () => { sizeLimitHit = true; });
+      stream.on('end', () => {
+        if (!sizeLimitHit && !typeRejected) {
+          resume = {
+            buffer: Buffer.concat(chunks),
+            filename: info.filename || 'resume',
+            mimeType: info.mimeType || 'application/octet-stream',
+          };
+        }
+      });
+    });
+    bb.on('error', reject);
+    bb.on('close', () => {
+      if (sizeLimitHit) return reject(new Error('Resume file is larger than 4 MB. Please attach a smaller file.'));
+      if (typeRejected) return reject(new Error(`Resume file type not accepted (${typeRejected}). Please attach a PDF, DOC, DOCX, or plain-text file.`));
+      resolve({ fields, resume });
+    });
+    req.pipe(bb);
+  });
+}
+
 async function handleSubmit(req, res) {
-  const body = req.body || {};
+  const contentType = String(req.headers?.['content-type'] || '').toLowerCase();
+  const isMultipart = contentType.startsWith('multipart/form-data');
+
+  let body;
+  let resume = null;
+  if (isMultipart) {
+    try {
+      const parsed = await parseMultipartBody(req);
+      body = parsed.fields;
+      resume = parsed.resume;
+      // Numeric fields come back as strings from FormData.
+      if (body.elapsedMs != null) body.elapsedMs = Number(body.elapsedMs);
+    } catch (err) {
+      return res.status(400).json({ ok: false, error: err.message || 'Could not read the submission.' });
+    }
+  } else {
+    body = req.body || {};
+  }
+
   if (body.website) {
     console.warn('jobs POST: honeypot triggered, dropping silently');
     return res.status(200).json({ ok: true });
@@ -144,6 +222,9 @@ async function handleSubmit(req, res) {
     canPerform,
     workConstraints,
     submittedAt: new Date().toISOString(),
+    resumeFilename: resume?.filename || null,
+    resumeMimeType: resume?.mimeType || null,
+    resumeSize: resume?.buffer.length || null,
   };
 
   try {
@@ -160,11 +241,11 @@ async function handleSubmit(req, res) {
 
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({
+    const emailPayload = {
       from: 'Montissol Careers <noreply@montissolessentials.com>',
       to: ['elyseem@montissolessentials.com'],
       replyTo: email,
-      subject: `[Job Interest] ${project} - ${name}`,
+      subject: `[Job Interest] ${project} - ${name}${resume ? ' (resume attached)' : ''}`,
       html: `
         <h2>New Job Interest Submission</h2>
         <p style="margin:0 0 20px 0;">
@@ -177,11 +258,19 @@ async function handleSubmit(req, res) {
           <tr style="border-bottom:1px solid #eee;"><td style="padding:10px;font-weight:bold;">Phone</td><td style="padding:10px;">${esc(phone)}</td></tr>
           <tr style="border-bottom:1px solid #eee;"><td style="padding:10px;font-weight:bold;">Can perform essential duties</td><td style="padding:10px;">${canPerform === 'yes' ? 'Yes' : 'No'}</td></tr>
           <tr style="border-bottom:1px solid #eee;"><td style="padding:10px;font-weight:bold;vertical-align:top;">Non-medical constraints</td><td style="padding:10px;white-space:pre-wrap;">${esc(workConstraints || 'None provided')}</td></tr>
+          <tr style="border-bottom:1px solid #eee;"><td style="padding:10px;font-weight:bold;">Resume</td><td style="padding:10px;">${resume ? `<strong>${esc(resume.filename)}</strong> (${Math.round(resume.buffer.length / 1024)} KB) — attached to this email` : '<em>Not attached</em>'}</td></tr>
           <tr><td style="padding:10px;font-weight:bold;vertical-align:top;">Experience</td><td style="padding:10px;white-space:pre-wrap;">${esc(experience)}</td></tr>
         </table>
         <p style="color:#777;font-size:12px;margin-top:24px;">Submitted through the Montissol Essentials careers website. Reply to this email to respond to ${esc(name)} directly.</p>
       `,
-    });
+    };
+    if (resume) {
+      emailPayload.attachments = [{
+        filename: resume.filename,
+        content: resume.buffer.toString('base64'),
+      }];
+    }
+    await resend.emails.send(emailPayload);
   } catch (error) {
     console.error('Job interest email error:', error);
   }
@@ -327,6 +416,7 @@ function renderJobPageHtml(meta) {
           <div class="field"><label for="experience">Relevant experience <span class="req">*</span></label><textarea id="experience" name="experience" minlength="20" maxlength="3000" required placeholder="Tell us about your janitorial, custodial, cleaning, or facility experience."></textarea></div>
           <div class="field"><label for="canPerform">Can you perform the essential duties of this role, with or without reasonable accommodation? <span class="req">*</span></label><select id="canPerform" name="canPerform" required><option value="">Select an answer</option><option value="yes">Yes</option><option value="no">No</option></select></div>
           <div class="field"><label for="workConstraints">Are there any non-medical scheduling, transportation, or work-location limitations we should consider?</label><textarea id="workConstraints" name="workConstraints" maxlength="1000" placeholder="Optional. Please do not provide medical or disability information."></textarea></div>
+          <div class="field"><label for="resume">Attach your r&eacute;sum&eacute; <span style="color:#666;font-weight:400;">(optional &mdash; PDF, DOC, DOCX, or TXT, up to 4&nbsp;MB)</span></label><input id="resume" name="resume" type="file" accept=".pdf,.doc,.docx,.txt,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"></div>
           <button class="contact-submit job-interest-submit" type="submit">Submit Interest</button>
           <p class="form-status" id="formStatus" role="status" aria-live="polite"></p>
         </form>
@@ -350,14 +440,27 @@ function renderJobPageHtml(meta) {
       button.textContent = 'Submitting...';
       status.className = 'form-status';
       status.textContent = '';
-      var data = Object.fromEntries(new FormData(form).entries());
-      data.elapsedMs = Date.now() - startedAt;
+      // If the applicant attached a résumé, submit as multipart/form-data
+      // so the file rides along with the rest of the fields. Otherwise
+      // send JSON (matches the existing behavior + saves bandwidth).
+      var resumeInput = form.querySelector('input[name="resume"]');
+      var hasResume = resumeInput && resumeInput.files && resumeInput.files.length > 0;
+      var response;
       try {
-        var response = await fetch('/api/jobs', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        });
+        if (hasResume) {
+          var fd = new FormData(form);
+          fd.append('elapsedMs', String(Date.now() - startedAt));
+          response = await fetch('/api/jobs', { method: 'POST', body: fd });
+        } else {
+          var data = Object.fromEntries(new FormData(form).entries());
+          delete data.resume; // empty file blob is not JSON-serializable and not needed
+          data.elapsedMs = Date.now() - startedAt;
+          response = await fetch('/api/jobs', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+        }
         var contentType = response.headers.get('content-type') || '';
         if (!contentType.includes('application/json')) {
           throw new Error('The application form is not available in this static preview.');
