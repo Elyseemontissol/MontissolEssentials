@@ -987,6 +987,13 @@ async function handleJobDirectory(req, res) {
     .map((slug, i) => ({ slug, meta: metas[i] }))
     .filter((x) => x.meta)
     .sort((a, b) => String(b.meta.postedAt || '').localeCompare(String(a.meta.postedAt || '')));
+  // JSON mode powers the static careers.html shell, which fetches the
+  // live list client-side so the static file can keep its marketing hero.
+  if (req.query?.format === 'json') {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=60');
+    return res.status(200).json({ ok: true, items: items.map(({ slug, meta }) => ({ slug, ...meta })) });
+  }
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.setHeader('Cache-Control', 'public, max-age=60'); // small cache — updates propagate quickly
   return res.status(200).send(renderJobDirectoryHtml(items));

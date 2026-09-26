@@ -4,174 +4,167 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Careers - Montissol Essentials</title>
-  <meta name="description" content="Join Montissol Essentials LLC. Explore careers in janitorial services, industrial cleaning, and government facility support.">
+  <meta name="description" content="Current openings at Montissol Essentials LLC. Explore janitorial, custodial, industrial cleaning, and facility-support roles and apply online.">
   <meta property="og:title" content="Careers - Montissol Essentials">
-  <meta property="og:description" content="Join Montissol Essentials LLC. Explore careers in janitorial services, industrial cleaning, and government facility support.">
+  <meta property="og:description" content="Current openings at Montissol Essentials LLC. Apply online.">
   <meta property="og:image" content="https://montissolessentials.com/assets/images/Header-logo.png">
-  <meta property="og:url" content="https://montissolessentials.com/careers.html">
+  <meta property="og:url" content="https://montissolessentials.com/careers">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/styles.css"/>
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon.png">
+  <style>
+    /* Openings section — self-contained so the marketing hero above stays untouched. */
+    .openings { padding: 8px 0 48px; }
+    .openings__intro { color: var(--text-muted, #cfcfcf); max-width: 640px; margin: 0 0 24px; }
+    .openings__list { display: grid; grid-template-columns: 1fr; gap: 20px; }
+    @media (min-width: 720px) { .openings__list { grid-template-columns: 1fr 1fr; } }
+    .job-card {
+      display: block; padding: 24px 28px; border: 1px solid rgba(231,77,16,.28);
+      border-radius: 14px; text-decoration: none; color: inherit;
+      background: rgba(255,255,255,.02);
+      transition: border-color .15s, transform .15s, background .15s;
+    }
+    .job-card:hover, .job-card:focus {
+      border-color: #e74d10; background: rgba(231,77,16,.06); transform: translateY(-2px); outline: none;
+    }
+    .job-card__kicker { font-size: .78rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #e74d10; }
+    .job-card__title { margin: 8px 0 4px; font-size: 1.5rem; line-height: 1.2; }
+    .job-card__where { margin: 0 0 12px; color: #cfcfcf; font-weight: 600; }
+    .job-card__snippet { margin: 0; color: #a8a8a8; line-height: 1.55; }
+    .job-card__foot { display: flex; justify-content: space-between; align-items: center; margin-top: 18px; flex-wrap: wrap; gap: 12px; }
+    .job-card__date { color: #888; font-size: .85rem; }
+    .job-card__cta { color: #e74d10; font-weight: 700; }
+    .openings__empty, .openings__loading, .openings__error {
+      text-align: center; padding: 40px 24px;
+      border: 1px dashed rgba(255,255,255,.15); border-radius: 14px;
+    }
+    .openings__empty h2, .openings__loading h2 { margin: 0 0 12px; }
+    .openings__empty p, .openings__loading p, .openings__error p { margin: 0 0 16px; color: #b0b0b0; }
+    .openings__error { border-color: rgba(229,72,77,.4); }
+  </style>
 </head>
 <body>
-  
+
 <div id="shared-header"></div>
 
-  <main>
-    
-<!-- CAREERS HERO (uses existing hero--zoom CSS properly) -->
-<section class="hero hero--services hero--zoom">
+<main>
 
-  <!-- Background Image Layer -->
-  <div class="hero-split__bg"
-    style="background-image:url('assets/images/cement-plant-with-high-factory-structure-and-tower-N7J96QC.jpg');">
-  </div>
-
-  <canvas id="particleCanvas"></canvas>
-
-  <!-- Overlay Layer -->
-  <div class="hero-lightning"></div>
-  <div class="hero-split__overlay"></div>
-
-  <div class="container hero-split__inner">
-    <div class="hero-split__kicker">
-      <span class="dot"></span>
-      <span>Montissol Essentials</span>
+  <!-- CAREERS HERO -->
+  <section class="hero hero--services hero--zoom">
+    <div class="hero-split__bg"
+         style="background-image:url('assets/images/cement-plant-with-high-factory-structure-and-tower-N7J96QC.jpg');"></div>
+    <canvas id="particleCanvas"></canvas>
+    <div class="hero-lightning"></div>
+    <div class="hero-split__overlay"></div>
+    <div class="container hero-split__inner">
+      <div class="hero-split__kicker">
+        <span class="dot"></span>
+        <span>Montissol Essentials</span>
+      </div>
+      <h1 class="hero-split__headline">Careers</h1>
+      <p class="hero-split__sub">
+        Join a growing team supporting federal facilities, industrial sites, and community landmarks across the country.
+      </p>
+      <div class="hero-split__actions">
+        <a class="btn primary" href="#open-positions">View Open Positions</a>
+      </div>
     </div>
+  </section>
 
-    <h1 class="hero-split__headline">Careers</h1>
-
-    <p class="hero-split__sub">
-      Work on large-scale industrial and manufacturing projects that push boundaries.
-    </p>
-
-    <div class="hero-split__actions">
-      <a class="btn primary" href="/careers">View Open Positions</a>
-    </div>
-  </div>
-
-</section>
-
-    
-<section class="section reveal">
-  <div class="container">
-    <div class="grid">
-
-      <!-- Section intro (optional) -->
-      <div class="card reveal glow-border" style="grid-column: span 12;">
+  <!-- OPEN POSITIONS -->
+  <section class="section reveal" id="open-positions">
+    <div class="container">
+      <div class="card reveal glow-border" style="grid-column: span 12; padding:28px;">
         <div class="mini-kicker">
           <span class="dot"></span>
           <span>Careers</span>
         </div>
         <h2>Open Positions</h2>
         <div class="hr"></div>
-        <p>Explore current openings. New roles will be posted here as we grow.</p>
-        <p style="margin-top:18px;"><a class="btn primary" href="/careers">See all current openings &amp; apply →</a></p>
+        <p class="openings__intro">
+          Every posting below is live. Click a role for the full description and to apply online — no account required.
+        </p>
+        <div class="openings">
+          <div id="openings-list" class="openings__list">
+            <div class="openings__loading">
+              <h2>Loading current openings…</h2>
+              <p>One moment while we pull the latest roles.</p>
+            </div>
+          </div>
+        </div>
       </div>
-
-      <!-- JOB CARD 1 (light) -->
-      <a href="job-hop-brook-lake.html"
-         class="card reveal glow-border"
-         style="grid-column:span 12;text-decoration:none;color:inherit;position:relative;padding:28px;border-radius:8px;">
-        <div class="mini-kicker"><span class="dot"></span><span>Middlebury, Connecticut</span></div>
-        <div aria-hidden="true" style="position:absolute;top:22px;right:22px;font-size:26px;opacity:.9;">&#8599;</div>
-        <h2 style="margin-top:18px;">Janitorial Services - Hop Brook Lake</h2>
-        <p>Residents near Hop Brook Lake and the Naugatuck River Basin can express interest in local janitorial services opportunities.</p>
-      </a>
-
-      <!-- JOB CARD 1 (light) -->
-      <a href="job-janitorial-tech.html"
-         class="card reveal glow-border"
-         style="grid-column: span 4; text-decoration:none; color:inherit; position:relative; padding:28px; border-radius:22px;">
-        
-        <!-- icon (top-left) -->
-        <div aria-hidden="true" style="font-size:32px; line-height:1;">🏭</div>
-
-        <!-- arrow (top-right) -->
-        <div aria-hidden="true" style="position:absolute; top:22px; right:22px; font-size:26px; opacity:.9;">↗</div>
-
-        <h2 style="margin-top:26px;">Janitorial Technician</h2>
-        <p>Facility cleaning, restrooms, common areas, and checklist-based QC. Evening shifts available.</p>
-      </a>
-
-      <!-- JOB CARD 2 (highlight / brand) -->
-      <a href="job-industrial-cleaning.html"
-         class="card reveal glow-border"
-         style="grid-column: span 4; text-decoration:none; color:#fff; position:relative; padding:28px; border-radius:22px; background: var(--brand); border-color: transparent;">
-        
-        <div aria-hidden="true" style="font-size:32px; line-height:1;">🧰</div>
-        <div aria-hidden="true" style="position:absolute; top:22px; right:22px; font-size:26px; opacity:.95;">↗</div>
-
-        <h2 style="margin-top:26px; color:#fff;">Industrial Cleaning Tech</h2>
-        <p style="color:#fff; opacity:.95;">
-          HEPA vacuuming, dust control, and industrial area cleaning. PPE and safety-first procedures.
-        </p>
-      </a>
-
-      <!-- JOB CARD 3 (light) -->
-      <a href="job-site-supervisor.html"
-         class="card reveal glow-border"
-         style="grid-column: span 4; text-decoration:none; color:inherit; position:relative; padding:28px; border-radius:22px;">
-        
-        <div aria-hidden="true" style="font-size:32px; line-height:1;">🤖</div>
-        <div aria-hidden="true" style="position:absolute; top:22px; right:22px; font-size:26px; opacity:.9;">↗</div>
-
-        <h2 style="margin-top:26px;">Site Supervisor</h2>
-        <p>Lead a crew, manage daily checklists, verify QA/QC documentation, and coordinate site access.</p>
-      </a>
-
-      <!-- JOB CARD 4 (highlight / brand) -->
-      <a href="job-qc-inspector.html"
-         class="card reveal glow-border"
-         style="grid-column: span 4; text-decoration:none; color:#fff; position:relative; padding:28px; border-radius:22px; background: var(--brand); border-color: transparent;">
-        
-        <div aria-hidden="true" style="font-size:32px; line-height:1;">🪝</div>
-        <div aria-hidden="true" style="position:absolute; top:22px; right:22px; font-size:26px; opacity:.95;">↗</div>
-
-        <h2 style="margin-top:26px; color:#fff;">Crew Lead</h2>
-        <p style="color:#fff; opacity:.95;">
-          Assign tasks, ensure safety compliance, and confirm work meets contract requirements.
-        </p>
-      </a>
-
-      <!-- JOB CARD 5 (light) -->
-      <a href="job-maintenance-tech.html"
-         class="card reveal glow-border"
-         style="grid-column: span 4; text-decoration:none; color:inherit; position:relative; padding:28px; border-radius:22px;">
-        
-        <div aria-hidden="true" style="font-size:32px; line-height:1;">⚙️</div>
-        <div aria-hidden="true" style="position:absolute; top:22px; right:22px; font-size:26px; opacity:.9;">↗</div>
-
-        <h2 style="margin-top:26px;">Equipment &amp; Maintenance</h2>
-        <p>Support equipment readiness, consumables, inventory, and light maintenance coordination.</p>
-      </a>
-
-      <!-- JOB CARD 6 (highlight / brand) -->
-      <a href="job-qc-compliance.html"
-         class="card reveal glow-border"
-         style="grid-column: span 4; text-decoration:none; color:#fff; position:relative; padding:28px; border-radius:22px; background: var(--brand); border-color: transparent;">
-        
-        <div aria-hidden="true" style="font-size:32px; line-height:1;">✅</div>
-        <div aria-hidden="true" style="position:absolute; top:22px; right:22px; font-size:26px; opacity:.95;">↗</div>
-
-        <h2 style="margin-top:26px; color:#fff;">Quality &amp; Compliance</h2>
-        <p style="color:#fff; opacity:.95;">
-          Inspect, document, and report. Ensure cleaning standards and contract requirements are met.
-        </p>
-      </a>
-
     </div>
-  </div>
-</section>
+  </section>
 
-  </main>
-  
+</main>
+
 <div id="shared-footer"></div>
 
 <script src="assets/shared.js"></script>
-  <script src="assets/app.js"></script>
+<script src="assets/app.js"></script>
+
+<script>
+(function () {
+  var mount = document.getElementById('openings-list');
+  if (!mount) return;
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c];
+    });
+  }
+  function relPosted(iso) {
+    if (!iso) return '';
+    var days = Math.max(0, Math.floor((Date.now() - Date.parse(iso)) / 86400000));
+    if (days === 0) return 'Posted today';
+    if (days === 1) return 'Posted 1 day ago';
+    return 'Posted ' + days + ' days ago';
+  }
+  function renderCard(item) {
+    var subhead = item.subheadline || ((item.city || '') + (item.state ? ', ' + item.state : ''));
+    var snip = String(item.paragraph1 || '').slice(0, 240);
+    if (item.paragraph1 && item.paragraph1.length > 240) snip += '…';
+    return '<a class="job-card" href="/job-' + esc(item.slug) + '">'
+      +   '<div class="job-card__kicker">' + esc(item.kicker || 'Now Hiring') + '</div>'
+      +   '<h2 class="job-card__title">' + esc(item.headline || 'Open Position') + '</h2>'
+      +   '<p class="job-card__where">' + esc(subhead) + '</p>'
+      +   '<p class="job-card__snippet">' + esc(snip) + '</p>'
+      +   '<div class="job-card__foot">'
+      +     '<span class="job-card__date">' + esc(relPosted(item.postedAt)) + '</span>'
+      +     '<span class="job-card__cta">View position &amp; apply →</span>'
+      +   '</div>'
+      + '</a>';
+  }
+
+  fetch('/api/jobs?directory=1&format=json', { headers: { 'Accept': 'application/json' } })
+    .then(function (res) {
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    })
+    .then(function (json) {
+      var items = (json && json.items) || [];
+      if (!items.length) {
+        mount.innerHTML = '<div class="openings__empty">'
+          + '<h2>No open positions at this time</h2>'
+          + '<p>We aren\'t actively recruiting for a specific role right now. New opportunities are posted here as we win projects — please check back soon.</p>'
+          + '<p><a class="btn primary" href="/contact-us">Contact us to introduce yourself</a></p>'
+          + '</div>';
+        return;
+      }
+      mount.innerHTML = items.map(renderCard).join('');
+    })
+    .catch(function (err) {
+      console.error('Could not load openings:', err);
+      mount.innerHTML = '<div class="openings__error">'
+        + '<h2>Could not load current openings</h2>'
+        + '<p>Please refresh the page in a moment, or <a href="/contact-us" style="color:#e74d10;">contact us directly</a>.</p>'
+        + '</div>';
+    });
+})();
+</script>
 </body>
 </html>
