@@ -24,6 +24,14 @@
     {
       "source": "/job-:slug.html",
       "destination": "/api/jobs?id=:slug&page=1"
+    },
+    {
+      "source": "/job",
+      "destination": "/api/jobs?directory=1"
+    },
+    {
+      "source": "/jobs",
+      "destination": "/api/jobs?directory=1"
     }
   ]
 }

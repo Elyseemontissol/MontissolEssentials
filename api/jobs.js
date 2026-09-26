@@ -581,9 +581,117 @@ async function handleJobPage(req, res) {
   return res.status(200).send(renderJobPageHtml(meta));
 }
 
+// ──────────────────────────────────────────────────────────────────────
+// Directory: /job (and /jobs) → lists every currently-active listing
+// (i.e., every PROJECTS entry whose Redis meta hasn't expired yet).
+// ──────────────────────────────────────────────────────────────────────
+
+function renderJobDirectoryHtml(items) {
+  const now = Date.now();
+  function relPosted(iso) {
+    if (!iso) return '';
+    const days = Math.max(0, Math.floor((now - Date.parse(iso)) / 86400000));
+    if (days === 0) return 'Posted today';
+    if (days === 1) return 'Posted 1 day ago';
+    return `Posted ${days} days ago`;
+  }
+  const cards = items.length ? items.map(({ slug, meta }) => {
+    const snippet = String(meta.paragraph1 || '').slice(0, 240);
+    const trimmed = meta.paragraph1 && meta.paragraph1.length > 240 ? snippet + '…' : snippet;
+    return `
+      <a class="job-card" href="/job-${esc(slug)}.html">
+        <div class="job-card__kicker">${esc(meta.kicker || 'Now Hiring')}</div>
+        <h2 class="job-card__title">${esc(meta.headline || 'Open Position')}</h2>
+        <p class="job-card__where">${esc(meta.subheadline || `${meta.city || ''}${meta.state ? ', ' + meta.state : ''}`)}</p>
+        <p class="job-card__snippet">${esc(trimmed)}</p>
+        <div class="job-card__foot">
+          <span class="job-card__date">${esc(relPosted(meta.postedAt))}</span>
+          <span class="job-card__cta">View position &amp; apply →</span>
+        </div>
+      </a>`;
+  }).join('') : `
+      <div class="job-empty">
+        <h2>No open positions at this time</h2>
+        <p>We aren't actively recruiting for any specific project right now. Please check back soon — new opportunities are posted here as they become available.</p>
+        <p><a class="btn primary" href="/careers.html">Learn about careers at Montissol</a></p>
+      </div>`;
+
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Open Positions | Montissol Essentials</title>
+  <meta name="description" content="Current job openings at Montissol Essentials LLC. Apply directly online.">
+  <meta property="og:title" content="Open Positions | Montissol Essentials">
+  <meta property="og:description" content="Explore current job openings at Montissol Essentials LLC and apply directly online.">
+  <meta property="og:url" content="https://www.montissolessentials.com/job">
+  <meta property="og:type" content="website">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/styles.css">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon.png">
+  <style>
+    .job-directory { max-width: 960px; margin: 0 auto; padding: 48px 24px 64px; }
+    .job-directory h1 { margin: 8px 0 12px; }
+    .job-directory > p.lede { color: #ccc; margin: 0 0 32px; font-size: 1.05rem; max-width: 640px; }
+    .job-list { display: grid; grid-template-columns: 1fr; gap: 20px; }
+    .job-card { display: block; padding: 24px 28px; border: 1px solid rgba(231,77,16,.28); border-radius: 14px; text-decoration: none; color: inherit; background: rgba(255,255,255,.02); transition: border-color .15s, transform .15s, background .15s; }
+    .job-card:hover, .job-card:focus { border-color: #e74d10; background: rgba(231,77,16,.06); transform: translateY(-2px); outline: none; }
+    .job-card__kicker { font-size: .78rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #e74d10; }
+    .job-card__title { margin: 8px 0 4px; font-size: 1.5rem; line-height: 1.2; }
+    .job-card__where { margin: 0 0 12px; color: #cfcfcf; font-weight: 600; }
+    .job-card__snippet { margin: 0; color: #a8a8a8; line-height: 1.55; }
+    .job-card__foot { display: flex; justify-content: space-between; align-items: center; margin-top: 18px; flex-wrap: wrap; gap: 12px; }
+    .job-card__date { color: #888; font-size: .85rem; }
+    .job-card__cta { color: #e74d10; font-weight: 700; }
+    .job-empty { text-align: center; padding: 48px 24px; border: 1px dashed rgba(255,255,255,.15); border-radius: 14px; }
+    .job-empty h2 { margin: 0 0 12px; }
+    .job-empty p { margin: 0 0 16px; color: #b0b0b0; }
+    @media (min-width: 720px) { .job-list { grid-template-columns: 1fr 1fr; } }
+  </style>
+</head>
+<body>
+<div id="shared-header"></div>
+
+<main>
+  <section class="section">
+    <div class="container job-directory">
+      <div class="mini-kicker"><span class="dot"></span><span>Careers</span></div>
+      <h1>Open Positions</h1>
+      <p class="lede">Explore our current opportunities at Montissol Essentials. Click any position below to view details and apply directly online.</p>
+      <div class="job-list">
+        ${cards}
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="shared-footer"></div>
+<script src="/assets/shared.js"></script>
+</body>
+</html>`;
+}
+
+async function handleJobDirectory(req, res) {
+  // Pull every project's meta in parallel; drop the ones whose 30-day
+  // window has already lapsed (readJobMeta returns null for expired keys).
+  const slugs = Object.keys(PROJECTS);
+  const metas = await Promise.all(slugs.map((s) => readJobMeta(s)));
+  const items = slugs
+    .map((slug, i) => ({ slug, meta: metas[i] }))
+    .filter((x) => x.meta)
+    .sort((a, b) => String(b.meta.postedAt || '').localeCompare(String(a.meta.postedAt || '')));
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=60'); // small cache — updates propagate quickly
+  return res.status(200).send(renderJobDirectoryHtml(items));
+}
+
 export default async function handler(req, res) {
   if (req.method === 'POST') return handleSubmit(req, res);
   if (req.method === 'GET') {
+    if (req.query?.directory === '1') return handleJobDirectory(req, res);
     if (req.query?.page === '1') return handleJobPage(req, res);
     return handleAdminList(req, res);
   }
