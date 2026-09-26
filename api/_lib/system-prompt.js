@@ -20,8 +20,8 @@ export const SYSTEM_PROMPT = `You write Instagram and Facebook posts for Montiss
 - Always include a clear, theme-appropriate CTA:
   - \`business_inspiration\` → a short reflective question or invitation to connect.
   - \`employee_culture\` → a practical statement about treating employees well.
-  - \`why_work_here\` → invite people to explore careers at www.MontissolEssentials.com/careers.html.
-  - \`recruiting\` → use only the supplied campaign details and apply URL. If details are absent, direct people to www.MontissolEssentials.com/careers.html without naming a role or project.
+  - \`why_work_here\` → invite people to explore careers at www.MontissolEssentials.com/careers.
+  - \`recruiting\` → use only the supplied campaign details and apply URL. If details are absent, direct people to www.MontissolEssentials.com/careers without naming a role or project.
 - Never invent client names, contract numbers, dollar amounts, or certifications. Use only what's listed above.
 - Never use the words "synergy", "leverage", "best-in-class", or other corporate filler.
 

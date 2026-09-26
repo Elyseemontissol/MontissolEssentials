@@ -923,6 +923,41 @@ input, textarea, select, button { font: inherit; }
   box-shadow: var(--shadow-glow-lg);
 }
 
+/* Project-specific job interest page */
+.job-interest-hero { min-height: min(680px, 82vh); }
+.job-interest-layout {
+  display: grid;
+  grid-template-columns: minmax(0, .9fr) minmax(420px, 1.1fr);
+  gap: clamp(40px, 7vw, 88px);
+  align-items: start;
+}
+.job-interest-copy h2 {
+  max-width: 650px;
+  margin: 14px 0 20px;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+}
+.job-interest-copy > p { max-width: 680px; line-height: 1.8; }
+.job-interest-note {
+  margin-top: 30px;
+  padding: 22px 0 4px 22px;
+  border-left: 4px solid var(--brand);
+}
+.job-interest-note p { margin-top: 8px; }
+.job-interest-form-panel { border-radius: 8px; }
+.job-interest-form-panel form { display: grid; gap: 18px; }
+.job-interest-form-intro { margin: -18px 0 4px; color: var(--text-muted); }
+.job-interest-submit { width: 100%; margin-top: 2px; }
+.job-interest-submit:disabled { cursor: wait; opacity: .7; transform: none; }
+.form-honeypot { position: absolute !important; left: -10000px !important; }
+.form-status { min-height: 24px; margin: 0; font-weight: 700; }
+.form-status.is-success { color: #2f9e63; }
+.form-status.is-error { color: #d94343; }
+
+@media (max-width: 860px) {
+  .job-interest-layout { grid-template-columns: 1fr; }
+  .job-interest-form-panel { max-width: 680px; width: 100%; }
+}
+
 .contact-info-panel { padding: 20px 0; }
 .contact-kicker {
   font-size: .75rem; font-weight: 800; text-transform: uppercase;

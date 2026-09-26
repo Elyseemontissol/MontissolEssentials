@@ -408,7 +408,7 @@ function renderJobPageHtml(meta) {
       <p class="hero-split__sub">${esc(subheadline)}</p>
       <div class="hero-split__actions">
         <a class="btn primary" href="#interest-form">Express Interest</a>
-        <a class="btn outline" href="/careers.html" style="border-color:#fff;color:#fff;">View Careers</a>
+        <a class="btn outline" href="/careers" style="border-color:#fff;color:#fff;">View Careers</a>
       </div>
     </div>
   </section>
@@ -556,7 +556,7 @@ function renderExpiredHtml(projectId) {
       <h1 style="margin:0 0 12px 0;">Position Closed</h1>
       ${projectName ? `<p style="color:#666;margin:0 0 12px 0;">${esc(projectName)}</p>` : ''}
       <p style="margin:0 0 32px 0;">This job posting is no longer accepting applications. Check our current openings below or contact us directly.</p>
-      <a href="/careers.html" class="btn primary">View Current Openings</a>
+      <a href="/careers" class="btn primary">View Current Openings</a>
     </div>
   </section>
 </main>
@@ -613,7 +613,7 @@ function renderJobDirectoryHtml(items) {
       <div class="job-empty">
         <h2>No open positions at this time</h2>
         <p>We aren't actively recruiting for any specific project right now. Please check back soon — new opportunities are posted here as they become available.</p>
-        <p><a class="btn primary" href="/careers.html">Learn about careers at Montissol</a></p>
+        <p><a class="btn primary" href="/careers">Learn about careers at Montissol</a></p>
       </div>`;
 
   return `<!doctype html>
@@ -625,7 +625,7 @@ function renderJobDirectoryHtml(items) {
   <meta name="description" content="Current job openings at Montissol Essentials LLC. Apply directly online.">
   <meta property="og:title" content="Open Positions | Montissol Essentials">
   <meta property="og:description" content="Explore current job openings at Montissol Essentials LLC and apply directly online.">
-  <meta property="og:url" content="https://www.montissolessentials.com/job">
+  <meta property="og:url" content="https://www.montissolessentials.com/careers">
   <meta property="og:type" content="website">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

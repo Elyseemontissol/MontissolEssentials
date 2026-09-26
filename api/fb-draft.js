@@ -20,7 +20,7 @@ function appBaseUrl() {
 
 // Derive the projectId slug from an apply URL like
 // `https://.../job-<slug>.html#interest-form`. Returns null for URLs that
-// aren't in our /job-<slug>.html pattern (e.g. careers.html fallback).
+// aren't in our /job-<slug>.html pattern (e.g. /careers fallback).
 function projectIdFromApplyUrl(applyUrl) {
   const m = String(applyUrl || '').match(/\/job-([a-z0-9-]+)\.html/i);
   return m ? m[1].toLowerCase() : null;
@@ -73,7 +73,7 @@ function cleanCampaign(query = {}) {
   }
 
   if (!query.project && !query.role && !query.location && !query.apply_url) return null;
-  const applyUrl = limit(query.apply_url, 300) || `${appBaseUrl()}/careers.html`;
+  const applyUrl = limit(query.apply_url, 300) || `${appBaseUrl()}/careers`;
   return {
     projectId: limit(query.project_id, 80) || projectIdFromApplyUrl(applyUrl),
     project: limit(query.project, 120) || 'Not specified',

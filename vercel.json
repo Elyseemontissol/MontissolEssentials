@@ -26,14 +26,23 @@
       "destination": "/api/jobs?id=:slug&page=1"
     },
     {
-      "source": "/jobs",
+      "source": "/careers",
+      "destination": "/api/jobs?directory=1"
+    },
+    {
+      "source": "/careers.html",
       "destination": "/api/jobs?directory=1"
     }
   ],
   "redirects": [
     {
       "source": "/job",
-      "destination": "/jobs",
+      "destination": "/careers",
+      "permanent": true
+    },
+    {
+      "source": "/jobs",
+      "destination": "/careers",
       "permanent": true
     }
   ]
