@@ -196,6 +196,22 @@ async function handleSubmit(req, res) {
     return res.status(200).json({ ok: true });
   }
 
+  // Simple arithmetic verification — the page embeds mathA / mathB /
+  // mathOp as hidden fields (generated client-side on load). Bots that
+  // POST directly to /api/jobs without rendering the page will be
+  // missing these entirely and fail the check.
+  const mathA = Number(body.mathA);
+  const mathB = Number(body.mathB);
+  const mathOp = String(body.mathOp || '');
+  const mathAnswer = Number(body.mathAnswer);
+  if (!Number.isFinite(mathA) || !Number.isFinite(mathB) || !Number.isFinite(mathAnswer) || !['+', '-'].includes(mathOp)) {
+    return res.status(400).json({ ok: false, error: 'Please solve the verification equation before submitting.' });
+  }
+  const mathExpected = mathOp === '+' ? mathA + mathB : mathA - mathB;
+  if (mathAnswer !== mathExpected) {
+    return res.status(400).json({ ok: false, error: 'The verification answer is incorrect. Please solve the equation and try again.' });
+  }
+
   const result = validateInterest(body);
   if (result.error) return res.status(400).json({ ok: false, error: result.error });
 
@@ -423,6 +439,7 @@ function renderJobPageHtml(meta) {
           <div class="field"><label for="canPerform">Can you perform the essential duties of this role, with or without reasonable accommodation? <span class="req">*</span></label><select id="canPerform" name="canPerform" required><option value="">Select an answer</option><option value="yes">Yes</option><option value="no">No</option></select></div>
           <div class="field"><label for="workConstraints">Are there any non-medical scheduling, transportation, or work-location limitations we should consider?</label><textarea id="workConstraints" name="workConstraints" maxlength="1000" placeholder="Optional. Please do not provide medical or disability information."></textarea></div>
           <div class="field"><label for="resume">Attach your r&eacute;sum&eacute; <span style="color:#666;font-weight:400;">(optional &mdash; PDF, DOC, DOCX, or TXT, up to 4&nbsp;MB)</span></label><input id="resume" name="resume" type="file" accept=".pdf,.doc,.docx,.txt,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"></div>
+          <div class="field"><label for="mathAnswer">Verification &mdash; solve this to submit <span class="req">*</span><br><span style="font-size:.95rem;font-weight:400;">What is <span id="mathQuestion">&mdash;</span>?</span></label><input id="mathAnswer" name="mathAnswer" type="text" inputmode="numeric" pattern="-?[0-9]{1,4}" maxlength="4" autocomplete="off" required style="max-width:140px;"><input type="hidden" name="mathA" id="mathA"><input type="hidden" name="mathB" id="mathB"><input type="hidden" name="mathOp" id="mathOp"></div>
           <button class="contact-submit job-interest-submit" type="submit">Submit Interest</button>
           <p class="form-status" id="formStatus" role="status" aria-live="polite"></p>
         </form>
@@ -439,9 +456,35 @@ function renderJobPageHtml(meta) {
     var status = document.getElementById('formStatus');
     var button = form.querySelector('button[type="submit"]');
     var startedAt = Date.now();
+
+    // Generate a small verification equation on page load. Naive spam
+    // bots that POST /api/jobs directly without loading the page won't
+    // have the hidden mathA/mathB/mathOp fields at all, so the server
+    // rejects them. Real users just add two small numbers.
+    var mA = Math.floor(Math.random() * 9) + 1;
+    var mB = Math.floor(Math.random() * 9) + 1;
+    var mOp = Math.random() < 0.5 ? '+' : '-';
+    if (mOp === '-' && mB > mA) { var t = mA; mA = mB; mB = t; }
+    var mExpected = mOp === '+' ? mA + mB : mA - mB;
+    document.getElementById('mathQuestion').textContent = mA + ' ' + mOp + ' ' + mB;
+    document.getElementById('mathA').value = String(mA);
+    document.getElementById('mathB').value = String(mB);
+    document.getElementById('mathOp').value = mOp;
+
     form.addEventListener('submit', async function (event) {
       event.preventDefault();
       if (!form.reportValidity()) return;
+
+      // Client-side verification check — immediate feedback if the
+      // math answer is wrong. Server re-verifies as the source of
+      // truth (see handleSubmit in api/jobs.js).
+      var typedAnswer = Number(document.getElementById('mathAnswer').value);
+      if (!Number.isFinite(typedAnswer) || typedAnswer !== mExpected) {
+        status.className = 'form-status is-error';
+        status.textContent = 'The verification answer is incorrect. Please solve the equation and try again.';
+        return;
+      }
+
       button.disabled = true;
       button.textContent = 'Submitting...';
       status.className = 'form-status';
