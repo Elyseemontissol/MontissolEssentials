@@ -59,6 +59,25 @@ function metaKey(projectId) {
   return `jobs:meta:${projectId}`;
 }
 
+// Runtime-editable project name registry. Combines the compiled-in
+// PROJECTS constant (backward compat / seed data) with a Redis hash
+// `jobs:projects_map` that the postings admin can edit. Anything in
+// Redis wins; the admin can add new project IDs at will.
+async function getAllProjects() {
+  try {
+    const dynamic = (await redis.hgetall('jobs:projects_map')) || {};
+    return { ...PROJECTS, ...dynamic };
+  } catch (err) {
+    console.error('getAllProjects Redis error:', err);
+    return { ...PROJECTS };
+  }
+}
+
+async function getProjectName(projectId) {
+  const all = await getAllProjects();
+  return all[projectId] || null;
+}
+
 // Called from api/fb-draft.js when a campaign draft is created (non-dry).
 // Writes the full page metadata to Redis with a 30d TTL so the dynamic
 // page renderer + form submissions work for the next month, then expire
@@ -82,7 +101,7 @@ async function readJobMeta(projectId) {
   }
 }
 
-export function validateInterest(body = {}) {
+export function validateInterest(body = {}, projectsMap = PROJECTS) {
   const data = {
     projectId: clean(body.projectId, 80),
     name: clean(body.name, 120),
@@ -93,7 +112,7 @@ export function validateInterest(body = {}) {
     workConstraints: clean(body.workConstraints, 1000),
   };
 
-  if (!PROJECTS[data.projectId]) return { error: 'This position is not available.' };
+  if (!projectsMap[data.projectId]) return { error: 'This position is not available.' };
   if (!data.name || !data.email || !data.phone || !data.experience || !data.canPerform) {
     return { error: 'Please complete all required fields.' };
   }
@@ -110,7 +129,7 @@ export function validateInterest(body = {}) {
     return { error: 'Please tell us a little more about your experience.' };
   }
 
-  return { data: { ...data, project: PROJECTS[data.projectId] } };
+  return { data: { ...data, project: projectsMap[data.projectId] } };
 }
 
 function authorized(req) {
@@ -212,7 +231,8 @@ async function handleSubmit(req, res) {
     return res.status(400).json({ ok: false, error: 'The verification answer is incorrect. Please solve the equation and try again.' });
   }
 
-  const result = validateInterest(body);
+  const projectsMap = await getAllProjects();
+  const result = validateInterest(body, projectsMap);
   if (result.error) return res.status(400).json({ ok: false, error: result.error });
 
   // Reject submissions for jobs whose 30-day meta window has closed.
@@ -299,6 +319,7 @@ async function handleAdminList(req, res) {
     return res.status(401).json({ ok: false, error: 'Unauthorized' });
   }
   try {
+    const projectsMap = await getAllProjects();
     const projectIds = await redis.smembers('jobs:projects');
     const projects = await Promise.all(projectIds.map(async (projectId) => {
       const raw = await redis.lrange(`jobs:candidates:${projectId}`, 0, 999);
@@ -308,7 +329,7 @@ async function handleAdminList(req, res) {
       }).filter(Boolean);
       return {
         id: projectId,
-        name: candidates[0]?.project || PROJECTS[projectId] || projectId,
+        name: candidates[0]?.project || projectsMap[projectId] || projectId,
         candidates,
       };
     }));
@@ -317,6 +338,142 @@ async function handleAdminList(req, res) {
   } catch (error) {
     console.error('Candidate dashboard error:', error);
     return res.status(500).json({ ok: false, error: 'Could not load candidates.' });
+  }
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// Postings admin: list / create / update / close job listings
+// ────────────────────────────────────────────────────────────────────────
+
+// Sanitize a projectId slug (kebab-case, letters/digits/hyphens only).
+function cleanSlug(v) {
+  return String(v || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 80);
+}
+
+// GET /api/jobs?admin=postings → { ok, postings: [{ id, name, hasMeta,
+// ttlSeconds, meta, candidateCount }] }.
+async function handleAdminPostings(req, res) {
+  if (!authorized(req)) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  try {
+    const projectsMap = await getAllProjects();
+    const seenCandidates = new Set(await redis.smembers('jobs:projects'));
+    // Union of known project IDs from the projects map and from any set
+    // that has ever received a candidate (in case someone submitted for
+    // a slug that never had a name entry).
+    const allIds = Array.from(new Set([...Object.keys(projectsMap), ...seenCandidates]));
+    const postings = await Promise.all(allIds.map(async (id) => {
+      const [rawMeta, ttl, candCount] = await Promise.all([
+        redis.get(metaKey(id)),
+        redis.ttl(metaKey(id)),
+        redis.llen(`jobs:candidates:${id}`),
+      ]);
+      let meta = null;
+      if (rawMeta) {
+        try { meta = typeof rawMeta === 'string' ? JSON.parse(rawMeta) : rawMeta; }
+        catch { meta = null; }
+      }
+      return {
+        id,
+        name: projectsMap[id] || meta?.projectName || id,
+        hasMeta: !!meta,
+        ttlSeconds: typeof ttl === 'number' && ttl > 0 ? ttl : 0,
+        meta,
+        candidateCount: candCount || 0,
+      };
+    }));
+    // Active first (hasMeta = true) with newest posts on top, then closed.
+    postings.sort((a, b) => {
+      if (a.hasMeta !== b.hasMeta) return a.hasMeta ? -1 : 1;
+      const aP = a.meta?.postedAt || '';
+      const bP = b.meta?.postedAt || '';
+      if (aP !== bP) return String(bP).localeCompare(String(aP));
+      return a.name.localeCompare(b.name);
+    });
+    return res.status(200).json({ ok: true, postings });
+  } catch (error) {
+    console.error('Admin postings list error:', error);
+    return res.status(500).json({ ok: false, error: 'Could not load postings.' });
+  }
+}
+
+// PUT /api/jobs (admin) → create or update a posting. Body:
+//   { projectId, projectName, headline, subheadline, kicker, city, state,
+//     streetAddress?, postalCode?, h2, paragraph1, paragraph2?, ttlDays? }
+// Writes the projectName into the jobs:projects_map hash (persists even
+// after the posting closes so candidates keep their friendly label) and
+// the full meta under jobs:meta:<id> with a 30-day TTL by default.
+async function handleAdminSavePosting(req, res) {
+  if (!authorized(req)) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  const body = req.body || {};
+  const projectId = cleanSlug(body.projectId);
+  if (!projectId) return res.status(400).json({ ok: false, error: 'projectId is required (kebab-case slug).' });
+  const projectName = clean(body.projectName, 200);
+  const headline    = clean(body.headline, 120);
+  const subheadline = clean(body.subheadline, 200);
+  const kicker      = clean(body.kicker, 80);
+  const city        = clean(body.city, 80);
+  const state       = clean(body.state, 40);
+  const h2          = clean(body.h2, 200);
+  const paragraph1  = clean(body.paragraph1, 4000);
+  const paragraph2  = clean(body.paragraph2, 4000);
+  const streetAddress = clean(body.streetAddress, 200);
+  const postalCode  = clean(body.postalCode, 20);
+  const ttlDaysRaw = Number(body.ttlDays);
+  const ttlDays = Number.isFinite(ttlDaysRaw) && ttlDaysRaw > 0 && ttlDaysRaw <= 365 ? Math.floor(ttlDaysRaw) : 30;
+  if (!projectName || !headline || !subheadline || !kicker || !city || !state || !h2 || !paragraph1) {
+    return res.status(400).json({ ok: false, error: 'Please provide project name, headline, subheadline, kicker, city, state, section heading (h2), and the first paragraph.' });
+  }
+  // Preserve postedAt on updates so JobPosting datePosted stays honest.
+  const existingRaw = await redis.get(metaKey(projectId));
+  let existingMeta = null;
+  if (existingRaw) {
+    try { existingMeta = typeof existingRaw === 'string' ? JSON.parse(existingRaw) : existingRaw; } catch {}
+  }
+  const meta = {
+    projectId,
+    projectName,
+    headline,
+    subheadline,
+    kicker,
+    city,
+    state,
+    ...(streetAddress ? { streetAddress } : {}),
+    ...(postalCode ? { postalCode } : {}),
+    h2,
+    paragraph1,
+    ...(paragraph2 ? { paragraph2 } : {}),
+    postedAt: existingMeta?.postedAt || new Date().toISOString(),
+  };
+  try {
+    await redis.hset('jobs:projects_map', { [projectId]: projectName });
+    await redis.set(metaKey(projectId), JSON.stringify(meta), { ex: ttlDays * 24 * 60 * 60 });
+    return res.status(200).json({ ok: true, id: projectId, ttlDays });
+  } catch (error) {
+    console.error('Admin save posting error:', error);
+    return res.status(500).json({ ok: false, error: 'Could not save posting.' });
+  }
+}
+
+// DELETE /api/jobs?id=<slug> → close a posting. Removes the meta so the
+// /job-<slug> URL immediately serves the "Position Closed" page and the
+// /careers directory drops it. Keeps the projects_map entry so candidates
+// submitted while the position was open still show a friendly name.
+async function handleAdminClosePosting(req, res) {
+  if (!authorized(req)) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  const projectId = cleanSlug(req.query?.id);
+  if (!projectId) return res.status(400).json({ ok: false, error: 'projectId is required.' });
+  try {
+    await redis.del(metaKey(projectId));
+    return res.status(200).json({ ok: true, id: projectId });
+  } catch (error) {
+    console.error('Admin close posting error:', error);
+    return res.status(500).json({ ok: false, error: 'Could not close posting.' });
   }
 }
 
@@ -533,8 +690,7 @@ function renderJobPageHtml(meta) {
 </html>`;
 }
 
-function renderExpiredHtml(projectId) {
-  const projectName = PROJECTS[projectId] || '';
+function renderExpiredHtml(projectId, projectName = '') {
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -576,7 +732,8 @@ async function handleJobPage(req, res) {
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   if (!meta) {
     // Either never posted or 30-day TTL expired. Same friendly page either way.
-    return res.status(410).send(renderExpiredHtml(projectId));
+    const name = (await getProjectName(projectId)) || '';
+    return res.status(410).send(renderExpiredHtml(projectId, name));
   }
   return res.status(200).send(renderJobPageHtml(meta));
 }
@@ -675,9 +832,10 @@ function renderJobDirectoryHtml(items) {
 }
 
 async function handleJobDirectory(req, res) {
-  // Pull every project's meta in parallel; drop the ones whose 30-day
-  // window has already lapsed (readJobMeta returns null for expired keys).
-  const slugs = Object.keys(PROJECTS);
+  // Read every project (compiled-in + admin-added) and its meta in
+  // parallel; drop those whose 30-day window has lapsed.
+  const projectsMap = await getAllProjects();
+  const slugs = Object.keys(projectsMap);
   const metas = await Promise.all(slugs.map((s) => readJobMeta(s)));
   const items = slugs
     .map((slug, i) => ({ slug, meta: metas[i] }))
@@ -690,11 +848,14 @@ async function handleJobDirectory(req, res) {
 
 export default async function handler(req, res) {
   if (req.method === 'POST') return handleSubmit(req, res);
+  if (req.method === 'PUT') return handleAdminSavePosting(req, res);
+  if (req.method === 'DELETE') return handleAdminClosePosting(req, res);
   // Treat HEAD like GET so crawlers / uptime pings don't see spurious
   // 405s. The response.send() body is discarded by the runtime for HEAD.
   if (req.method === 'GET' || req.method === 'HEAD') {
     if (req.query?.directory === '1') return handleJobDirectory(req, res);
     if (req.query?.page === '1') return handleJobPage(req, res);
+    if (req.query?.admin === 'postings') return handleAdminPostings(req, res);
     return handleAdminList(req, res);
   }
   return res.status(405).json({ ok: false, error: 'Method Not Allowed' });

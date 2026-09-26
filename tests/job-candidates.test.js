@@ -26,6 +26,7 @@ test('candidate API requires the admin password', async () => {
 test('candidate API rejects unsupported methods before authentication', async () => {
   const { default: handler } = await import('../api/jobs.js');
   const res = response();
-  await handler({ method: 'DELETE', headers: {} }, res);
+  // PATCH isn't wired to any handler; POST/PUT/DELETE/GET/HEAD all are.
+  await handler({ method: 'PATCH', headers: {}, query: {} }, res);
   assert.equal(res.statusCode, 405);
 });

@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Manage Job Postings - Montissol Essentials</title>
+  <style>
+    :root { --bg:#0a0a0a; --panel:#151515; --text:#f4f4f4; --muted:#999; --border:#303030; --brand:#e74d10; --good:#35b879; --warn:#e6b400; --bad:#e5484d; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--text); font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    main { width:min(1120px,calc(100% - 32px)); margin:32px auto 64px; }
+    h1,h2,h3,p { margin-top:0; }
+    a { color:var(--brand); }
+    .panel { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:24px; margin-bottom:18px; }
+    .hidden { display:none; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:20px; flex-wrap:wrap; }
+    .topbar .actions { display:flex; gap:8px; flex-wrap:wrap; }
+    input, select, textarea { width:100%; background:#0d0d0d; color:var(--text); border:1px solid var(--border); border-radius:6px; padding:11px 12px; font:inherit; }
+    textarea { min-height:96px; resize:vertical; font-family:inherit; }
+    label { display:block; color:var(--muted); font-size:.85rem; margin-bottom:6px; }
+    button, .button { border:0; border-radius:6px; background:var(--brand); color:#fff; padding:10px 16px; font:inherit; font-weight:700; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:6px; }
+    button.secondary, .button.secondary { background:transparent; border:1px solid var(--border); color:var(--text); }
+    button.danger { background:transparent; border:1px solid var(--bad); color:var(--bad); }
+    button:disabled { opacity:.5; cursor:not-allowed; }
+    .error { color:#ff8585; margin-top:12px; }
+    .status { color:var(--good); margin-top:12px; }
+    .login-shell { max-width:480px; margin:10vh auto 0; }
+    .login-button { width:100%; margin-top:12px; }
+    .grid-fields { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .grid-fields .full { grid-column:1 / -1; }
+    @media (max-width:640px) { .grid-fields { grid-template-columns:1fr; } }
+    .posting { border-top:1px solid var(--border); padding:20px 0; display:flex; justify-content:space-between; gap:16px; align-items:flex-start; flex-wrap:wrap; }
+    .posting:first-of-type { border-top:0; }
+    .posting__body { flex:1; min-width:0; }
+    .posting__id { color:var(--muted); font-size:.82rem; text-transform:uppercase; letter-spacing:.5px; }
+    .posting__name { margin:4px 0 8px; font-size:1.1rem; }
+    .posting__meta { color:var(--muted); font-size:.88rem; display:flex; flex-wrap:wrap; gap:6px 14px; }
+    .badge { display:inline-block; padding:3px 10px; border-radius:999px; font-size:.78rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; }
+    .badge.active { background:rgba(53,184,121,.15); color:var(--good); }
+    .badge.closed { background:rgba(229,72,77,.15); color:var(--bad); }
+    .badge.warn { background:rgba(230,180,0,.15); color:var(--warn); }
+    .posting__actions { display:flex; gap:6px; flex-wrap:wrap; }
+    .empty { color:var(--muted); text-align:center; padding:32px 0; }
+    dialog { border:1px solid var(--border); border-radius:12px; background:var(--panel); color:var(--text); padding:0; width:min(700px,calc(100% - 32px)); max-height:90vh; }
+    dialog::backdrop { background:rgba(0,0,0,.7); }
+    .dialog-head { padding:20px 24px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+    .dialog-body { padding:20px 24px; overflow-y:auto; max-height:calc(90vh - 140px); }
+    .dialog-foot { padding:16px 24px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:8px; }
+    .field-hint { color:var(--muted); font-size:.78rem; margin-top:4px; }
+  </style>
+</head>
+<body>
+<main>
+  <h1 style="margin-bottom:8px;">Manage Job Postings</h1>
+  <p style="color:var(--muted); margin-bottom:22px;">Create, edit, close, or renew job listings shown on <a href="/careers">montissolessentials.com/careers</a>.</p>
+
+  <!-- LOGIN -->
+  <div id="loginPanel" class="panel login-shell">
+    <h2 style="margin-bottom:14px;">Admin Sign-in</h2>
+    <label for="pwd">Admin password</label>
+    <input id="pwd" type="password" autocomplete="current-password">
+    <button id="loginBtn" class="login-button">Sign in</button>
+    <p id="loginErr" class="error hidden"></p>
+    <p style="margin-top:16px;"><a href="/index.html">← Back to homepage</a></p>
+  </div>
+
+  <!-- MAIN PANEL -->
+  <div id="mainPanel" class="hidden">
+    <div class="topbar">
+      <div>
+        <span id="summary" style="color:var(--muted);">Loading…</span>
+      </div>
+      <div class="actions">
+        <button id="newBtn">+ New Position</button>
+        <button id="refreshBtn" class="secondary">Refresh</button>
+        <button id="signOutBtn" class="secondary">Sign out</button>
+      </div>
+    </div>
+    <div id="postingsList" class="panel"></div>
+  </div>
+
+  <!-- EDIT / CREATE DIALOG -->
+  <dialog id="editDialog">
+    <div class="dialog-head">
+      <h2 id="dialogTitle" style="margin:0;">New Position</h2>
+      <button type="button" class="secondary" id="closeDialogBtn">Close</button>
+    </div>
+    <form id="editForm">
+      <div class="dialog-body">
+        <div class="grid-fields">
+          <div class="full">
+            <label for="fProjectId">Project ID (slug) <span style="color:var(--brand);">*</span></label>
+            <input id="fProjectId" name="projectId" placeholder="e.g. albany-va-parking" required>
+            <p class="field-hint">Lowercase letters, digits, and hyphens only. Used in the URL /job-&lt;slug&gt;. Cannot be changed after creation.</p>
+          </div>
+          <div class="full">
+            <label for="fProjectName">Project name <span style="color:var(--brand);">*</span></label>
+            <input id="fProjectName" name="projectName" placeholder="e.g. Patient Assisted Parking Services - Samuel S. Stratton VA Medical Center, Albany, NY" required>
+            <p class="field-hint">Full display name shown in the admin panels + candidate lists.</p>
+          </div>
+          <div>
+            <label for="fHeadline">Headline <span style="color:var(--brand);">*</span></label>
+            <input id="fHeadline" name="headline" placeholder="e.g. Janitorial Services" required>
+          </div>
+          <div>
+            <label for="fKicker">Kicker <span style="color:var(--brand);">*</span></label>
+            <input id="fKicker" name="kicker" placeholder="e.g. Now Recruiting in Michigan" required>
+          </div>
+          <div class="full">
+            <label for="fSubheadline">Subheadline <span style="color:var(--brand);">*</span></label>
+            <input id="fSubheadline" name="subheadline" placeholder="e.g. Sault Project Office (SPO), St. Marys Falls Canal, Sault Ste. Marie, MI" required>
+          </div>
+          <div>
+            <label for="fCity">City <span style="color:var(--brand);">*</span></label>
+            <input id="fCity" name="city" required>
+          </div>
+          <div>
+            <label for="fState">State <span style="color:var(--brand);">*</span></label>
+            <input id="fState" name="state" placeholder="e.g. NY" maxlength="40" required>
+          </div>
+          <div>
+            <label for="fStreetAddress">Street address <span class="field-hint">(optional)</span></label>
+            <input id="fStreetAddress" name="streetAddress">
+          </div>
+          <div>
+            <label for="fPostalCode">Postal code <span class="field-hint">(optional)</span></label>
+            <input id="fPostalCode" name="postalCode" maxlength="20">
+          </div>
+          <div class="full">
+            <label for="fH2">Section heading <span style="color:var(--brand);">*</span></label>
+            <input id="fH2" name="h2" placeholder="e.g. Support our Veterans at the Samuel S. Stratton VA Medical Center" required>
+          </div>
+          <div class="full">
+            <label for="fParagraph1">Paragraph 1 <span style="color:var(--brand);">*</span></label>
+            <textarea id="fParagraph1" name="paragraph1" required></textarea>
+          </div>
+          <div class="full">
+            <label for="fParagraph2">Paragraph 2 <span class="field-hint">(optional)</span></label>
+            <textarea id="fParagraph2" name="paragraph2"></textarea>
+          </div>
+          <div>
+            <label for="fTtlDays">TTL (days visible on /careers) <span class="field-hint">— default 30</span></label>
+            <input id="fTtlDays" name="ttlDays" type="number" min="1" max="365" placeholder="30">
+          </div>
+        </div>
+        <p id="dialogErr" class="error hidden"></p>
+        <p id="dialogStatus" class="status hidden"></p>
+      </div>
+      <div class="dialog-foot">
+        <button type="button" class="secondary" id="cancelBtn">Cancel</button>
+        <button type="submit" id="saveBtn">Save posting</button>
+      </div>
+    </form>
+  </dialog>
+</main>
+
+<script>
+(function () {
+  var TOKEN_KEY = 'me_admin_token';
+  var loginPanel = document.getElementById('loginPanel');
+  var mainPanel  = document.getElementById('mainPanel');
+  var pwd        = document.getElementById('pwd');
+  var loginBtn   = document.getElementById('loginBtn');
+  var loginErr   = document.getElementById('loginErr');
+  var signOutBtn = document.getElementById('signOutBtn');
+  var refreshBtn = document.getElementById('refreshBtn');
+  var newBtn     = document.getElementById('newBtn');
+  var summary    = document.getElementById('summary');
+  var listBox    = document.getElementById('postingsList');
+  var editDialog = document.getElementById('editDialog');
+  var editForm   = document.getElementById('editForm');
+  var dialogTitle = document.getElementById('dialogTitle');
+  var dialogErr  = document.getElementById('dialogErr');
+  var dialogStatus = document.getElementById('dialogStatus');
+  var closeDialogBtn = document.getElementById('closeDialogBtn');
+  var cancelBtn  = document.getElementById('cancelBtn');
+  var fProjectId = document.getElementById('fProjectId');
+
+  function getToken() { try { return sessionStorage.getItem(TOKEN_KEY) || ''; } catch (e) { return ''; } }
+  function setToken(v) { try { sessionStorage.setItem(TOKEN_KEY, v); } catch (e) {} }
+  function clearToken() { try { sessionStorage.removeItem(TOKEN_KEY); } catch (e) {} }
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c];
+    });
+  }
+  function daysLeft(sec) { return Math.max(0, Math.round(sec / 86400)); }
+
+  async function apiFetch(url, opts) {
+    opts = opts || {};
+    opts.headers = Object.assign({}, opts.headers || {}, { 'Authorization': 'Bearer ' + getToken() });
+    var res = await fetch(url, opts);
+    var ct = res.headers.get('content-type') || '';
+    if (!ct.includes('application/json')) {
+      throw new Error('Unexpected response (' + res.status + ').');
+    }
+    var json = await res.json();
+    if (!res.ok || !json.ok) {
+      if (res.status === 401) { clearToken(); showLogin(); }
+      throw new Error(json.error || ('Request failed (' + res.status + ')'));
+    }
+    return json;
+  }
+
+  function showLogin() {
+    mainPanel.classList.add('hidden');
+    loginPanel.classList.remove('hidden');
+    pwd.focus();
+  }
+  function showMain() {
+    loginPanel.classList.add('hidden');
+    mainPanel.classList.remove('hidden');
+    load();
+  }
+
+  loginBtn.addEventListener('click', async function () {
+    loginErr.classList.add('hidden');
+    var token = pwd.value.trim();
+    if (!token) return;
+    setToken(token);
+    try {
+      await apiFetch('/api/jobs?admin=postings');
+      showMain();
+    } catch (err) {
+      clearToken();
+      loginErr.textContent = err.message || 'Sign-in failed.';
+      loginErr.classList.remove('hidden');
+    }
+  });
+  pwd.addEventListener('keydown', function (e) { if (e.key === 'Enter') loginBtn.click(); });
+  signOutBtn.addEventListener('click', function () { clearToken(); showLogin(); });
+  refreshBtn.addEventListener('click', load);
+  newBtn.addEventListener('click', function () { openDialog(null); });
+  closeDialogBtn.addEventListener('click', function () { editDialog.close(); });
+  cancelBtn.addEventListener('click', function () { editDialog.close(); });
+
+  async function load() {
+    summary.textContent = 'Loading…';
+    listBox.innerHTML = '<p class="empty">Loading postings…</p>';
+    try {
+      var json = await apiFetch('/api/jobs?admin=postings');
+      renderList(json.postings || []);
+    } catch (err) {
+      listBox.innerHTML = '<p class="error">' + esc(err.message) + '</p>';
+      summary.textContent = '';
+    }
+  }
+
+  function renderList(postings) {
+    var active = postings.filter(function (p) { return p.hasMeta; });
+    var closed = postings.filter(function (p) { return !p.hasMeta; });
+    summary.textContent = active.length + ' active · ' + closed.length + ' closed · ' + postings.length + ' total';
+    if (postings.length === 0) {
+      listBox.innerHTML = '<p class="empty">No postings yet. Click "+ New Position" to create your first listing.</p>';
+      return;
+    }
+    var html = '';
+    postings.forEach(function (p) {
+      var days = daysLeft(p.ttlSeconds);
+      var badge = !p.hasMeta
+        ? '<span class="badge closed">Closed</span>'
+        : (days <= 3
+            ? '<span class="badge warn">' + days + ' day' + (days === 1 ? '' : 's') + ' left</span>'
+            : '<span class="badge active">' + days + ' days left</span>');
+      var url = p.hasMeta ? '/job-' + p.id : null;
+      var meta = p.meta || {};
+      var loc = (meta.city || '') + (meta.state ? ', ' + meta.state : '');
+      html += '<div class="posting">'
+        +   '<div class="posting__body">'
+        +     '<div class="posting__id">' + esc(p.id) + '</div>'
+        +     '<h3 class="posting__name">' + esc(p.name) + '</h3>'
+        +     '<div class="posting__meta">'
+        +       badge
+        +       (loc ? '<span>📍 ' + esc(loc) + '</span>' : '')
+        +       (p.candidateCount ? '<span>💼 ' + p.candidateCount + ' candidate' + (p.candidateCount === 1 ? '' : 's') + '</span>' : '')
+        +       (url ? '<a href="' + esc(url) + '" target="_blank" rel="noopener">View public page ↗</a>' : '')
+        +     '</div>'
+        +   '</div>'
+        +   '<div class="posting__actions">'
+        +     '<button data-action="edit" data-id="' + esc(p.id) + '">' + (p.hasMeta ? 'Edit' : 'Reopen') + '</button>'
+        +     (p.hasMeta ? '<button class="danger" data-action="close" data-id="' + esc(p.id) + '">Close</button>' : '')
+        +   '</div>'
+        + '</div>';
+    });
+    listBox.innerHTML = html;
+    listBox.querySelectorAll('button[data-action]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = btn.getAttribute('data-id');
+        var action = btn.getAttribute('data-action');
+        if (action === 'edit') {
+          var p = postings.find(function (x) { return x.id === id; });
+          openDialog(p);
+        } else if (action === 'close') {
+          closePosting(id);
+        }
+      });
+    });
+  }
+
+  function openDialog(posting) {
+    dialogErr.classList.add('hidden');
+    dialogStatus.classList.add('hidden');
+    editForm.reset();
+    var isNew = !posting;
+    dialogTitle.textContent = isNew ? 'New Position' : (posting.hasMeta ? 'Edit posting' : 'Reopen posting');
+    fProjectId.readOnly = !isNew;
+    var meta = (posting && posting.meta) || {};
+    if (posting) {
+      fProjectId.value = posting.id;
+      document.getElementById('fProjectName').value = meta.projectName || posting.name || '';
+      document.getElementById('fHeadline').value = meta.headline || '';
+      document.getElementById('fKicker').value = meta.kicker || '';
+      document.getElementById('fSubheadline').value = meta.subheadline || '';
+      document.getElementById('fCity').value = meta.city || '';
+      document.getElementById('fState').value = meta.state || '';
+      document.getElementById('fStreetAddress').value = meta.streetAddress || '';
+      document.getElementById('fPostalCode').value = meta.postalCode || '';
+      document.getElementById('fH2').value = meta.h2 || '';
+      document.getElementById('fParagraph1').value = meta.paragraph1 || '';
+      document.getElementById('fParagraph2').value = meta.paragraph2 || '';
+    }
+    editDialog.showModal();
+  }
+
+  editForm.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    dialogErr.classList.add('hidden');
+    dialogStatus.classList.add('hidden');
+    var body = {
+      projectId: fProjectId.value.trim().toLowerCase().replace(/[^a-z0-9-]+/g,'-'),
+      projectName: document.getElementById('fProjectName').value.trim(),
+      headline: document.getElementById('fHeadline').value.trim(),
+      subheadline: document.getElementById('fSubheadline').value.trim(),
+      kicker: document.getElementById('fKicker').value.trim(),
+      city: document.getElementById('fCity').value.trim(),
+      state: document.getElementById('fState').value.trim(),
+      streetAddress: document.getElementById('fStreetAddress').value.trim(),
+      postalCode: document.getElementById('fPostalCode').value.trim(),
+      h2: document.getElementById('fH2').value.trim(),
+      paragraph1: document.getElementById('fParagraph1').value.trim(),
+      paragraph2: document.getElementById('fParagraph2').value.trim(),
+    };
+    var ttl = Number(document.getElementById('fTtlDays').value);
+    if (Number.isFinite(ttl) && ttl > 0) body.ttlDays = ttl;
+    try {
+      var json = await apiFetch('/api/jobs', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      dialogStatus.textContent = 'Saved. Visible on /careers for ~' + (json.ttlDays || 30) + ' days.';
+      dialogStatus.classList.remove('hidden');
+      setTimeout(function () { editDialog.close(); load(); }, 900);
+    } catch (err) {
+      dialogErr.textContent = err.message || 'Could not save.';
+      dialogErr.classList.remove('hidden');
+    }
+  });
+
+  async function closePosting(id) {
+    if (!confirm('Close the posting "' + id + '"?\n\nThis removes it from /careers and the /job-' + id + ' page becomes a "Position Closed" page. Candidates submitted while it was open stay in the admin panel. You can reopen it later by editing.')) return;
+    try {
+      await apiFetch('/api/jobs?id=' + encodeURIComponent(id), { method: 'DELETE' });
+      load();
+    } catch (err) {
+      alert(err.message || 'Could not close posting.');
+    }
+  }
+
+  // Boot
+  if (getToken()) {
+    apiFetch('/api/jobs?admin=postings').then(function () { showMain(); }).catch(function () { clearToken(); showLogin(); });
+  } else {
+    showLogin();
+  }
+})();
+</script>
+</body>
+</html>
