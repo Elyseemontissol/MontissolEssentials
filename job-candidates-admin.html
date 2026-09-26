@@ -67,7 +67,6 @@
     <div class="topbar">
       <h1 style="margin:0;">Hiring Candidates</h1>
       <div>
-        <button class="secondary" id="purgeTestsButton" type="button" title="Permanently delete every candidate entry that has no resume attached">Purge test submissions</button>
         <a class="button secondary" href="/">Home</a>
         <button class="secondary" id="signOutButton" type="button">Sign Out</button>
       </div>
@@ -146,9 +145,15 @@
             (resumeSizeKb ? ' <span style="color:#888;">(' + resumeSizeKb + ' KB)</span>' : '') +
             ' <span style="color:#888;">— emailed to elyseem@montissolessentials.com when submitted</span></div>'
           : '';
+        var deleteBtn = candidate.id
+          ? '<button type="button" class="secondary" data-action="delete-candidate" data-project="' +
+            escapeHtml(project.id) + '" data-id="' + escapeHtml(candidate.id) + '" data-name="' +
+            escapeHtml(candidate.name) + '" style="border-color:rgba(229,72,77,.4); color:#e5484d;">Delete</button>'
+          : '';
         return '<article class="candidate"><div class="candidate-head"><div><h2>' +
           escapeHtml(candidate.name) + '</h2><div class="candidate-meta">Submitted ' +
-          escapeHtml(formatDate(candidate.submittedAt)) + '</div></div></div>' +
+          escapeHtml(formatDate(candidate.submittedAt)) + '</div></div>' +
+          '<div>' + deleteBtn + '</div></div>' +
           '<div class="candidate-contact"><a href="mailto:' + encodeURIComponent(candidate.email) + '">' +
           escapeHtml(candidate.email) + '</a><a href="tel:' + escapeHtml(phoneLink) + '">' +
           escapeHtml(candidate.phone) + '</a></div>' +
@@ -215,27 +220,25 @@
       sessionStorage.removeItem('me_admin_token');
       location.reload();
     });
-    document.getElementById('purgeTestsButton').addEventListener('click', async function () {
-      var btn = this;
-      if (!confirm('Permanently delete every candidate entry that has NO resume attached?\n\nThis removes smoke-test submissions from Redis. Real applicants (with a resume) are kept. This cannot be undone.')) return;
-      btn.disabled = true;
-      var originalLabel = btn.textContent;
-      btn.textContent = 'Purging…';
+
+    async function deleteCandidate(projectId, candidateId, candidateName) {
+      if (!confirm('Permanently delete this candidate?\n\n' + (candidateName || candidateId) + '\n\nThis removes them from Redis and cannot be undone.')) return;
       try {
-        var res = await fetch('/api/jobs?admin=purge-tests', {
-          method: 'POST',
+        var res = await fetch('/api/jobs?candidate=1&projectId=' + encodeURIComponent(projectId) + '&id=' + encodeURIComponent(candidateId), {
+          method: 'DELETE',
           headers: { 'Authorization': 'Bearer ' + token },
         });
         var json = await res.json();
-        if (!res.ok || !json.ok) throw new Error(json.error || 'Purge failed (' + res.status + ')');
-        alert('Purge complete.\n\nRemoved: ' + json.totalPurged + ' test submission' + (json.totalPurged === 1 ? '' : 's') + '\nKept: ' + json.totalKept + ' real applicant' + (json.totalKept === 1 ? '' : 's'));
+        if (!res.ok || !json.ok) throw new Error(json.error || 'Delete failed (' + res.status + ')');
         await load(token);
       } catch (err) {
-        alert('Error: ' + (err.message || 'Purge failed.'));
-      } finally {
-        btn.disabled = false;
-        btn.textContent = originalLabel;
+        alert('Error: ' + (err.message || 'Delete failed.'));
       }
+    }
+    list.addEventListener('click', function (event) {
+      var btn = event.target.closest('button[data-action="delete-candidate"]');
+      if (!btn) return;
+      deleteCandidate(btn.getAttribute('data-project'), btn.getAttribute('data-id'), btn.getAttribute('data-name'));
     });
     filter.addEventListener('change', renderCandidates);
     if (token) load(token).catch(function () { sessionStorage.removeItem('me_admin_token'); });

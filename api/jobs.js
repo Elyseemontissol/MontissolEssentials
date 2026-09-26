@@ -479,42 +479,37 @@ async function handleAdminList(req, res) {
   }
 }
 
-// POST /api/jobs?admin=purge-tests (admin-authed) → walks every
-// jobs:candidates:<id> list, drops entries without a resumeFilename
-// (i.e. smoke tests / bot noise), and RPUSHes the survivors back in
-// their original order. Returns a per-project breakdown.
-async function handleAdminPurgeTests(req, res) {
+// DELETE /api/jobs?candidate=1&projectId=X&id=Y (admin-authed) →
+// removes a single candidate entry from the jobs:candidates:<X> list.
+// LREM would require the exact stringified JSON we wrote; instead we
+// LRANGE, filter by candidate.id, DEL, and RPUSH survivors in their
+// original order.
+async function handleAdminDeleteCandidate(req, res) {
   if (!authorized(req)) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  const projectId = cleanSlug(req.query?.projectId);
+  const candidateId = clean(req.query?.id, 80);
+  if (!projectId || !candidateId) {
+    return res.status(400).json({ ok: false, error: 'projectId and id are required.' });
+  }
   try {
-    const projectIds = await redis.smembers('jobs:projects');
-    let totalPurged = 0;
-    let totalKept = 0;
-    const perProject = [];
-    for (const projectId of projectIds) {
-      const raw = await redis.lrange(`jobs:candidates:${projectId}`, 0, 999);
-      const parsed = raw.map((entry) => {
-        try { return typeof entry === 'string' ? JSON.parse(entry) : entry; } catch { return null; }
-      }).filter(Boolean);
-      const kept = parsed.filter((c) => c && c.resumeFilename);
-      const purged = parsed.length - kept.length;
-      if (purged > 0) {
-        // Rewrite atomically: delete the list and rpush the survivors in
-        // their original order (LRANGE 0..N returns newest→oldest; rpush
-        // preserves that same order at indices 0..N).
-        await redis.del(`jobs:candidates:${projectId}`);
-        if (kept.length > 0) {
-          const serialized = kept.map((c) => JSON.stringify(c));
-          await redis.rpush(`jobs:candidates:${projectId}`, ...serialized);
-        }
-        perProject.push({ id: projectId, purged, kept: kept.length });
-      }
-      totalPurged += purged;
-      totalKept += kept.length;
+    const raw = await redis.lrange(`jobs:candidates:${projectId}`, 0, 999);
+    const parsed = raw.map((entry) => {
+      try { return typeof entry === 'string' ? JSON.parse(entry) : entry; } catch { return null; }
+    }).filter(Boolean);
+    const survivors = parsed.filter((c) => c && c.id !== candidateId);
+    const removed = parsed.length - survivors.length;
+    if (removed === 0) {
+      return res.status(404).json({ ok: false, error: 'Candidate not found (may already have been deleted).' });
     }
-    return res.status(200).json({ ok: true, totalPurged, totalKept, perProject });
+    await redis.del(`jobs:candidates:${projectId}`);
+    if (survivors.length > 0) {
+      const serialized = survivors.map((c) => JSON.stringify(c));
+      await redis.rpush(`jobs:candidates:${projectId}`, ...serialized);
+    }
+    return res.status(200).json({ ok: true, projectId, id: candidateId, removed });
   } catch (error) {
-    console.error('Admin purge tests error:', error);
-    return res.status(500).json({ ok: false, error: 'Could not purge test submissions.' });
+    console.error('Admin delete candidate error:', error);
+    return res.status(500).json({ ok: false, error: 'Could not delete candidate.' });
   }
 }
 
@@ -1048,11 +1043,13 @@ async function handleJobDirectory(req, res) {
 export default async function handler(req, res) {
   if (req.method === 'POST') {
     if (req.query?.admin === 'parse-pws') return handleAdminParsePws(req, res);
-    if (req.query?.admin === 'purge-tests') return handleAdminPurgeTests(req, res);
     return handleSubmit(req, res);
   }
   if (req.method === 'PUT') return handleAdminSavePosting(req, res);
-  if (req.method === 'DELETE') return handleAdminClosePosting(req, res);
+  if (req.method === 'DELETE') {
+    if (req.query?.candidate === '1' || req.query?.candidate === 'true') return handleAdminDeleteCandidate(req, res);
+    return handleAdminClosePosting(req, res);
+  }
   // Treat HEAD like GET so crawlers / uptime pings don't see spurious
   // 405s. The response.send() body is discarded by the runtime for HEAD.
   if (req.method === 'GET' || req.method === 'HEAD') {
