@@ -371,6 +371,12 @@ function renderJobPageHtml(meta) {
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/assets/styles.css">
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon.png">
+  <style>
+    /* Visually hide the honeypot spam trap so real applicants never see
+       it. Kept in the tab order for accessibility tools but off-screen.
+       (assets/styles.css may not carry a rule for this on all pages.) */
+    .form-honeypot { position: absolute !important; left: -9999px !important; width: 1px !important; height: 1px !important; overflow: hidden !important; opacity: 0 !important; pointer-events: none; }
+  </style>
   <script type="application/ld+json">${jsonLd}</script>
 </head>
 <body>
