@@ -468,6 +468,48 @@ async function handleSubmit(req, res) {
     console.error('Job interest email error:', error);
   }
 
+  // Applicant confirmation. Failure here shouldn't block the submission —
+  // the candidate is already saved and the admin has already been notified.
+  try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const firstName = String(name).split(/\s+/)[0] || name;
+    await resend.emails.send({
+      from: 'Montissol Essentials <NoReply@MontissolEssentials.com>',
+      to: [email],
+      replyTo: 'info@MontissolEssentials.com',
+      subject: `Thank you for applying — ${project}`,
+      text: [
+        `Hi ${firstName},`,
+        '',
+        `Thank you for applying to the ${project} position with Montissol Essentials LLC. We've received your application and it is under review.`,
+        '',
+        `Once all applications for this position have been reviewed, our team will reach out directly if you are selected to move forward.`,
+        '',
+        `We appreciate the time you took to share your background with us and wish you the very best.`,
+        '',
+        `— The Montissol Essentials Team`,
+        `info@MontissolEssentials.com`,
+        `https://montissolessentials.com`,
+      ].join('\n'),
+      html: `
+        <div style="font-family:Arial,Helvetica,sans-serif;color:#222;max-width:640px;margin:0 auto;padding:24px;">
+          <p style="margin:0 0 16px;">Hi ${esc(firstName)},</p>
+          <p style="margin:0 0 16px;">Thank you for applying to the <strong>${esc(project)}</strong> position with Montissol Essentials LLC. We've received your application and it is under review.</p>
+          <p style="margin:0 0 16px;">Once all applications for this position have been reviewed, our team will reach out directly if you are selected to move forward.</p>
+          <p style="margin:0 0 16px;">We appreciate the time you took to share your background with us and wish you the very best.</p>
+          <p style="margin:24px 0 4px;">— The Montissol Essentials Team</p>
+          <p style="margin:0;color:#666;font-size:13px;">
+            <a href="mailto:info@MontissolEssentials.com" style="color:#e74d10;">info@MontissolEssentials.com</a><br>
+            <a href="https://montissolessentials.com" style="color:#e74d10;">montissolessentials.com</a>
+          </p>
+          <p style="margin:24px 0 0;color:#999;font-size:11px;">This is an automated confirmation. Please do not reply directly to this message; use info@MontissolEssentials.com for any questions.</p>
+        </div>
+      `,
+    });
+  } catch (error) {
+    console.error('Applicant confirmation email error:', error);
+  }
+
   return res.status(200).json({ ok: true });
 }
 
