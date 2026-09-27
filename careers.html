@@ -45,6 +45,39 @@
     .openings__empty h2, .openings__loading h2 { margin: 0 0 12px; }
     .openings__empty p, .openings__loading p, .openings__error p { margin: 0 0 16px; color: #b0b0b0; }
     .openings__error { border-color: rgba(229,72,77,.4); }
+
+    /* Search bar */
+    .openings__search { position: relative; margin: 0 0 24px; max-width: 480px; }
+    .openings__search input {
+      width: 100%; padding: 12px 16px 12px 44px;
+      background: rgba(255,255,255,.03); color: inherit;
+      border: 1px solid rgba(255,255,255,.15); border-radius: 10px;
+      font: inherit; font-size: 1rem;
+      transition: border-color .15s, background .15s;
+    }
+    .openings__search input:focus {
+      outline: none; border-color: #e74d10; background: rgba(231,77,16,.06);
+    }
+    .openings__search input::placeholder { color: #888; }
+    .openings__search::before {
+      content: "🔍"; position: absolute; left: 14px; top: 50%;
+      transform: translateY(-50%); font-size: 1rem; opacity: .7;
+    }
+    /* Group headers */
+    .openings__group { margin: 0 0 36px; }
+    .openings__group:last-child { margin-bottom: 0; }
+    .openings__group-title {
+      display: flex; align-items: baseline; gap: 12px;
+      margin: 0 0 16px; padding: 0 0 10px;
+      border-bottom: 1px solid rgba(231,77,16,.28);
+    }
+    .openings__group-title h3 {
+      margin: 0; font-size: 1.4rem; color: #fff; letter-spacing: .3px;
+    }
+    .openings__group-title .count {
+      color: #e74d10; font-weight: 700; font-size: .95rem;
+    }
+    .openings__meta { color: #b0b0b0; font-size: .9rem; margin: 0 0 20px; }
   </style>
 </head>
 <body>
@@ -89,12 +122,11 @@
           Every posting below is live. Click a role for the full description and to apply online — no account required.
         </p>
         <div class="openings">
-          <div id="openings-list" class="openings__list">
-            <div class="openings__loading">
-              <h2>Loading current openings…</h2>
-              <p>One moment while we pull the latest roles.</p>
-            </div>
-          </div>
+          <label for="openings-search" class="openings__search">
+            <input id="openings-search" type="search" placeholder="Search by role, city, state, or keyword…" autocomplete="off" aria-label="Search open positions">
+          </label>
+          <p id="openings-meta" class="openings__meta"></p>
+          <div id="openings-list"></div>
         </div>
       </div>
     </div>
@@ -110,7 +142,23 @@
 <script>
 (function () {
   var mount = document.getElementById('openings-list');
+  var meta = document.getElementById('openings-meta');
+  var searchInput = document.getElementById('openings-search');
   if (!mount) return;
+
+  var STATE_NAMES = {
+    AL:'Alabama', AK:'Alaska', AZ:'Arizona', AR:'Arkansas', CA:'California',
+    CO:'Colorado', CT:'Connecticut', DE:'Delaware', FL:'Florida', GA:'Georgia',
+    HI:'Hawaii', ID:'Idaho', IL:'Illinois', IN:'Indiana', IA:'Iowa',
+    KS:'Kansas', KY:'Kentucky', LA:'Louisiana', ME:'Maine', MD:'Maryland',
+    MA:'Massachusetts', MI:'Michigan', MN:'Minnesota', MS:'Mississippi', MO:'Missouri',
+    MT:'Montana', NE:'Nebraska', NV:'Nevada', NH:'New Hampshire', NJ:'New Jersey',
+    NM:'New Mexico', NY:'New York', NC:'North Carolina', ND:'North Dakota', OH:'Ohio',
+    OK:'Oklahoma', OR:'Oregon', PA:'Pennsylvania', RI:'Rhode Island', SC:'South Carolina',
+    SD:'South Dakota', TN:'Tennessee', TX:'Texas', UT:'Utah', VT:'Vermont',
+    VA:'Virginia', WA:'Washington', WV:'West Virginia', WI:'Wisconsin', WY:'Wyoming',
+    DC:'District of Columbia', PR:'Puerto Rico'
+  };
 
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -123,6 +171,13 @@
     if (days === 0) return 'Posted today';
     if (days === 1) return 'Posted 1 day ago';
     return 'Posted ' + days + ' days ago';
+  }
+  function stateLabel(raw) {
+    var s = String(raw || '').trim();
+    if (!s) return 'Other locations';
+    var up = s.toUpperCase();
+    if (STATE_NAMES[up]) return STATE_NAMES[up];
+    return s;
   }
   function renderCard(item) {
     var subhead = item.subheadline || ((item.city || '') + (item.state ? ', ' + item.state : ''));
@@ -139,6 +194,63 @@
       +   '</div>'
       + '</a>';
   }
+  function matches(item, q) {
+    if (!q) return true;
+    var haystack = [
+      item.headline, item.kicker, item.subheadline,
+      item.city, item.state, stateLabel(item.state),
+      item.projectName, item.paragraph1, item.paragraph2, item.h2, item.slug,
+    ].join(' ').toLowerCase();
+    return q.split(/\s+/).every(function (word) { return haystack.indexOf(word) !== -1; });
+  }
+  function groupByState(items) {
+    var groups = {};
+    items.forEach(function (item) {
+      var label = stateLabel(item.state);
+      (groups[label] = groups[label] || []).push(item);
+    });
+    return Object.keys(groups).sort(function (a, b) {
+      // Push "Other locations" to the bottom, everything else alphabetical.
+      if (a === 'Other locations') return 1;
+      if (b === 'Other locations') return -1;
+      return a.localeCompare(b);
+    }).map(function (label) {
+      return { label: label, items: groups[label] };
+    });
+  }
+  function render(items, q) {
+    var filtered = items.filter(function (it) { return matches(it, q); });
+    if (!filtered.length) {
+      meta.textContent = q ? 'No positions match “' + q + '”.' : '';
+      mount.innerHTML = q
+        ? '<div class="openings__empty"><h2>No matches</h2><p>Try a different keyword, or clear the search to see everything.</p></div>'
+        : '<div class="openings__empty">'
+          + '<h2>No open positions at this time</h2>'
+          + '<p>We aren\'t actively recruiting for a specific role right now. New opportunities are posted here as we win projects — please check back soon.</p>'
+          + '<p><a class="btn primary" href="/contact-us">Contact us to introduce yourself</a></p>'
+          + '</div>';
+      return;
+    }
+    var groups = groupByState(filtered);
+    var stateCount = groups.length;
+    meta.textContent = filtered.length + ' open position' + (filtered.length === 1 ? '' : 's') +
+      ' across ' + stateCount + ' state' + (stateCount === 1 ? '' : 's') +
+      (q ? ' matching “' + q + '”' : '') + '.';
+    mount.innerHTML = groups.map(function (g) {
+      return '<section class="openings__group">'
+        +   '<div class="openings__group-title">'
+        +     '<h3>' + esc(g.label) + '</h3>'
+        +     '<span class="count">' + g.items.length + ' opening' + (g.items.length === 1 ? '' : 's') + '</span>'
+        +   '</div>'
+        +   '<div class="openings__list">'
+        +     g.items.map(renderCard).join('')
+        +   '</div>'
+        + '</section>';
+    }).join('');
+  }
+
+  var allItems = [];
+  mount.innerHTML = '<div class="openings__loading"><h2>Loading current openings…</h2><p>One moment while we pull the latest roles.</p></div>';
 
   fetch('/api/jobs?directory=1&format=json', { headers: { 'Accept': 'application/json' } })
     .then(function (res) {
@@ -146,19 +258,15 @@
       return res.json();
     })
     .then(function (json) {
-      var items = (json && json.items) || [];
-      if (!items.length) {
-        mount.innerHTML = '<div class="openings__empty">'
-          + '<h2>No open positions at this time</h2>'
-          + '<p>We aren\'t actively recruiting for a specific role right now. New opportunities are posted here as we win projects — please check back soon.</p>'
-          + '<p><a class="btn primary" href="/contact-us">Contact us to introduce yourself</a></p>'
-          + '</div>';
-        return;
-      }
-      mount.innerHTML = items.map(renderCard).join('');
+      allItems = (json && json.items) || [];
+      render(allItems, '');
+      searchInput.addEventListener('input', function () {
+        render(allItems, searchInput.value.trim().toLowerCase());
+      });
     })
     .catch(function (err) {
       console.error('Could not load openings:', err);
+      meta.textContent = '';
       mount.innerHTML = '<div class="openings__error">'
         + '<h2>Could not load current openings</h2>'
         + '<p>Please refresh the page in a moment, or <a href="/contact-us" style="color:#e74d10;">contact us directly</a>.</p>'
