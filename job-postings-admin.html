@@ -92,7 +92,7 @@
           <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
             <div style="flex:1; min-width:220px;">
               <div style="font-weight:700; margin-bottom:2px;">📄 Auto-fill from PWS or SOW</div>
-              <div class="field-hint" style="margin:0;">Upload a Performance Work Statement or Statement of Work — PDF or DOCX, up to 4 MB — and Claude will draft every field below. You can edit before saving.</div>
+              <div class="field-hint" style="margin:0;">Upload a Performance Work Statement or Statement of Work — PDF or DOCX, up to 13 MB — and Claude will draft every field below. You can edit before saving.</div>
             </div>
             <div style="display:flex; gap:8px; align-items:center;">
               <input type="file" id="pwsFile" accept="application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.pdf,.docx" style="display:none;">
@@ -428,8 +428,8 @@
       pwsStatus.textContent = 'That doesn\'t look like a PDF or DOCX. Please choose a PDF or a modern Word (.docx) file.';
       pwsUploadBtn.disabled = true; return;
     }
-    if (f.size > 4 * 1024 * 1024) {
-      pwsStatus.textContent = 'File is over 4 MB. Try trimming pages or use a smaller file.';
+    if (f.size > 13 * 1024 * 1024) {
+      pwsStatus.textContent = 'File is over 13 MB. Try trimming pages or use a smaller file.';
       pwsUploadBtn.disabled = true; return;
     }
     pwsStatus.textContent = 'Selected: ' + f.name + ' (' + Math.round(f.size / 1024) + ' KB). Click "Extract fields" to auto-fill.';

@@ -39,9 +39,10 @@ const RESUME_ALLOWED_MIME = new Set([
   'text/plain',
 ]);
 
-// PWS/SOW upload (admin auto-fill) — PDF or DOCX, capped just below
-// Vercel's ~4.5 MB serverless request body limit.
-const PWS_MAX_BYTES = 4 * 1024 * 1024;
+// PWS/SOW upload (admin auto-fill) — PDF or DOCX. Requires a Vercel
+// plan whose serverless request body limit is >= 13 MB (Hobby is
+// ~4.5 MB; Pro raises it well above this cap).
+const PWS_MAX_BYTES = 13 * 1024 * 1024;
 const PWS_ALLOWED_MIME = new Set([
   'application/pdf',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -225,7 +226,7 @@ function parsePwsUpload(req) {
     });
     bb.on('error', reject);
     bb.on('close', () => {
-      if (sizeLimitHit) return reject(new Error('File is larger than 4 MB. Try a smaller file or extract the relevant pages.'));
+      if (sizeLimitHit) return reject(new Error('File is larger than 13 MB. Try a smaller file or extract the relevant pages.'));
       if (typeRejected) return reject(new Error(`File type not accepted (${typeRejected}). Upload a PDF or DOCX.`));
       if (!pws) return reject(new Error('No PDF or DOCX file was received.'));
       resolve(pws);
