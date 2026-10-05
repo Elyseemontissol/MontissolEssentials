@@ -436,20 +436,70 @@
     pwsUploadBtn.disabled = false;
   });
 
+  // Lazy-load a script from a CDN; resolves when it has executed.
+  // Keeps the admin page lean until the admin actually uploads a PWS.
+  function loadScriptOnce(url) {
+    return new Promise(function (resolve, reject) {
+      var existing = document.querySelector('script[data-src="' + url + '"]');
+      if (existing && existing.dataset.loaded === '1') return resolve();
+      var tag = existing || document.createElement('script');
+      if (!existing) {
+        tag.src = url;
+        tag.dataset.src = url;
+        document.head.appendChild(tag);
+      }
+      tag.addEventListener('load', function () { tag.dataset.loaded = '1'; resolve(); });
+      tag.addEventListener('error', function () { reject(new Error('Could not load ' + url)); });
+    });
+  }
+
+  var PDFJS_VER = '3.11.174';
+  var MAMMOTH_VER = '1.9.0';
+
+  async function extractPdfText(file) {
+    await loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/' + PDFJS_VER + '/pdf.min.js');
+    var pdfjsLib = window.pdfjsLib || window['pdfjs-dist/build/pdf'];
+    if (!pdfjsLib) throw new Error('PDF.js failed to initialize.');
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/' + PDFJS_VER + '/pdf.worker.min.js';
+    var buf = await file.arrayBuffer();
+    var pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+    var out = [];
+    for (var i = 1; i <= pdf.numPages; i++) {
+      pwsStatus.textContent = 'Reading PDF… page ' + i + ' of ' + pdf.numPages;
+      var page = await pdf.getPage(i);
+      var tc = await page.getTextContent();
+      out.push(tc.items.map(function (it) { return it.str; }).join(' '));
+    }
+    return out.join('\n\n').trim();
+  }
+  async function extractDocxText(file) {
+    await loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/mammoth/' + MAMMOTH_VER + '/mammoth.browser.min.js');
+    if (!window.mammoth) throw new Error('mammoth failed to initialize.');
+    var buf = await file.arrayBuffer();
+    var result = await window.mammoth.extractRawText({ arrayBuffer: buf });
+    return String(result?.value || '').trim();
+  }
+
   pwsUploadBtn.addEventListener('click', async function () {
     var f = pwsFile.files && pwsFile.files[0];
     if (!f) return;
     pwsUploadBtn.disabled = true;
     pwsPickBtn.disabled = true;
-    pwsStatus.textContent = 'Uploading and extracting… (this can take 15-30 seconds)';
-    var fd = new FormData();
-    fd.append('pws', f);
     try {
+      var isPdf = /\.pdf$/i.test(f.name) || f.type === 'application/pdf';
+      pwsStatus.textContent = isPdf ? 'Reading PDF locally…' : 'Reading DOCX locally…';
+      var text = isPdf ? await extractPdfText(f) : await extractDocxText(f);
+      if (!text) throw new Error('No text could be extracted from this file.');
+      pwsStatus.textContent = 'Extracted ' + Math.round(text.length / 1024) + ' KB of text. Sending to Claude…';
       var res = await fetch('/api/jobs?admin=parse-pws', {
         method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + getToken() },
-        body: fd,
+        headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: text, filename: f.name }),
       });
+      var ct = res.headers.get('content-type') || '';
+      if (!ct.includes('application/json')) {
+        throw new Error('Server returned a non-JSON response (status ' + res.status + '). Try a smaller document.');
+      }
       var json = await res.json();
       if (!res.ok || !json.ok) throw new Error(json.error || ('Extraction failed (' + res.status + ')'));
       var fields = json.fields || {};
@@ -465,7 +515,7 @@
       if (fields.h2) document.getElementById('fH2').value = fields.h2;
       if (fields.paragraph1) document.getElementById('fParagraph1').value = fields.paragraph1;
       if (fields.paragraph2) document.getElementById('fParagraph2').value = fields.paragraph2;
-      pwsStatus.textContent = 'Filled from PWS. Review each field before saving.';
+      pwsStatus.textContent = 'Filled from document. Review each field before saving.';
     } catch (err) {
       pwsStatus.textContent = 'Error: ' + (err.message || 'Extraction failed.');
     } finally {

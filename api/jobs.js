@@ -15,7 +15,6 @@ import { Redis } from '@upstash/redis';
 import { randomUUID, timingSafeEqual } from 'node:crypto';
 import Busboy from 'busboy';
 import Anthropic from '@anthropic-ai/sdk';
-import mammoth from 'mammoth';
 
 // Vercel's Node runtime auto-parses JSON bodies for us (req.body arrives
 // as an object). Multipart/form-data is NOT auto-parsed — req arrives as
@@ -39,14 +38,6 @@ const RESUME_ALLOWED_MIME = new Set([
   'text/plain',
 ]);
 
-// PWS/SOW upload (admin auto-fill) — PDF or DOCX. Requires a Vercel
-// plan whose serverless request body limit is >= 13 MB (Hobby is
-// ~4.5 MB; Pro raises it well above this cap).
-const PWS_MAX_BYTES = 13 * 1024 * 1024;
-const PWS_ALLOWED_MIME = new Set([
-  'application/pdf',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-]);
 
 const redis = Redis.fromEnv();
 
@@ -197,57 +188,24 @@ function parseMultipartBody(req) {
   });
 }
 
-// Same shape as parseMultipartBody(), but for a single PDF or DOCX
-// field named `pws`. Kept separate so the resume path stays untouched.
-function parsePwsUpload(req) {
-  return new Promise((resolve, reject) => {
-    let bb;
-    try {
-      bb = Busboy({ headers: req.headers, limits: { files: 1, fileSize: PWS_MAX_BYTES } });
-    } catch (err) { return reject(err); }
-    let pws = null;
-    let sizeLimitHit = false;
-    let typeRejected = null;
-    bb.on('file', (name, stream, info) => {
-      const mime = info.mimeType || '';
-      if (name !== 'pws' || (mime && !PWS_ALLOWED_MIME.has(mime))) {
-        if (mime && !PWS_ALLOWED_MIME.has(mime)) typeRejected = mime;
-        stream.resume();
-        return;
-      }
-      const chunks = [];
-      stream.on('data', (c) => chunks.push(c));
-      stream.on('limit', () => { sizeLimitHit = true; });
-      stream.on('end', () => {
-        if (!sizeLimitHit && !typeRejected) {
-          pws = { buffer: Buffer.concat(chunks), filename: info.filename || 'pws', mimeType: mime };
-        }
-      });
-    });
-    bb.on('error', reject);
-    bb.on('close', () => {
-      if (sizeLimitHit) return reject(new Error('File is larger than 13 MB. Try a smaller file or extract the relevant pages.'));
-      if (typeRejected) return reject(new Error(`File type not accepted (${typeRejected}). Upload a PDF or DOCX.`));
-      if (!pws) return reject(new Error('No PDF or DOCX file was received.'));
-      resolve(pws);
-    });
-    req.pipe(bb);
-  });
-}
-
-// POST /api/jobs?admin=parse-pws (multipart, admin-authed) → sends the
-// uploaded PDF to Claude and returns a structured JSON draft the admin
-// panel can drop straight into the New Position form.
+// POST /api/jobs?admin=parse-pws (JSON, admin-authed) → takes raw
+// text already extracted in the browser (PDF.js or mammoth) and hands
+// it to Claude. Doing the extraction client-side keeps the request
+// body small, so Vercel's ~4.5 MB serverless body cap never applies
+// no matter how large the source PDF/DOCX was.
 async function handleAdminParsePws(req, res) {
   if (!authorized(req)) return res.status(401).json({ ok: false, error: 'Unauthorized' });
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return res.status(500).json({ ok: false, error: 'ANTHROPIC_API_KEY not configured.' });
 
-  let pws;
-  try {
-    pws = await parsePwsUpload(req);
-  } catch (err) {
-    return res.status(400).json({ ok: false, error: err.message || 'Could not read the PDF.' });
+  const body = req.body || {};
+  const rawText = String(body.text || '').trim();
+  const filename = clean(body.filename, 200) || 'document';
+  if (!rawText) {
+    return res.status(400).json({ ok: false, error: 'No text was provided. The file may have been empty or extraction failed.' });
+  }
+  if (rawText.length > 500_000) {
+    return res.status(413).json({ ok: false, error: 'Extracted text is too long (>500 KB). Try a shorter document or trim unrelated sections.' });
   }
 
   const instruction = [
@@ -276,38 +234,14 @@ async function handleAdminParsePws(req, res) {
     '- Never include phone numbers, emails, URLs, or solicitation numbers in the paragraphs.',
   ].join('\n');
 
-  // PDF → send as base64 document (Anthropic native support).
-  // DOCX → extract raw text with mammoth, send as text (Anthropic has no
-  // native DOCX type). Either way the same instruction applies.
-  let content;
-  if (pws.mimeType === 'application/pdf') {
-    content = [
-      { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: pws.buffer.toString('base64') } },
-      { type: 'text', text: instruction },
-    ];
-  } else {
-    let docxText = '';
-    try {
-      const result = await mammoth.extractRawText({ buffer: pws.buffer });
-      docxText = (result?.value || '').trim();
-    } catch (err) {
-      console.error('DOCX extract failed:', err);
-      return res.status(400).json({ ok: false, error: 'Could not read that DOCX file. It may be password-protected or corrupted.' });
-    }
-    if (!docxText) {
-      return res.status(400).json({ ok: false, error: 'The DOCX file appears to be empty.' });
-    }
-    content = [
-      { type: 'text', text: `Below is the full text of a Performance Work Statement / Statement of Work extracted from a DOCX file. Use it as your source document.\n\n---\n${docxText.slice(0, 60000)}\n---\n\n${instruction}` },
-    ];
-  }
+  const prompt = `Below is the full text of a Performance Work Statement / Statement of Work (file: ${filename}). Use it as your source document.\n\n---\n${rawText.slice(0, 60000)}\n---\n\n${instruction}`;
 
   try {
     const client = new Anthropic({ apiKey });
     const resp = await client.messages.create({
       model: 'claude-sonnet-4-5',
       max_tokens: 1500,
-      messages: [{ role: 'user', content }],
+      messages: [{ role: 'user', content: [{ type: 'text', text: prompt }] }],
     });
     const text = resp.content.map((b) => (b.type === 'text' ? b.text : '')).join('').trim();
     let parsed;
