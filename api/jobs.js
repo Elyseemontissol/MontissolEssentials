@@ -236,46 +236,55 @@ async function handleAdminParsePws(req, res) {
 
   const prompt = `Below is the full text of a Performance Work Statement / Statement of Work (file: ${filename}). Use it as your source document.\n\n---\n${rawText.slice(0, 60000)}\n---\n\n${instruction}`;
 
+  let modelText;
   try {
     const client = new Anthropic({ apiKey });
     const resp = await client.messages.create({
-      model: 'claude-sonnet-4-5',
+      model: 'claude-sonnet-4-6',
       max_tokens: 1500,
       messages: [{ role: 'user', content: [{ type: 'text', text: prompt }] }],
     });
-    const text = resp.content.map((b) => (b.type === 'text' ? b.text : '')).join('').trim();
-    let parsed;
-    try {
-      const fenced = text.match(/^```(?:json)?\s*\n?([\s\S]*?)\n?```$/);
-      parsed = JSON.parse(fenced ? fenced[1] : text);
-    } catch (err) {
-      console.error('PWS parse: JSON decode failed. Raw:', text.slice(0, 500));
-      return res.status(502).json({ ok: false, error: 'The model did not return valid JSON. Try again or fill the form manually.' });
-    }
-    // Trim/normalize to match server-side validation limits.
-    const slugify = (v) => String(v || '').toLowerCase().trim().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
-    const fields = {
-      projectId: slugify(parsed.projectId),
-      projectName: clean(parsed.projectName, 200),
-      headline: clean(parsed.headline, 120),
-      kicker: clean(parsed.kicker, 80),
-      subheadline: clean(parsed.subheadline, 200),
-      city: clean(parsed.city, 80),
-      state: clean(parsed.state, 40),
-      streetAddress: clean(parsed.streetAddress, 200),
-      postalCode: clean(parsed.postalCode, 20),
-      h2: clean(parsed.h2, 200),
-      paragraph1: clean(parsed.paragraph1, 4000),
-      paragraph2: clean(parsed.paragraph2, 4000),
-    };
-    return res.status(200).json({ ok: true, fields });
+    modelText = resp.content.map((b) => (b.type === 'text' ? b.text : '')).join('').trim();
   } catch (err) {
     console.error('PWS parse: Anthropic call failed:', err);
-    const msg = err?.status === 413 || /too large/i.test(err?.message || '')
-      ? 'The PDF is too large or has too many pages for the extraction model.'
-      : 'Could not process the PDF. Check the file and try again.';
+    const detail = err?.error?.error?.message || err?.message || 'unknown error';
+    const status = err?.status;
+    const msg = status === 413 || /too large/i.test(detail)
+      ? 'The extracted text was too long for the model.'
+      : status === 401 || status === 403
+        ? 'Claude rejected the request (auth). Check ANTHROPIC_API_KEY on Vercel.'
+        : status === 404 || /model/i.test(detail)
+          ? `Model error: ${detail}`
+          : `Claude error (status ${status || 'n/a'}): ${detail}`;
     return res.status(502).json({ ok: false, error: msg });
   }
+
+  let parsed;
+  try {
+    const fenced = modelText.match(/^```(?:json)?\s*\n?([\s\S]*?)\n?```$/);
+    parsed = JSON.parse(fenced ? fenced[1] : modelText);
+  } catch (err) {
+    console.error('PWS parse: JSON decode failed. Raw:', modelText.slice(0, 500));
+    return res.status(502).json({ ok: false, error: 'The model did not return valid JSON. Try again or fill the form manually.' });
+  }
+
+  // Trim/normalize to match server-side validation limits.
+  const slugify = (v) => String(v || '').toLowerCase().trim().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
+  const fields = {
+    projectId: slugify(parsed.projectId),
+    projectName: clean(parsed.projectName, 200),
+    headline: clean(parsed.headline, 120),
+    kicker: clean(parsed.kicker, 80),
+    subheadline: clean(parsed.subheadline, 200),
+    city: clean(parsed.city, 80),
+    state: clean(parsed.state, 40),
+    streetAddress: clean(parsed.streetAddress, 200),
+    postalCode: clean(parsed.postalCode, 20),
+    h2: clean(parsed.h2, 200),
+    paragraph1: clean(parsed.paragraph1, 4000),
+    paragraph2: clean(parsed.paragraph2, 4000),
+  };
+  return res.status(200).json({ ok: true, fields });
 }
 
 async function handleSubmit(req, res) {
