@@ -5,6 +5,7 @@
 //
 //   node scripts/refresh-meta-tokens.mjs          check both tokens, renew what's broken
 //   node scripts/refresh-meta-tokens.mjs --check  only report token health
+//   pbpaste | node scripts/refresh-meta-tokens.mjs --instagram   save an IGAA token from the clipboard
 //
 // Facebook: needs a long-lived *user* token once (Graph API Explorer → Generate
 // Access Token → Access Token Debugger → "Extend Access Token"). From that it
@@ -147,6 +148,10 @@ To renew the Facebook Page token (it will also cover Instagram):
 `);
   const userToken = await askHidden('Paste the extended user token (input hidden), or press Enter to skip: ');
   if (!userToken) return null;
+  if (userToken.startsWith('IGAA')) {
+    console.log('That\'s an Instagram token, not a Facebook one. Using it for Instagram and leaving Facebook as is.');
+    return { instagramLoginToken: userToken };
+  }
 
   const accounts = await getJson(`${graphBase(env)}/me/accounts?fields=id,name,access_token&limit=100&access_token=${encodeURIComponent(userToken)}`);
   let page = pickPage(accounts, env.FB_PAGE_ID);
@@ -189,6 +194,7 @@ To renew the Facebook Page token (it will also cover Instagram):
 }
 
 async function renewInstagram(env, health, renewed) {
+  if (renewed?.instagramLoginToken) return saveInstagramLoginToken(renewed.instagramLoginToken);
   if (renewed?.instagram) {
     saveToVercel('IG_USER_ID', renewed.instagram.id);
     saveToVercel('IG_ACCESS_TOKEN', renewed.page.access_token, { sensitive: true });
@@ -242,6 +248,10 @@ Or, without linking: Meta app dashboard → Instagram → "API setup with Instag
 → "Generate token" for the Montissol Instagram account, and paste it here.`);
   const token = await askHidden('Paste the Instagram token (IGAA…, input hidden), or press Enter to skip: ');
   if (!token) return false;
+  return saveInstagramLoginToken(token);
+}
+
+async function saveInstagramLoginToken(token) {
   if (!token.startsWith('IGAA')) throw new Error('That isn\'t an Instagram login token (they start with IGAA).');
   const me = await getJson(`${IG_GRAPH}/me?fields=user_id,username&access_token=${encodeURIComponent(token)}`);
   saveToVercel('IG_USER_ID', String(me.user_id));
@@ -260,7 +270,25 @@ function redeployProduction() {
   console.log('Redeploy finished.');
 }
 
+async function readStdin() {
+  let data = '';
+  for await (const chunk of process.stdin) data += chunk;
+  return data.trim();
+}
+
+// `pbpaste | node scripts/refresh-meta-tokens.mjs --instagram` saves an IGAA
+// token straight from the clipboard, with no prompt to paste into.
+async function instagramOnly() {
+  const token = process.stdin.isTTY
+    ? await askHidden('Paste the Instagram token (IGAA…, input hidden): ')
+    : await readStdin();
+  if (!token) throw new Error('No Instagram token given.');
+  await saveInstagramLoginToken(token);
+  redeployProduction();
+}
+
 async function main() {
+  if (process.argv.includes('--instagram')) return instagramOnly();
   const checkOnly = process.argv.includes('--check');
   const env = pullProductionEnv();
 
@@ -271,8 +299,15 @@ async function main() {
   if (checkOnly) return;
 
   // A sensitive (unreadable) token can't be tested, so offer renewal; Enter skips.
-  const renewed = fb.ok ? null : await renewFacebook(env);
-  let changed = Boolean(renewed);
+  let renewed = null;
+  if (!fb.ok) {
+    try {
+      renewed = await renewFacebook(env);
+    } catch (err) {
+      console.log(`Facebook step failed: ${err.message}\nMoving on to Instagram.`);
+    }
+  }
+  let changed = Boolean(renewed?.page);
   changed = (await renewInstagram(env, ig, renewed)) || changed;
 
   if (changed) redeployProduction();
