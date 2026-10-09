@@ -1,14 +1,18 @@
-// Uses the Instagram Login API (graph.instagram.com), not the Facebook Login
-// API (graph.facebook.com). This pairs with `IGAA...` access tokens obtained
-// through Instagram Business Login. Two-step publish:
+// Publishes to an Instagram Professional account in two steps:
 //   1) POST /{ig-user-id}/media       → container id
 //   2) POST /{ig-user-id}/media_publish with creation_id
-function graphBase() {
-  return `https://graph.instagram.com/${process.env.IG_GRAPH_VERSION || 'v19.0'}`;
+// Both Meta login flavors expose those endpoints, so the host follows the token:
+// Instagram Login tokens (IGAA…) use graph.instagram.com; Facebook Login tokens
+// (EAA…, e.g. the never-expiring Page token) use graph.facebook.com with the
+// Page's linked instagram_business_account id.
+function graphBase(accessToken) {
+  return String(accessToken).startsWith('IGAA')
+    ? `https://graph.instagram.com/${process.env.IG_GRAPH_VERSION || 'v19.0'}`
+    : `https://graph.facebook.com/${process.env.META_GRAPH_VERSION || 'v25.0'}`;
 }
 
 async function graphPost(path, params, fetchImpl = fetch) {
-  const res = await fetchImpl(`${graphBase()}/${path}`, {
+  const res = await fetchImpl(`${graphBase(params.access_token)}/${path}`, {
     method: 'POST',
     body: new URLSearchParams(params),
   });
@@ -26,6 +30,7 @@ export async function postToInstagram({
   caption,
   imageUrl,
   fetchImpl = fetch,
+  waitMs = 5000,
 }) {
   if (!imageUrl) {
     throw new Error('Instagram publishing requires a public image URL');
@@ -39,7 +44,7 @@ export async function postToInstagram({
 
   // Instagram sometimes needs a moment to process the media container before
   // it's ready to publish. Govpaid sleeps 5s here; matching that.
-  await new Promise((r) => setTimeout(r, 5000));
+  await new Promise((r) => setTimeout(r, waitMs));
 
   return graphPost(`${instagramUserId}/media_publish`, {
     creation_id: container.id,

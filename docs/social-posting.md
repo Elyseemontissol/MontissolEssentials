@@ -51,6 +51,23 @@ PUBLIC_BASE_URL
 `META_GRAPH_VERSION` should be set to the version enabled for the Meta app. The
 code defaults to `v25.0` only when the variable is absent.
 
+## Keeping the tokens alive
+
+Facebook and Instagram both post with one never-expiring Page token: Instagram
+goes through the Page's linked Instagram Professional account
+(`IG_USER_ID` = its `instagram_business_account` id). If a post fails with
+"Page token health check failed" or "Session has expired", run:
+
+```bash
+node scripts/refresh-meta-tokens.mjs          # renew and save to Vercel, then redeploy
+node scripts/refresh-meta-tokens.mjs --check  # report token health only
+```
+
+It asks for one extended user token from the Graph API Explorer, derives the
+Page token, saves `FB_PAGE_ACCESS_TOKEN`, `IG_USER_ID` and `IG_ACCESS_TOKEN` to
+Vercel production without printing them, and redeploys. Failed approvals keep
+their draft for 72 hours, so the same approval link works again afterwards.
+
 ## Targeted hiring campaigns
 
 Open the draft endpoint with campaign fields to create a recruiting draft

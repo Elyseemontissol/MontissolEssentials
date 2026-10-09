@@ -41,3 +41,19 @@ test('Instagram requires an image URL', async () => {
     /requires a public image URL/,
   );
 });
+
+test('Instagram picks the Graph host from the token type', async () => {
+  const urls = [];
+  const fetchImpl = async (url) => {
+    urls.push(url);
+    return { ok: true, status: 200, async json() { return { id: 'x' }; } };
+  };
+  const post = (accessToken) => postToInstagram({
+    instagramUserId: 'ig-123', accessToken, caption: 'c', imageUrl: 'https://example.com/i.png', fetchImpl, waitMs: 0,
+  });
+  await post('IGAAabc');
+  await post('EAAGpage');
+  assert.match(urls[0], /^https:\/\/graph\.instagram\.com\//);
+  assert.match(urls[2], /^https:\/\/graph\.facebook\.com\//);
+  assert.match(urls[3], /^https:\/\/graph\.facebook\.com\/.+ig-123\/media_publish$/);
+});
