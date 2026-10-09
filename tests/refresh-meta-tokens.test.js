@@ -22,3 +22,17 @@ test('pickPage without FB_PAGE_ID: single Page, or the one Montissol Page', () =
   assert.equal(pickPage({ data: [{ id: '1', name: 'Other' }, { id: '2', name: 'Montissol Essentials' }] }, '').id, '2');
   assert.equal(pickPage({ data: [{ id: '1', name: 'A' }, { id: '2', name: 'B' }] }, ''), null);
 });
+
+test('missingPermissions lists required Instagram permissions not granted', async () => {
+  const { missingPermissions } = await import('../scripts/refresh-meta-tokens.mjs');
+  const perms = { data: [
+    { permission: 'pages_show_list', status: 'granted' },
+    { permission: 'instagram_basic', status: 'declined' },
+  ] };
+  assert.deepEqual(missingPermissions(perms), ['instagram_basic', 'instagram_content_publish']);
+  assert.deepEqual(missingPermissions({ data: [
+    { permission: 'pages_show_list', status: 'granted' },
+    { permission: 'instagram_basic', status: 'granted' },
+    { permission: 'instagram_content_publish', status: 'granted' },
+  ] }), []);
+});

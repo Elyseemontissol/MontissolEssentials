@@ -68,6 +68,11 @@ Page token, saves `FB_PAGE_ACCESS_TOKEN`, `IG_USER_ID` and `IG_ACCESS_TOKEN` to
 Vercel production without printing them, and redeploys. Failed approvals keep
 their draft for 72 hours, so the same approval link works again afterwards.
 
+If the Page has no linked Instagram account, the script says whether the token
+is missing Instagram permissions or the account isn't linked, and offers a
+fallback: an Instagram-login token (`IGAA…`). That one lasts 60 days, so run the
+script again within 50 days to renew it.
+
 ## Targeted hiring campaigns
 
 Open the draft endpoint with campaign fields to create a recruiting draft

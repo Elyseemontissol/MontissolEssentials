@@ -185,7 +185,7 @@ To renew the Facebook Page token (it will also cover Instagram):
   } catch (err) {
     console.log(`Could not read the Page's linked Instagram account: ${err.message}`);
   }
-  return { page, instagram };
+  return { page, instagram, userToken };
 }
 
 async function renewInstagram(env, health, renewed) {
@@ -203,15 +203,52 @@ async function renewInstagram(env, health, renewed) {
     return true;
   }
   if (health.ok) return false;
-  if (renewed) {
+  if (renewed) await explainMissingInstagram(env, renewed);
+  return pasteInstagramLoginToken();
+}
+
+// Instagram permissions the Page token needs to see and publish to the linked account.
+export const INSTAGRAM_PERMISSIONS = ['pages_show_list', 'instagram_basic', 'instagram_content_publish'];
+
+export function missingPermissions(permissions, required = INSTAGRAM_PERMISSIONS) {
+  const granted = new Set((permissions?.data ?? []).filter((p) => p.status === 'granted').map((p) => p.permission));
+  return required.filter((p) => !granted.has(p));
+}
+
+async function explainMissingInstagram(env, renewed) {
+  let missing = null;
+  try {
+    missing = missingPermissions(await getJson(`${graphBase(env)}/me/permissions?access_token=${encodeURIComponent(renewed.userToken)}`));
+  } catch { /* fall through to the generic explanation */ }
+  if (missing?.length) {
     console.log(`
-Instagram not fixed: the Page "${renewed.page.name}" has no linked Instagram Professional account
-visible to this login. Link it under Page settings → Linked accounts → Instagram, make sure the
-token had instagram_basic and instagram_content_publish, then run this script again.`);
+Instagram isn't visible because the token is missing: ${missing.join(', ')}.
+In Graph API Explorer add ${missing.length === 1 ? 'it' : 'them'}, click "Generate Access Token" again, extend it
+in the Access Token Debugger, and run this script again.`);
   } else {
-    console.log('\nInstagram not fixed: renew the Facebook token above (with the Instagram permissions) to fix both.');
+    console.log(`
+The token has the Instagram permissions, so the Page "${renewed.page.name}" has no linked
+Instagram Professional account. To link it (then run this script again):
+  Facebook → switch to the Montissol Page → Settings → Linked accounts → Instagram → Connect,
+  and make sure the Instagram account is a Business or Creator account.`);
   }
-  return false;
+}
+
+// Fallback: an Instagram-login token (IGAA…) works without linking the Page,
+// but lasts 60 days. It's saved readable so this script can renew it.
+async function pasteInstagramLoginToken() {
+  console.log(`
+Or, without linking: Meta app dashboard → Instagram → "API setup with Instagram business login"
+→ "Generate token" for the Montissol Instagram account, and paste it here.`);
+  const token = await askHidden('Paste the Instagram token (IGAA…, input hidden), or press Enter to skip: ');
+  if (!token) return false;
+  if (!token.startsWith('IGAA')) throw new Error('That isn\'t an Instagram login token (they start with IGAA).');
+  const me = await getJson(`${IG_GRAPH}/me?fields=user_id,username&access_token=${encodeURIComponent(token)}`);
+  saveToVercel('IG_USER_ID', String(me.user_id));
+  saveToVercel('IG_ACCESS_TOKEN', token);
+  console.log(`Saved Instagram @${me.username} (IG_USER_ID ${me.user_id}) to Vercel production.`);
+  console.log('This token expires in about 60 days. Run this script again within 50 days to renew it.');
+  return true;
 }
 
 function redeployProduction() {
