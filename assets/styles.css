@@ -82,10 +82,11 @@
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor; mask-composite: exclude;
   animation: borderSweep 3s linear infinite;
+  animation-play-state: paused;
   opacity: 0; transition: opacity .4s ease;
   pointer-events: none;
 }
-.glow-border:hover::after { opacity: 1; }
+.glow-border:hover::after { opacity: 1; animation-play-state: running; }
 @keyframes borderSweep {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
@@ -1325,16 +1326,15 @@ input, textarea, select, button { font: inherit; }
 .home-section--alt .faq-answer { color: rgba(255,255,255,.6); }
 
 /* ============================================================
-   SELECTION & SCROLLBAR
+   SCROLLBAR  (selection is defined once near the top of the file)
    ============================================================ */
-::selection { background: rgba(231, 77, 16, .2); color: inherit; }
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: var(--bg-deep); }
 ::-webkit-scrollbar-thumb {
   background: rgba(231, 77, 16, .3); border-radius: 10px;
   border: 2px solid var(--bg-deep);
 }
-::-webkit-scrollbar-thumb:hover { background: var(--brand); }
+::-webkit-scrollbar-thumb:hover { background: var(--brand-dark); }
 
 /* ===== Smooth page load ===== */
 @keyframes pageIn {
@@ -1342,3 +1342,16 @@ input, textarea, select, button { font: inherit; }
   to { opacity: 1; }
 }
 main { animation: pageIn .6s ease both; }
+
+/* ===== Reduced motion: respect user preference ===== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .reveal, .reveal.revealed { opacity: 1 !important; transform: none !important; }
+  .hero-clouds, .hero-lightning, #particleCanvas { display: none !important; }
+  .glow-border::after { display: none !important; }
+}

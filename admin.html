@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Staff Portal - Montissol Essentials</title>
+  <style>
+    :root { --bg:#0a0a0a; --panel:#151515; --text:#f4f4f4; --muted:#999; --border:#303030; --brand:#e74d10; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 'Archivo', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+    main { max-width: 640px; margin: 0 auto; padding: 48px 24px 64px; }
+    h1 { margin: 0 0 8px; font-size: 1.75rem; font-weight: 900; letter-spacing: -.03em; }
+    .lede { color: var(--muted); margin: 0 0 32px; }
+    .card { display: block; padding: 22px 24px; margin-bottom: 14px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; text-decoration: none; color: inherit; transition: border-color .15s, transform .15s; }
+    .card:hover { border-color: var(--brand); transform: translateY(-1px); }
+    .card__title { font-weight: 700; font-size: 1.05rem; margin: 0 0 4px; }
+    .card__hint { color: var(--muted); font-size: .85rem; margin: 0; }
+    .back { display: inline-block; margin-top: 24px; color: var(--muted); font-size: .9rem; }
+    .back:hover { color: var(--brand); }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+<main>
+  <h1>Staff Portal</h1>
+  <p class="lede">Each tool below has its own sign-in.</p>
+
+  <a class="card" href="invoice.html#admin">
+    <div class="card__title">Manage Invoices</div>
+    <p class="card__hint">View, edit, mark paid, and rename invoices.</p>
+  </a>
+
+  <a class="card" href="pto-admin.html">
+    <div class="card__title">Manage Employee PTO</div>
+    <p class="card__hint">Add employees, approve or deny time-off requests.</p>
+  </a>
+
+  <a class="card" href="job-candidates-admin.html">
+    <div class="card__title">Manage Job Candidates</div>
+    <p class="card__hint">Review applicants who submitted interest forms, grouped by project.</p>
+  </a>
+
+  <a class="card" href="job-postings-admin.html">
+    <div class="card__title">Manage Job Postings</div>
+    <p class="card__hint">Create, edit, close, or renew job listings shown on /careers.</p>
+  </a>
+
+  <a class="back" href="/">← Back to home</a>
+</main>
+</body>
+</html>
