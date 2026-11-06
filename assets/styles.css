@@ -1470,12 +1470,19 @@ main { animation: pageIn .6s ease both; }
   background: #ffffff;
   border-color: rgba(20,24,28,.15);
 }
+:root[data-theme="light"] .contact-form .field input,
+:root[data-theme="light"] .contact-form .field textarea,
+:root[data-theme="light"] .contact-form .field select,
 :root[data-theme="light"] .field input,
 :root[data-theme="light"] .field textarea,
-:root[data-theme="light"] .field select {
+:root[data-theme="light"] .field select,
+:root[data-theme="light"] #contactForm input,
+:root[data-theme="light"] #contactForm textarea,
+:root[data-theme="light"] #contactForm select {
   background: #ffffff;
   border: 2px solid #1a1a1a;
   color: var(--text);
+  box-shadow: none;
 }
 :root[data-theme="light"] .field input::placeholder,
 :root[data-theme="light"] .field textarea::placeholder {
@@ -1492,12 +1499,19 @@ main { animation: pageIn .6s ease both; }
     background: #ffffff;
     border-color: rgba(20,24,28,.15);
   }
+  :root:not([data-theme]) .contact-form .field input,
+  :root:not([data-theme]) .contact-form .field textarea,
+  :root:not([data-theme]) .contact-form .field select,
   :root:not([data-theme]) .field input,
   :root:not([data-theme]) .field textarea,
-  :root:not([data-theme]) .field select {
+  :root:not([data-theme]) .field select,
+  :root:not([data-theme]) #contactForm input,
+  :root:not([data-theme]) #contactForm textarea,
+  :root:not([data-theme]) #contactForm select {
     background: #ffffff;
     border: 2px solid #1a1a1a;
     color: var(--text);
+    box-shadow: none;
   }
   :root:not([data-theme]) .field input::placeholder,
   :root:not([data-theme]) .field textarea::placeholder {
