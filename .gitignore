@@ -5,3 +5,9 @@ node_modules/
 .env.local
 .vercel
 .env*.local
+
+# Impeccable design tool installation (platform-specific binary + checkpoints)
+.claude/skills/impeccable/scripts/bin/
+.agents/skills/impeccable/scripts/bin/
+.codex/
+.impeccable/build/

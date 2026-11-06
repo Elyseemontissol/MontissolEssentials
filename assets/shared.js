@@ -163,3 +163,48 @@
   }
   draw();
 })();
+
+// ── Theme toggle (dark / light) ────────────────────────────────
+// The inline <head> script already applied the saved theme or system
+// preference on first paint. This handler lives on the shared header,
+// which is injected asynchronously, so we wire via document delegation
+// and also listen for the header mount.
+(function () {
+  var KEY = 'me-theme';
+
+  function current() {
+    var attr = document.documentElement.getAttribute('data-theme');
+    if (attr === 'light' || attr === 'dark') return attr;
+    // No explicit theme -> report system preference so toggle moves to the opposite
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) return 'light';
+    return 'dark';
+  }
+
+  function apply(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    try { localStorage.setItem(KEY, theme); } catch (e) {}
+  }
+
+  function toggle() {
+    apply(current() === 'light' ? 'dark' : 'light');
+  }
+
+  // Delegated click — covers the toggle rendered inside the injected header
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest && e.target.closest('#themeToggleBtn');
+    if (btn) { e.preventDefault(); toggle(); }
+  });
+
+  // Respond to system preference changes when the user hasn't explicitly chosen
+  if (window.matchMedia) {
+    var mq = window.matchMedia('(prefers-color-scheme: light)');
+    var listener = function (evt) {
+      var stored;
+      try { stored = localStorage.getItem(KEY); } catch (e) {}
+      if (stored === 'light' || stored === 'dark') return; // user chose, honor it
+      document.documentElement.setAttribute('data-theme', evt.matches ? 'light' : 'dark');
+    };
+    if (mq.addEventListener) mq.addEventListener('change', listener);
+    else if (mq.addListener) mq.addListener(listener);
+  }
+})();
