@@ -17,6 +17,7 @@
 - 334510 — Electromedical & Electrotherapeutic Apparatus Mfg
 - 812332 — Industrial Launderers
 - 561320 — Temporary Help Services
+- 541930 — Translation and Interpretation Services
 
 ## Core Competencies
 - Janitorial & Custodial Services
