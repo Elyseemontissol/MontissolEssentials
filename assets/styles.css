@@ -308,7 +308,7 @@ input, textarea, select, button { font: inherit; }
 .menu-btn {
   display: none; background: none; border: none; cursor: pointer;
   width: 44px; height: 44px; position: relative;
-  color: #fff; font-size: 1.6rem;
+  color: var(--text); font-size: 1.6rem;
   align-items: center; justify-content: center;
   margin-left: auto;
 }
@@ -1448,6 +1448,42 @@ main { animation: pageIn .6s ease both; }
 :root[data-theme="light"] .home-section--alt .mini-kicker { color: var(--brand-dark); }
 /* about-card glass background inverts to a subtle dark tint on light */
 :root[data-theme="light"] .about-card { background: rgba(20,24,28,.03); }
+
+/* Additional light-mode text/surface fixes (pages other than index hero) */
+:root[data-theme="light"] .about-band { color: var(--text); }
+:root[data-theme="light"] .project-title { color: var(--text); }
+:root[data-theme="light"] .q-card--orange { color: var(--text); }
+:root[data-theme="light"] .q-card--orange .q-muted { color: var(--text-secondary); }
+:root[data-theme="light"] .home-section--alt .stat-label { color: var(--text-secondary); }
+:root[data-theme="light"] .home-section--alt .industry-copy { color: var(--text-secondary); }
+:root[data-theme="light"] .home-section--alt .li-arrow { color: var(--brand); }
+/* Newsletter form input: dark border + text on light ground */
+:root[data-theme="light"] .newsletter-form input {
+  background: rgba(20,24,28,.04);
+  color: var(--text);
+  border-color: rgba(20,24,28,.15);
+}
+:root[data-theme="light"] .newsletter-form input::placeholder {
+  color: var(--text-muted);
+}
+/* Mirror into @media prefers-color-scheme: light block too */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) .about-band { color: var(--text); }
+  :root:not([data-theme]) .project-title { color: var(--text); }
+  :root:not([data-theme]) .q-card--orange { color: var(--text); }
+  :root:not([data-theme]) .q-card--orange .q-muted { color: var(--text-secondary); }
+  :root:not([data-theme]) .home-section--alt .stat-label { color: var(--text-secondary); }
+  :root:not([data-theme]) .home-section--alt .industry-copy { color: var(--text-secondary); }
+  :root:not([data-theme]) .home-section--alt .li-arrow { color: var(--brand); }
+  :root:not([data-theme]) .newsletter-form input {
+    background: rgba(20,24,28,.04);
+    color: var(--text);
+    border-color: rgba(20,24,28,.15);
+  }
+  :root:not([data-theme]) .newsletter-form input::placeholder {
+    color: var(--text-muted);
+  }
+}
 
 /* Footer: every hardcoded rgba(255,255,255,X) flips to a dark equivalent in light mode */
 :root[data-theme="light"] .footer-text { color: var(--text-secondary); }
