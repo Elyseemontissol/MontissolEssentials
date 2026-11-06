@@ -1484,15 +1484,29 @@ main { animation: pageIn .6s ease both; }
     background: var(--brand-dark); color: #fff; border-color: var(--brand-dark);
   }
 }
-/* Ghost button on light bg: swap dark-translucent base + darker text */
+/* Ghost button on a light body surface: dark text on translucent-dark panel.
+   Hero ghost buttons sit on a photo + dark overlay regardless of theme, so
+   they keep the white-on-translucent-white treatment (see override below). */
 :root[data-theme="light"] .btn.ghost {
-  background: rgba(20,24,28,.04);
+  background: rgba(20,24,28,.05);
   color: var(--text);
-  border-color: var(--border);
+  border-color: rgba(20,24,28,.18);
 }
 :root[data-theme="light"] .btn.ghost:hover {
-  background: rgba(20,24,28,.08);
+  background: rgba(20,24,28,.1);
   color: var(--text);
+  border-color: rgba(20,24,28,.28);
+}
+/* Ghost buttons inside a .hero sit on a photo + dark overlay in BOTH themes */
+:root[data-theme="light"] .hero .btn.ghost {
+  background: rgba(255,255,255,.08);
+  color: #fff;
+  border-color: rgba(255,255,255,.3);
+}
+:root[data-theme="light"] .hero .btn.ghost:hover {
+  background: rgba(255,255,255,.15);
+  color: #fff;
+  border-color: rgba(255,255,255,.5);
 }
 /* Glow orbs and noise overlay read too hot on a light surface */
 :root[data-theme="light"] .glow-orb { opacity: .06; }
@@ -1518,13 +1532,24 @@ main { animation: pageIn .6s ease both; }
   :root:not([data-theme]) .blog-excerpt,
   :root:not([data-theme]) .blog-sub { color: var(--text-secondary); }
   :root:not([data-theme]) .btn.ghost {
-    background: rgba(20,24,28,.04);
+    background: rgba(20,24,28,.05);
     color: var(--text);
-    border-color: var(--border);
+    border-color: rgba(20,24,28,.18);
   }
   :root:not([data-theme]) .btn.ghost:hover {
-    background: rgba(20,24,28,.08);
+    background: rgba(20,24,28,.1);
     color: var(--text);
+    border-color: rgba(20,24,28,.28);
+  }
+  :root:not([data-theme]) .hero .btn.ghost {
+    background: rgba(255,255,255,.08);
+    color: #fff;
+    border-color: rgba(255,255,255,.3);
+  }
+  :root:not([data-theme]) .hero .btn.ghost:hover {
+    background: rgba(255,255,255,.15);
+    color: #fff;
+    border-color: rgba(255,255,255,.5);
   }
   :root:not([data-theme]) .glow-orb { opacity: .06; }
   :root:not([data-theme]) body::before { opacity: .015; }
