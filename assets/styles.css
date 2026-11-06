@@ -1449,6 +1449,22 @@ main { animation: pageIn .6s ease both; }
 /* about-card glass background inverts to a subtle dark tint on light */
 :root[data-theme="light"] .about-card { background: rgba(20,24,28,.03); }
 
+/* Key Contacts initial avatars on contact-us. Dark mode: white on brand
+   gradient. Light mode: black on brand gradient (user preference). */
+.contact-avatar {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--brand), var(--brand-dark));
+  display: grid; place-items: center;
+  margin: 0 auto 16px;
+  font-size: 20px; font-weight: 800;
+  color: #fff;
+}
+:root[data-theme="light"] .contact-avatar { color: #111; }
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) .contact-avatar { color: #111; }
+}
+
 /* Additional light-mode text/surface fixes (pages other than index hero) */
 :root[data-theme="light"] .about-band { color: var(--text); }
 :root[data-theme="light"] .project-title { color: var(--text); }
