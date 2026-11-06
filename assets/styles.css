@@ -1465,6 +1465,52 @@ main { animation: pageIn .6s ease both; }
   :root:not([data-theme]) .contact-avatar { color: #111; }
 }
 
+/* Contact form in light mode: black outline on fields + crisp white fill */
+:root[data-theme="light"] .contact-form-panel {
+  background: #ffffff;
+  border-color: rgba(20,24,28,.15);
+}
+:root[data-theme="light"] .field input,
+:root[data-theme="light"] .field textarea,
+:root[data-theme="light"] .field select {
+  background: #ffffff;
+  border: 2px solid #1a1a1a;
+  color: var(--text);
+}
+:root[data-theme="light"] .field input::placeholder,
+:root[data-theme="light"] .field textarea::placeholder {
+  color: var(--text-muted);
+}
+:root[data-theme="light"] .field input:focus,
+:root[data-theme="light"] .field textarea:focus,
+:root[data-theme="light"] .field select:focus {
+  border-color: var(--brand);
+  outline: 2px solid var(--brand); outline-offset: 2px;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) .contact-form-panel {
+    background: #ffffff;
+    border-color: rgba(20,24,28,.15);
+  }
+  :root:not([data-theme]) .field input,
+  :root:not([data-theme]) .field textarea,
+  :root:not([data-theme]) .field select {
+    background: #ffffff;
+    border: 2px solid #1a1a1a;
+    color: var(--text);
+  }
+  :root:not([data-theme]) .field input::placeholder,
+  :root:not([data-theme]) .field textarea::placeholder {
+    color: var(--text-muted);
+  }
+  :root:not([data-theme]) .field input:focus,
+  :root:not([data-theme]) .field textarea:focus,
+  :root:not([data-theme]) .field select:focus {
+    border-color: var(--brand);
+    outline: 2px solid var(--brand); outline-offset: 2px;
+  }
+}
+
 /* Additional light-mode text/surface fixes (pages other than index hero) */
 :root[data-theme="light"] .about-band { color: var(--text); }
 :root[data-theme="light"] .project-title { color: var(--text); }
