@@ -175,9 +175,8 @@
   function current() {
     var attr = document.documentElement.getAttribute('data-theme');
     if (attr === 'light' || attr === 'dark') return attr;
-    // No explicit theme -> report system preference so toggle moves to the opposite
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) return 'light';
-    return 'dark';
+    // No explicit theme -> site default is light
+    return 'light';
   }
 
   function apply(theme) {
@@ -195,16 +194,6 @@
     if (btn) { e.preventDefault(); toggle(); }
   });
 
-  // Respond to system preference changes when the user hasn't explicitly chosen
-  if (window.matchMedia) {
-    var mq = window.matchMedia('(prefers-color-scheme: light)');
-    var listener = function (evt) {
-      var stored;
-      try { stored = localStorage.getItem(KEY); } catch (e) {}
-      if (stored === 'light' || stored === 'dark') return; // user chose, honor it
-      document.documentElement.setAttribute('data-theme', evt.matches ? 'light' : 'dark');
-    };
-    if (mq.addEventListener) mq.addEventListener('change', listener);
-    else if (mq.addListener) mq.addListener(listener);
-  }
+  // Light is the site default; system-preference changes no longer flip the
+  // theme automatically — only the toggle button changes it.
 })();
