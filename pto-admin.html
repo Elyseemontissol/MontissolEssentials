@@ -32,6 +32,12 @@
     .muted{color:var(--text-muted);}
     .hidden{display:none;}
     .actions{display:flex;gap:6px;flex-wrap:wrap;}
+    .project-head{cursor:pointer;user-select:none;display:flex;align-items:center;gap:8px;padding:6px 8px;margin:0 -8px;border-radius:6px;font-size:.88rem;font-weight:700;color:var(--brand);letter-spacing:.06em;text-transform:uppercase;transition:background .15s ease;}
+    .project-head:hover{background:rgba(231,77,16,.08);}
+    .project-head .chev{display:inline-block;width:12px;height:12px;transition:transform .2s ease;flex-shrink:0;}
+    .project-group.collapsed .chev{transform:rotate(-90deg);}
+    .project-group.collapsed table{display:none;}
+    .project-head .count{color:var(--text-muted);font-weight:500;text-transform:none;letter-spacing:0;margin-left:4px;}
   </style>
 </head>
 <body>
@@ -184,9 +190,11 @@
     }
 
     $('projectGroups').innerHTML = names.map(p => `
-      <div class="project-group" style="margin-top:20px;">
-        <h3 style="font-size:.88rem;font-weight:700;color:var(--brand);margin:0 0 8px 0;letter-spacing:.06em;text-transform:uppercase;">
-          ${escape(p)} <span style="color:var(--text-muted);font-weight:500;text-transform:none;letter-spacing:0;">— ${groups[p].length} ${groups[p].length === 1 ? 'person' : 'people'}</span>
+      <div class="project-group" data-project="${escape(p)}" style="margin-top:20px;">
+        <h3 class="project-head" role="button" tabindex="0" aria-expanded="true">
+          <svg class="chev" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4.5l3 3 3-3"/></svg>
+          <span>${escape(p)}</span>
+          <span class="count">— ${groups[p].length} ${groups[p].length === 1 ? 'person' : 'people'}</span>
         </h3>
         <table><thead>
           <tr><th>Name</th><th>Email</th><th>Balance</th><th>Project</th><th></th></tr>
@@ -209,8 +217,22 @@
       </div>
     `).join('');
 
-    $('projectGroups').querySelectorAll('button').forEach(btn => {
+    // Row action buttons
+    $('projectGroups').querySelectorAll('tbody button').forEach(btn => {
       btn.addEventListener('click', () => handleEmpAction(btn));
+    });
+
+    // Collapsible project headers — click or Enter/Space on the header toggles.
+    $('projectGroups').querySelectorAll('.project-head').forEach(head => {
+      const toggle = () => {
+        const group = head.closest('.project-group');
+        const collapsed = group.classList.toggle('collapsed');
+        head.setAttribute('aria-expanded', String(!collapsed));
+      };
+      head.addEventListener('click', toggle);
+      head.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); toggle(); }
+      });
     });
   }
 
