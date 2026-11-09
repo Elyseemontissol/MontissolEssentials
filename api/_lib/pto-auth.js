@@ -24,7 +24,10 @@ export async function findEmployee(name, ssn4, employees) {
   const key = normalizeName(name);
   if (!key || !ssn4) return null;
   for (const emp of employees) {
-    if (emp.nameKey !== key) continue;
+    // Normalize the stored name fresh each match so changes to the
+    // normalization rule (e.g., stripping middle initials) take effect
+    // for employees created under the old rule — no migration needed.
+    if (normalizeName(emp.name) !== key) continue;
     if (await verifySsn4(ssn4, emp.ssn4Hash)) return emp;
   }
   return null;

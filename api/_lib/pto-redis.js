@@ -33,6 +33,19 @@ export const KEYS = {
   rateLimitIp:     (ip) => `pto:rate:ip:${ip}`,
 };
 
+// Fold a name down to first + last for sign-in matching so an employee
+// entered as "John A. Smith" matches both "John Smith" and "John A Smith" at
+// sign-in. Rule: lowercase, strip periods, collapse whitespace, then drop any
+// single-character "initial" tokens between the first and last word. Multi-
+// word last names and hyphenated names are preserved (every middle token with
+// length >= 2 is kept).
 export function normalizeName(s) {
-  return String(s || '').toLowerCase().trim().replace(/\s+/g, ' ');
+  const base = String(s || '').toLowerCase().replace(/\./g, '').trim().replace(/\s+/g, ' ');
+  if (!base) return '';
+  const tokens = base.split(' ');
+  if (tokens.length <= 2) return base;
+  const first = tokens[0];
+  const last = tokens[tokens.length - 1];
+  const middles = tokens.slice(1, -1).filter((t) => t.length > 1);
+  return [first, ...middles, last].join(' ');
 }
