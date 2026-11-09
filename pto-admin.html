@@ -190,8 +190,8 @@
     }
 
     $('projectGroups').innerHTML = names.map(p => `
-      <div class="project-group" data-project="${escape(p)}" style="margin-top:20px;">
-        <h3 class="project-head" role="button" tabindex="0" aria-expanded="true">
+      <div class="project-group collapsed" data-project="${escape(p)}" style="margin-top:20px;">
+        <h3 class="project-head" role="button" tabindex="0" aria-expanded="false">
           <svg class="chev" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4.5l3 3 3-3"/></svg>
           <span>${escape(p)}</span>
           <span class="count">— ${groups[p].length} ${groups[p].length === 1 ? 'person' : 'people'}</span>
