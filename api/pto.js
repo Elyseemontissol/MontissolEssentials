@@ -4,6 +4,7 @@ import {
   listEmployees, createEmployee, updateEmployee, deleteEmployee,
   adjustBalance, listRequests, getRequest, decideRequest, getEmployee,
   listEmployeeRequests, createRequest, cancelRequest, editRequest,
+  listProjects, addProject, deleteProject,
 } from './_lib/pto-store.js';
 import { findEmployee } from './_lib/pto-auth.js';
 import { renderOwnerAlertEmail, renderEmployeeDecisionEmail, renderApprovedCancelledEmail, sendOwnerAlert, sendEmployeeDecision } from './_lib/pto-email.js';
@@ -293,6 +294,10 @@ async function handleAdmin(req, res) {
       }
       if (method === 'POST') {
         const emp = await createEmployee(redis, body, year);
+        // Auto-register the project so it appears in the dropdown next time.
+        if (emp.project && emp.project !== 'Unassigned') {
+          try { await addProject(redis, emp.project); } catch {}
+        }
         const { ssn4Hash, ...safe } = emp;
         return res.status(200).json({ ok: true, employee: safe });
       }
@@ -303,11 +308,31 @@ async function handleAdmin(req, res) {
           return res.status(200).json({ ok: true, employee: safe });
         }
         const emp = await updateEmployee(redis, id, body, year);
+        if (body.project !== undefined && emp.project && emp.project !== 'Unassigned') {
+          try { await addProject(redis, emp.project); } catch {}
+        }
         const { ssn4Hash, ...safe } = emp;
         return res.status(200).json({ ok: true, employee: safe });
       }
       if (method === 'DELETE' && id) {
         await deleteEmployee(redis, id);
+        return res.status(200).json({ ok: true });
+      }
+    }
+
+    if (resource === 'projects') {
+      if (method === 'GET') {
+        const projects = await listProjects(redis, year);
+        return res.status(200).json({ ok: true, projects });
+      }
+      if (method === 'POST') {
+        const name = await addProject(redis, body.name);
+        return res.status(200).json({ ok: true, project: name });
+      }
+      if (method === 'DELETE') {
+        const name = req.query?.name;
+        if (!name) return res.status(400).json({ ok: false, error: 'Project name is required.' });
+        await deleteProject(redis, name, year);
         return res.status(200).json({ ok: true });
       }
     }

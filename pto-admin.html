@@ -38,6 +38,9 @@
     .project-group.collapsed .chev{transform:rotate(-90deg);}
     .project-group.collapsed table{display:none;}
     .project-head .count{color:var(--text-muted);font-weight:500;text-transform:none;letter-spacing:0;margin-left:4px;}
+    .proj-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;background:rgba(231,77,16,.08);border:1px solid rgba(231,77,16,.35);border-radius:999px;font-size:.82rem;color:var(--text);}
+    .proj-chip .del{background:transparent;border:none;color:var(--text-muted);cursor:pointer;padding:0 2px;font-size:1rem;line-height:1;}
+    .proj-chip .del:hover{color:#f87171;}
   </style>
 </head>
 <body>
@@ -70,6 +73,16 @@
     </div>
 
     <div class="card">
+      <h2>Projects (<span id="projCount">0</span>)</h2>
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+        <input id="newProject" placeholder="New project name (e.g. NOAA Virginia Key)" style="flex:1;min-width:220px;">
+        <button id="addProjBtn">Add Project</button>
+      </div>
+      <div id="projErr" class="err"></div>
+      <div id="projList" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+    </div>
+
+    <div class="card">
       <h2>Employees (<span id="empCount">0</span>) <button id="showAddBtn" class="ghost" style="float:right;">+ Add Employee</button></h2>
       <div id="addEmpForm" class="hidden" style="margin-bottom:16px;padding:14px;border:1px solid var(--border);border-radius:8px;">
         <div class="row">
@@ -79,9 +92,13 @@
         </div>
         <div class="row" style="grid-template-columns:1fr;">
           <div>
-            <label>Project <span style="color:var(--text-muted);font-weight:400;">(e.g. NOAA Virginia Key)</span></label>
-            <input id="addProject" list="projectSuggestions" autocomplete="off">
-            <datalist id="projectSuggestions"></datalist>
+            <label>Project</label>
+            <select id="addProject">
+              <option value="">Unassigned</option>
+            </select>
+            <div style="font-size:.78rem;color:var(--text-muted);margin-top:4px;">
+              Need a new project? Add it in the Projects card above first.
+            </div>
           </div>
         </div>
         <div id="addErr" class="err"></div>
@@ -156,9 +173,60 @@
     if (!ok) sessionStorage.removeItem('me_admin_token');
   })();
 
+  let currentProjects = []; // mirror of server-side project list
+
   async function reloadAll() {
-    await Promise.all([reloadEmployees(), reloadRequests()]);
+    await Promise.all([reloadProjects(), reloadEmployees(), reloadRequests()]);
   }
+
+  async function reloadProjects() {
+    const { data } = await api('/api/pto?resource=projects', { method: 'GET' });
+    currentProjects = (data.projects || []).slice();
+    $('projCount').textContent = currentProjects.length;
+    $('projList').innerHTML = currentProjects.length
+      ? currentProjects.map((p) => `
+          <span class="proj-chip">
+            <span>${escape(p)}</span>
+            <button class="del" data-proj="${escape(p)}" title="Delete project" aria-label="Delete project ${escape(p)}">×</button>
+          </span>
+        `).join('')
+      : '<div class="muted">No projects yet. Add one above.</div>';
+    // Populate the Add Employee project select.
+    $('addProject').innerHTML = '<option value="">Unassigned</option>'
+      + currentProjects.map((p) => `<option value="${escape(p)}">${escape(p)}</option>`).join('');
+    // Wire delete handlers.
+    $('projList').querySelectorAll('.del').forEach((btn) => {
+      btn.addEventListener('click', () => handleDeleteProject(btn.dataset.proj));
+    });
+  }
+
+  async function handleDeleteProject(name) {
+    if (!confirm(`Delete project "${name}"?\n\nThis is blocked if any employee is still assigned to it.`)) return;
+    const { data } = await api('/api/pto?resource=projects&name=' + encodeURIComponent(name), { method: 'DELETE' });
+    if (!data.ok) {
+      alert(data.error || 'Failed to delete project.');
+      return;
+    }
+    await reloadAll();
+  }
+
+  $('addProjBtn').addEventListener('click', async () => {
+    const name = $('newProject').value.trim();
+    hideErr($('projErr'));
+    if (!name) return;
+    const { data } = await api('/api/pto?resource=projects', { method: 'POST', body: { name } });
+    if (!data.ok) {
+      $('projErr').textContent = data.error || 'Failed to add project.';
+      $('projErr').style.display = 'block';
+      return;
+    }
+    $('newProject').value = '';
+    await reloadProjects();
+  });
+  $('newProject').addEventListener('keydown', (ev) => {
+    if (ev.key === 'Enter') { ev.preventDefault(); $('addProjBtn').click(); }
+  });
+  function hideErr(el) { el.style.display = 'none'; }
 
   async function reloadEmployees() {
     const { data } = await api('/api/pto?resource=employees', { method: 'GET' });
@@ -177,12 +245,6 @@
       if (b === 'Unassigned') return -1;
       return a.localeCompare(b);
     });
-
-    // Populate the Add form's project autocomplete with existing names.
-    $('projectSuggestions').innerHTML = names
-      .filter(n => n !== 'Unassigned')
-      .map(n => `<option value="${escape(n)}">`)
-      .join('');
 
     if (!employees.length) {
       $('projectGroups').innerHTML = '<div class="muted" style="margin-top:12px;">No employees yet.</div>';
@@ -252,10 +314,17 @@
       reloadEmployees();
     } else if (act === 'project') {
       const current = btn.closest('tr').querySelector('td:nth-child(4)').textContent.trim();
-      const v = prompt('Project name (leave blank for Unassigned):', current === 'Unassigned' ? '' : current);
+      const options = currentProjects.length
+        ? `\n\nAvailable projects:\n  ${currentProjects.join('\n  ')}\n\nType the exact name (case-sensitive), or leave blank for Unassigned.\nAdd new projects in the Projects card.`
+        : '\n\n(No projects defined yet — add one in the Projects card first, or leave blank.)';
+      const v = prompt('Reassign project:' + options, current === 'Unassigned' ? '' : current);
       if (v === null) return;
-      await api('/api/pto?resource=employees&id=' + encodeURIComponent(id), { method: 'PATCH', body: { project: v } });
-      reloadEmployees();
+      const trimmed = v.trim();
+      if (trimmed && !currentProjects.includes(trimmed)) {
+        if (!confirm(`"${trimmed}" is not in the project list. Assign anyway and add it as a new project?`)) return;
+      }
+      await api('/api/pto?resource=employees&id=' + encodeURIComponent(id), { method: 'PATCH', body: { project: trimmed } });
+      await reloadAll();
     } else if (act === 'ssn') {
       const v = prompt('New last 4 of SSN:');
       if (v === null) return;

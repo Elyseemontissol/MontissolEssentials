@@ -83,6 +83,53 @@ export async function deleteEmployee(redis, id) {
   await redis.srem(KEYS.employees, id);
 }
 
+// ── Projects ─────────────────────────────────────────────────────────────
+// Projects are stored as a Redis set at KEYS.projects. On first read we lazily
+// backfill the set with any project names already assigned to employees, so
+// the admin's dropdown is never empty when this feature first ships.
+export async function listProjects(redis, currentYear) {
+  const stored = await redis.smembers(KEYS.projects);
+  const derived = new Set();
+  const employees = await listEmployees(redis, currentYear);
+  for (const e of employees) {
+    const p = (e.project || '').trim();
+    if (p && p !== 'Unassigned') derived.add(p);
+  }
+  // Persist any derived names that aren't yet in the stored set.
+  const storedSet = new Set(stored);
+  const missing = [...derived].filter((p) => !storedSet.has(p));
+  if (missing.length) {
+    await redis.sadd(KEYS.projects, ...missing);
+    missing.forEach((p) => storedSet.add(p));
+  }
+  return [...storedSet].sort((a, b) => a.localeCompare(b));
+}
+
+export async function addProject(redis, name) {
+  const trimmed = String(name || '').trim();
+  if (!trimmed) throw new Error('Project name is required.');
+  if (trimmed.toLowerCase() === 'unassigned') {
+    throw new Error('"Unassigned" is reserved and cannot be added.');
+  }
+  if (trimmed.length > 80) throw new Error('Project name is too long (max 80 characters).');
+  await redis.sadd(KEYS.projects, trimmed);
+  return trimmed;
+}
+
+export async function deleteProject(redis, name, currentYear) {
+  const trimmed = String(name || '').trim();
+  if (!trimmed) throw new Error('Project name is required.');
+  // Block delete if any employee is still assigned to this project.
+  const employees = await listEmployees(redis, currentYear);
+  const assigned = employees.filter((e) => (e.project || '') === trimmed);
+  if (assigned.length) {
+    throw new Error(
+      `${assigned.length} employee${assigned.length === 1 ? ' is' : 's are'} still assigned to "${trimmed}". Reassign them first.`
+    );
+  }
+  await redis.srem(KEYS.projects, trimmed);
+}
+
 export async function adjustBalance(redis, id, deltaOrSet, mode /* 'used' | 'set' */) {
   const raw = await redis.get(KEYS.employee(id));
   if (!raw) throw new Error('Employee not found.');

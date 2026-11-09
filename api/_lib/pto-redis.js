@@ -25,6 +25,7 @@ export const REQUEST_TTL_SECONDS = 72 * 60 * 60;
 export const KEYS = {
   employee:        (id) => `pto:employee:${id}`,
   employees:       'pto:employees',
+  projects:        'pto:projects',
   request:         (id) => `pto:request:${id}`,
   requests:        'pto:requests',
   requestsByEmp:   (employeeId) => `pto:requests:by-employee:${employeeId}`,
