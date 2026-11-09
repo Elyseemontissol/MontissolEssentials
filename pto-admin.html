@@ -71,13 +71,18 @@
           <div><label>Email</label><input id="addEmail" type="email"></div>
           <div><label>Last 4 SSN</label><input id="addSsn" maxlength="4" pattern="\d{4}" inputmode="numeric"></div>
         </div>
+        <div class="row" style="grid-template-columns:1fr;">
+          <div>
+            <label>Project <span style="color:var(--text-muted);font-weight:400;">(e.g. NOAA Virginia Key)</span></label>
+            <input id="addProject" list="projectSuggestions" autocomplete="off">
+            <datalist id="projectSuggestions"></datalist>
+          </div>
+        </div>
         <div id="addErr" class="err"></div>
         <button id="addEmpBtn">Add Employee</button>
         <button id="cancelAddBtn" class="ghost">Cancel</button>
       </div>
-      <table id="empTable"><thead>
-        <tr><th>Name</th><th>Email</th><th>Balance</th><th></th></tr>
-      </thead><tbody id="empBody"></tbody></table>
+      <div id="projectGroups"></div>
     </div>
 
     <div class="card">
@@ -153,19 +158,58 @@
     const { data } = await api('/api/pto?resource=employees', { method: 'GET' });
     const employees = data.employees || [];
     $('empCount').textContent = employees.length;
-    $('empBody').innerHTML = employees.map(e => `
-      <tr data-id="${e.id}">
-        <td>${escape(e.name)}</td>
-        <td>${escape(e.email)}</td>
-        <td>${e.balanceDays} d</td>
-        <td class="actions">
-          <button class="ghost" data-act="adjust">Adjust</button>
-          <button class="ghost" data-act="ssn">Reset SSN</button>
-          <button class="ghost" data-act="del">🗑</button>
-        </td>
-      </tr>
-    `).join('') || '<tr><td colspan="4" class="muted">No employees yet.</td></tr>';
-    $('empBody').querySelectorAll('button').forEach(btn => {
+
+    // Group employees by project; always put "Unassigned" at the bottom.
+    const groups = {};
+    employees.forEach(e => {
+      const p = (e.project && String(e.project).trim()) || 'Unassigned';
+      if (!groups[p]) groups[p] = [];
+      groups[p].push(e);
+    });
+    const names = Object.keys(groups).sort((a, b) => {
+      if (a === 'Unassigned') return 1;
+      if (b === 'Unassigned') return -1;
+      return a.localeCompare(b);
+    });
+
+    // Populate the Add form's project autocomplete with existing names.
+    $('projectSuggestions').innerHTML = names
+      .filter(n => n !== 'Unassigned')
+      .map(n => `<option value="${escape(n)}">`)
+      .join('');
+
+    if (!employees.length) {
+      $('projectGroups').innerHTML = '<div class="muted" style="margin-top:12px;">No employees yet.</div>';
+      return;
+    }
+
+    $('projectGroups').innerHTML = names.map(p => `
+      <div class="project-group" style="margin-top:20px;">
+        <h3 style="font-size:.88rem;font-weight:700;color:var(--brand);margin:0 0 8px 0;letter-spacing:.06em;text-transform:uppercase;">
+          ${escape(p)} <span style="color:var(--text-muted);font-weight:500;text-transform:none;letter-spacing:0;">— ${groups[p].length} ${groups[p].length === 1 ? 'person' : 'people'}</span>
+        </h3>
+        <table><thead>
+          <tr><th>Name</th><th>Email</th><th>Balance</th><th>Project</th><th></th></tr>
+        </thead><tbody>
+          ${groups[p].map(e => `
+            <tr data-id="${e.id}">
+              <td>${escape(e.name)}</td>
+              <td>${escape(e.email)}</td>
+              <td>${e.balanceDays} d</td>
+              <td>${escape(e.project || 'Unassigned')}</td>
+              <td class="actions">
+                <button class="ghost" data-act="adjust">Balance</button>
+                <button class="ghost" data-act="project">Project</button>
+                <button class="ghost" data-act="ssn">Reset SSN</button>
+                <button class="ghost" data-act="del">🗑</button>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody></table>
+      </div>
+    `).join('');
+
+    $('projectGroups').querySelectorAll('button').forEach(btn => {
       btn.addEventListener('click', () => handleEmpAction(btn));
     });
   }
@@ -183,6 +227,12 @@
       const n = Number(v);
       if (!Number.isFinite(n) || n < 0) return alert('Must be a non-negative number.');
       await api('/api/pto?resource=employees&id=' + encodeURIComponent(id), { method: 'PATCH', body: { balanceDays: n } });
+      reloadEmployees();
+    } else if (act === 'project') {
+      const current = btn.closest('tr').querySelector('td:nth-child(4)').textContent.trim();
+      const v = prompt('Project name (leave blank for Unassigned):', current === 'Unassigned' ? '' : current);
+      if (v === null) return;
+      await api('/api/pto?resource=employees&id=' + encodeURIComponent(id), { method: 'PATCH', body: { project: v } });
       reloadEmployees();
     } else if (act === 'ssn') {
       const v = prompt('New last 4 of SSN:');
@@ -243,18 +293,19 @@
     const name = $('addName').value.trim();
     const email = $('addEmail').value.trim();
     const ssn4 = $('addSsn').value.trim();
+    const project = $('addProject').value.trim();
     if (!name || !email || !/^\d{4}$/.test(ssn4)) {
       $('addErr').textContent = 'Name, email, and 4-digit SSN are required.';
       $('addErr').style.display = 'block';
       return;
     }
-    const { data } = await api('/api/pto?resource=employees', { method: 'POST', body: { name, email, ssn4 } });
+    const { data } = await api('/api/pto?resource=employees', { method: 'POST', body: { name, email, ssn4, project } });
     if (!data.ok) {
       $('addErr').textContent = data.error || 'Failed to add.';
       $('addErr').style.display = 'block';
       return;
     }
-    $('addName').value = ''; $('addEmail').value = ''; $('addSsn').value = '';
+    $('addName').value = ''; $('addEmail').value = ''; $('addSsn').value = ''; $('addProject').value = '';
     $('addEmpForm').classList.add('hidden');
     reloadEmployees();
   });

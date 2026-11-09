@@ -325,7 +325,7 @@ async function handleAdmin(req, res) {
       if (!request) return res.status(404).json({ ok: false, error: 'Request not found' });
       const employee = await getEmployee(redis, request.employeeId, year);
       try {
-        const updated = await decideRequest(redis, id, decision, note);
+        const updated = await decideRequest(redis, id, decision, note, { admin: true });
         const after = employee ? await getEmployee(redis, request.employeeId, year) : null;
         if (employee) await emailEmployeeDecision(updated, after || employee, decision);
         return res.status(200).json({ ok: true, request: updated });

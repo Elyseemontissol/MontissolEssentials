@@ -11,12 +11,22 @@ function maybeReset(employee, currentYear) {
   return { ...employee, balanceDays: ANNUAL_DAYS, lastResetYear: currentYear };
 }
 
+// Normalize legacy records that pre-date the `project` field.
+function withProjectDefault(emp) {
+  if (!emp) return emp;
+  if (emp.project === undefined || emp.project === null || emp.project === '') {
+    return { ...emp, project: 'Unassigned' };
+  }
+  return emp;
+}
+
 export async function getEmployee(redis, id, currentYear) {
   const raw = await redis.get(KEYS.employee(id));
   if (!raw) return null;
-  const emp = typeof raw === 'string' ? JSON.parse(raw) : raw;
+  const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+  const emp = withProjectDefault(parsed);
   const after = maybeReset(emp, currentYear);
-  if (after.lastResetYear !== emp.lastResetYear) {
+  if (after.lastResetYear !== emp.lastResetYear || after.project !== parsed.project) {
     await redis.set(KEYS.employee(id), JSON.stringify(after));
   }
   return after;
@@ -32,7 +42,7 @@ export async function listEmployees(redis, currentYear) {
   return out;
 }
 
-export async function createEmployee(redis, { name, email, ssn4 }, currentYear) {
+export async function createEmployee(redis, { name, email, ssn4, project }, currentYear) {
   if (!name || !email) throw new Error('Name and email are required.');
   const id = randomUUID();
   const emp = {
@@ -40,6 +50,7 @@ export async function createEmployee(redis, { name, email, ssn4 }, currentYear) 
     name: String(name).trim(),
     nameKey: normalizeName(name),
     email: String(email).trim(),
+    project: String(project || '').trim() || 'Unassigned',
     ssn4Hash: await hashSsn4(ssn4),
     balanceDays: ANNUAL_DAYS,
     lastResetYear: currentYear,
@@ -59,6 +70,9 @@ export async function updateEmployee(redis, id, updates, currentYear) {
     next.nameKey = normalizeName(updates.name);
   }
   if (updates.email !== undefined) next.email = String(updates.email).trim();
+  if (updates.project !== undefined) {
+    next.project = String(updates.project).trim() || 'Unassigned';
+  }
   if (updates.ssn4 !== undefined) next.ssn4Hash = await hashSsn4(updates.ssn4);
   await redis.set(KEYS.employee(id), JSON.stringify(next));
   return next;
@@ -84,6 +98,31 @@ export async function adjustBalance(redis, id, deltaOrSet, mode /* 'used' | 'set
   return emp;
 }
 
+// Detect approved PTO overlaps on the same project. Returns the first matching
+// date range (without identifying the other employee) or null if clear.
+// `excludeEmployeeId` lets a user not conflict with themselves. `excludeRequestId`
+// lets an edit not conflict with its own prior approved range.
+export async function findProjectConflict(redis, { project, startDate, endDate, excludeEmployeeId, excludeRequestId }) {
+  if (!project || project === 'Unassigned') return null;
+  const ids = await redis.lrange(KEYS.requests, 0, GLOBAL_REQUEST_CAP - 1);
+  const year = new Date().getUTCFullYear();
+  for (const id of ids) {
+    const r = await getRequest(redis, id);
+    if (!r) continue;
+    if (r.status !== 'approved') continue;
+    if (excludeRequestId && r.id === excludeRequestId) continue;
+    if (excludeEmployeeId && r.employeeId === excludeEmployeeId) continue;
+    // Overlap: startA <= endB && endA >= startB (string ISO dates compare chronologically)
+    if (r.startDate > endDate) continue;
+    if (r.endDate < startDate) continue;
+    const otherEmp = await getEmployee(redis, r.employeeId, year);
+    if (!otherEmp) continue;
+    if (otherEmp.project !== project) continue;
+    return { startDate: r.startDate, endDate: r.endDate };
+  }
+  return null;
+}
+
 export async function createRequest(redis, { employee, startDate, endDate, reason }) {
   const days = countWeekdays(startDate, endDate);
   if (days <= 0) throw new Error('Request must include at least one weekday.');
@@ -91,6 +130,21 @@ export async function createRequest(redis, { employee, startDate, endDate, reaso
     throw new Error(`Requested ${days} day(s) exceed your remaining balance of ${employee.balanceDays}.`);
   }
   if (!reason || !String(reason).trim()) throw new Error('Reason is required.');
+
+  // Block if a teammate on the same project already has approved PTO that overlaps.
+  // The message is deliberately non-identifying — no name or email of the teammate.
+  const conflict = await findProjectConflict(redis, {
+    project: employee.project,
+    startDate,
+    endDate,
+    excludeEmployeeId: employee.id,
+  });
+  if (conflict) {
+    throw new Error(
+      `Another teammate on your project already has approved time off from ${conflict.startDate} to ${conflict.endDate}. Please choose different dates or contact HR.`
+    );
+  }
+
   const id = randomUUID();
   const req = {
     id,
@@ -165,6 +219,20 @@ export async function editRequest(redis, { requestId, employee, startDate, endDa
     throw new Error(`Requested ${days} day(s) exceed your remaining balance of ${effectiveBalance}.`);
   }
 
+  // Same project-conflict check as createRequest, excluding the request being edited.
+  const conflict = await findProjectConflict(redis, {
+    project: employee.project,
+    startDate,
+    endDate,
+    excludeEmployeeId: employee.id,
+    excludeRequestId: requestId,
+  });
+  if (conflict) {
+    throw new Error(
+      `Another teammate on your project already has approved time off from ${conflict.startDate} to ${conflict.endDate}. Please choose different dates or contact HR.`
+    );
+  }
+
   req.startDate = startDate;
   req.endDate = endDate;
   req.days = days;
@@ -192,10 +260,33 @@ export async function editRequest(redis, { requestId, employee, startDate, endDa
   return req;
 }
 
-export async function decideRequest(redis, requestId, decision, note) {
+export async function decideRequest(redis, requestId, decision, note, options = {}) {
   if (decision !== 'approve' && decision !== 'deny') {
     throw new Error('decision must be "approve" or "deny"');
   }
+  const adminBypass = !!options.admin;
+
+  if (adminBypass) {
+    // Admin path: the auth'd admin page can decide at any point while the
+    // request is still pending, regardless of the one-shot magic-link claim's
+    // state (the claim has a 72h TTL and auto-expires, leaving pending
+    // requests stuck otherwise). We still clear the claim so the emailed
+    // magic-links can't double-decide after the fact.
+    const req = await getRequest(redis, requestId);
+    if (!req) throw new Error('Request not found.');
+    if (req.status !== 'pending') throw new Error('Already decided.');
+    await redis.del(KEYS.decisionClaim(requestId));
+    req.status = decision === 'approve' ? 'approved' : 'denied';
+    req.decidedAt = new Date().toISOString();
+    req.decisionNote = note ? String(note).slice(0, 500) : null;
+    await redis.set(KEYS.request(requestId), JSON.stringify(req));
+    if (decision === 'approve') {
+      await adjustBalance(redis, req.employeeId, req.days, 'used');
+    }
+    return req;
+  }
+
+  // Email magic-link path: one-shot claim prevents replay from a forwarded email.
   const claim = await redis.getdel(KEYS.decisionClaim(requestId));
   if (!claim) throw new Error('Already decided or expired.');
   const req = await getRequest(redis, requestId);
