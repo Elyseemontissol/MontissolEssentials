@@ -1239,6 +1239,24 @@ input, textarea, select, button { font: inherit; }
   letter-spacing: .14em; color: var(--brand); margin-bottom: 20px;
 }
 .footer-text { font-size: .9rem; color: rgba(255,255,255,.5); line-height: 1.7; }
+.footer-compliance { margin-top: 18px; display: flex; flex-wrap: wrap; gap: 8px; }
+.compliance-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 7px 12px; border-radius: 999px;
+  background: rgba(231,77,16,.08);
+  border: 1px solid rgba(231,77,16,.35);
+  color: var(--brand);
+  font-size: .78rem; font-weight: 700;
+  letter-spacing: .04em;
+  line-height: 1;
+}
+.compliance-badge svg { color: var(--brand); flex: 0 0 auto; }
+:root[data-theme="light"] .compliance-badge {
+  background: rgba(231,77,16,.1);
+  border-color: rgba(231,77,16,.45);
+  color: var(--brand-dark, #b84d14);
+}
+:root[data-theme="light"] .compliance-badge svg { color: var(--brand-dark, #b84d14); }
 .footer-hr { border: none; height: 1px; background: rgba(255,255,255,.08); margin: 0; }
 .footer-links { display: flex; flex-direction: column; gap: 10px; }
 .footer-links a {
