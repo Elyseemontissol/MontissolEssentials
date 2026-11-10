@@ -173,9 +173,8 @@ export async function findProjectConflict(redis, { project, startDate, endDate, 
 export async function createRequest(redis, { employee, startDate, endDate, reason }) {
   const days = countWeekdays(startDate, endDate);
   if (days <= 0) throw new Error('Request must include at least one weekday.');
-  if (days > employee.balanceDays) {
-    throw new Error(`Requested ${days} day(s) exceed your remaining balance of ${employee.balanceDays}.`);
-  }
+  // Note: requests that exceed the employee's PTO balance are allowed — the
+  // overage is tracked as unpaid time off at approval time.
   if (!reason || !String(reason).trim()) throw new Error('Reason is required.');
 
   // Block if a teammate on the same project already has approved PTO that overlaps.
@@ -205,6 +204,8 @@ export async function createRequest(redis, { employee, startDate, endDate, reaso
     createdAt: new Date().toISOString(),
     decidedAt: null,
     decisionNote: null,
+    paidDays: null,
+    unpaidDays: null,
   };
   await redis.set(KEYS.request(id), JSON.stringify(req));
   await redis.set(KEYS.decisionClaim(id), 'unused', { ex: REQUEST_TTL_SECONDS });
@@ -236,11 +237,16 @@ export async function cancelRequest(redis, requestId, employeeId) {
   // Invalidate the owner's approve/deny magic-links so the email becomes inert.
   await redis.del(KEYS.decisionClaim(requestId));
   if (wasApproved) {
-    // Restore the days that were deducted at approval time.
-    const year = new Date().getUTCFullYear();
-    const emp = await getEmployee(redis, employeeId, year);
-    if (emp) {
-      await adjustBalance(redis, employeeId, emp.balanceDays + req.days, 'set');
+    // Only the paid portion came out of the balance at approval, so only that
+    // portion is restored on cancel. Legacy approved requests from before
+    // paid/unpaid tracking fall back to `req.days` as the paid amount.
+    const restore = Number.isFinite(req.paidDays) ? req.paidDays : req.days;
+    if (restore > 0) {
+      const year = new Date().getUTCFullYear();
+      const emp = await getEmployee(redis, employeeId, year);
+      if (emp) {
+        await adjustBalance(redis, employeeId, emp.balanceDays + restore, 'set');
+      }
     }
   }
   return req;
@@ -258,13 +264,9 @@ export async function editRequest(redis, { requestId, employee, startDate, endDa
   if (!reason || !String(reason).trim()) throw new Error('Reason is required.');
 
   const wasApproved = req.status === 'approved';
-  const oldDays = req.days;
-  // Effective balance: for an approved edit, the old days were already deducted —
-  // they become "available" once we revert the request to pending.
-  const effectiveBalance = wasApproved ? employee.balanceDays + oldDays : employee.balanceDays;
-  if (days > effectiveBalance) {
-    throw new Error(`Requested ${days} day(s) exceed your remaining balance of ${effectiveBalance}.`);
-  }
+  const oldPaidDays = Number.isFinite(req.paidDays) ? req.paidDays : (wasApproved ? req.days : 0);
+  // Note: no balance check — requests that exceed remaining PTO are allowed;
+  // the overage is paid as unpaid time off when approved.
 
   // Same project-conflict check as createRequest, excluding the request being edited.
   const conflict = await findProjectConflict(redis, {
@@ -285,6 +287,10 @@ export async function editRequest(redis, { requestId, employee, startDate, endDa
   req.days = days;
   req.reason = String(reason).trim().slice(0, 500);
   req.editedAt = new Date().toISOString();
+  // A pending request has no paid/unpaid breakdown yet — the owner computes
+  // it at approval time against current balance.
+  req.paidDays = null;
+  req.unpaidDays = null;
 
   if (wasApproved) {
     // Revert to pending — the owner's original approval was for different details.
@@ -292,11 +298,13 @@ export async function editRequest(redis, { requestId, employee, startDate, endDa
     req.previousStatus = 'approved';
     req.decidedAt = null;
     req.decisionNote = null;
-    // Restore the originally-deducted days; the owner re-deducts on re-approve.
+    // Restore only the days that were actually deducted at approval (paid
+    // portion). Unpaid days never came out of the balance, so there's
+    // nothing to restore for them.
     const year = new Date().getUTCFullYear();
     const emp = await getEmployee(redis, employee.id, year);
-    if (emp) {
-      await adjustBalance(redis, employee.id, emp.balanceDays + oldDays, 'set');
+    if (emp && oldPaidDays > 0) {
+      await adjustBalance(redis, employee.id, emp.balanceDays + oldPaidDays, 'set');
     }
     // Recreate the decision-claim key so the fresh owner alert email's
     // Approve/Deny magic-links work.
@@ -313,6 +321,33 @@ export async function decideRequest(redis, requestId, decision, note, options = 
   }
   const adminBypass = !!options.admin;
 
+  // Shared finalize helper for both admin and magic-link paths.
+  async function finalize(req) {
+    req.status = decision === 'approve' ? 'approved' : 'denied';
+    req.decidedAt = new Date().toISOString();
+    req.decisionNote = note ? String(note).slice(0, 500) : null;
+    if (decision === 'approve') {
+      // Split the request into paid (up to current balance) + unpaid overflow.
+      const year = new Date().getUTCFullYear();
+      const emp = await getEmployee(redis, req.employeeId, year);
+      const balance = emp ? emp.balanceDays : 0;
+      const paidDays = Math.min(req.days, balance);
+      const unpaidDays = req.days - paidDays;
+      req.paidDays = paidDays;
+      req.unpaidDays = unpaidDays;
+      await redis.set(KEYS.request(requestId), JSON.stringify(req));
+      if (paidDays > 0) {
+        await adjustBalance(redis, req.employeeId, paidDays, 'used');
+      }
+    } else {
+      // Denied requests never touch the balance.
+      req.paidDays = 0;
+      req.unpaidDays = req.days;
+      await redis.set(KEYS.request(requestId), JSON.stringify(req));
+    }
+    return req;
+  }
+
   if (adminBypass) {
     // Admin path: the auth'd admin page can decide at any point while the
     // request is still pending, regardless of the one-shot magic-link claim's
@@ -323,14 +358,7 @@ export async function decideRequest(redis, requestId, decision, note, options = 
     if (!req) throw new Error('Request not found.');
     if (req.status !== 'pending') throw new Error('Already decided.');
     await redis.del(KEYS.decisionClaim(requestId));
-    req.status = decision === 'approve' ? 'approved' : 'denied';
-    req.decidedAt = new Date().toISOString();
-    req.decisionNote = note ? String(note).slice(0, 500) : null;
-    await redis.set(KEYS.request(requestId), JSON.stringify(req));
-    if (decision === 'approve') {
-      await adjustBalance(redis, req.employeeId, req.days, 'used');
-    }
-    return req;
+    return await finalize(req);
   }
 
   // Email magic-link path: one-shot claim prevents replay from a forwarded email.
@@ -338,14 +366,7 @@ export async function decideRequest(redis, requestId, decision, note, options = 
   if (!claim) throw new Error('Already decided or expired.');
   const req = await getRequest(redis, requestId);
   if (!req) throw new Error('Request not found.');
-  req.status = decision === 'approve' ? 'approved' : 'denied';
-  req.decidedAt = new Date().toISOString();
-  req.decisionNote = note ? String(note).slice(0, 500) : null;
-  await redis.set(KEYS.request(requestId), JSON.stringify(req));
-  if (decision === 'approve') {
-    await adjustBalance(redis, req.employeeId, req.days, 'used');
-  }
-  return req;
+  return await finalize(req);
 }
 
 export async function listRequests(redis, { status, limit = 50 } = {}) {

@@ -51,7 +51,7 @@
   <!-- Sign-in screen -->
   <section id="signinView" class="card">
     <h1>Employee Time Off</h1>
-    <p style="color:var(--text-muted);margin:0 0 16px 0;">Sign in to request paid time off.</p>
+    <p style="color:var(--text-muted);margin:0 0 16px 0;">Sign in to request time off &mdash; paid if you have PTO balance, unpaid if you don&rsquo;t.</p>
     <div id="signinErr" class="err"></div>
     <div class="field">
       <label for="siName">Full name <span style="color:var(--text-muted);font-weight:400;">(middle initial optional)</span></label>
@@ -141,9 +141,12 @@
              <button class="hist-btn danger" data-act="cancel" data-id="${escapeHtml(r.id)}">Cancel time off</button>
            </div>`;
       }
+      const split = (r.status === 'approved' && Number.isFinite(r.unpaidDays) && r.unpaidDays > 0)
+        ? ` <span style="color:var(--text-muted);font-size:.78rem;">(${r.paidDays} paid${r.unpaidDays > 0 ? ' + ' + r.unpaidDays + ' unpaid' : ''})</span>`
+        : '';
       return `<li>
         <span class="${cls}">${label}</span>${edited} ·
-        ${fmtDate(r.startDate)} – ${fmtDate(r.endDate)} (${r.days} d) ·
+        ${fmtDate(r.startDate)} – ${fmtDate(r.endDate)} (${r.days} d)${split} ·
         <span style="color:var(--text-muted);">${escapeHtml(r.reason)}</span>
         ${note}
         ${actions}
@@ -235,7 +238,16 @@
       const dow = d.getUTCDay();
       if (dow !== 0 && dow !== 6) days++;
     }
-    $('dayPreview').textContent = `${days} weekday${days === 1 ? '' : 's'}`;
+    const balance = Number($('empBalance').textContent) || 0;
+    const paid = Math.min(days, balance);
+    const unpaid = days - paid;
+    let msg = `${days} weekday${days === 1 ? '' : 's'}`;
+    if (days > 0 && unpaid > 0) {
+      msg += paid > 0
+        ? ` — ${paid} paid + ${unpaid} unpaid (exceeds your PTO balance)`
+        : ` — all ${unpaid} unpaid (no PTO balance remaining)`;
+    }
+    $('dayPreview').textContent = msg;
   }
   $('reqStart').addEventListener('change', updateDayPreview);
   $('reqEnd').addEventListener('change', updateDayPreview);

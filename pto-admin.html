@@ -335,32 +335,52 @@
   }
 
   async function reloadRequests() {
-    const { data: pendingRes } = await api('/api/pto?resource=requests&status=pending', { method: 'GET' });
-    const pending = pendingRes.requests || [];
+    // Fetch employees alongside so the pending list can preview paid/unpaid
+    // split against the current balance before approval.
+    const [pendingRes, empRes] = await Promise.all([
+      api('/api/pto?resource=requests&status=pending', { method: 'GET' }),
+      api('/api/pto?resource=employees', { method: 'GET' }),
+    ]);
+    const pending = pendingRes.data.requests || [];
+    const empsById = new Map((empRes.data.employees || []).map(e => [e.id, e]));
     $('pendingCount').textContent = pending.length;
-    $('pendingList').innerHTML = pending.map(r => `
-      <div style="padding:12px 0;border-bottom:1px solid var(--border);">
-        <div><strong>${escape(r.employeeName)}</strong> · ${fmtDate(r.startDate)} – ${fmtDate(r.endDate)} (${r.days} d)</div>
-        <div class="muted">${escape(r.reason)}</div>
-        <div class="actions" style="margin-top:8px;">
-          <button class="green" data-req="${r.id}" data-act="approve">✅ Approve</button>
-          <button class="red" data-req="${r.id}" data-act="deny">❌ Deny</button>
+    $('pendingList').innerHTML = pending.map(r => {
+      const emp = empsById.get(r.employeeId);
+      const bal = emp ? emp.balanceDays : 0;
+      const paid = Math.min(r.days, bal);
+      const unpaid = r.days - paid;
+      const preview = unpaid > 0
+        ? `<span style="color:#fbbf24;font-size:.82rem;"> — would be ${paid} paid + ${unpaid} unpaid</span>`
+        : '';
+      return `
+        <div style="padding:12px 0;border-bottom:1px solid var(--border);">
+          <div><strong>${escape(r.employeeName)}</strong> · ${fmtDate(r.startDate)} – ${fmtDate(r.endDate)} (${r.days} d)${preview}</div>
+          <div class="muted">${escape(r.reason)}</div>
+          <div class="actions" style="margin-top:8px;">
+            <button class="green" data-req="${r.id}" data-act="approve">✅ Approve</button>
+            <button class="red" data-req="${r.id}" data-act="deny">❌ Deny</button>
+          </div>
         </div>
-      </div>
-    `).join('') || '<div class="muted">No pending requests.</div>';
+      `;
+    }).join('') || '<div class="muted">No pending requests.</div>';
     $('pendingList').querySelectorAll('button').forEach(btn => {
       btn.addEventListener('click', () => handleDecide(btn));
     });
 
     const { data: allRes } = await api('/api/pto?resource=requests', { method: 'GET' });
     const decided = (allRes.requests || []).filter(r => r.status !== 'pending');
-    $('decidedList').innerHTML = decided.map(r => `
-      <div style="padding:10px 0;border-bottom:1px solid var(--border);font-size:.9rem;">
-        <strong>${escape(r.employeeName)}</strong> · ${fmtDate(r.startDate)} – ${fmtDate(r.endDate)} (${r.days} d) ·
-        <span style="color:${r.status === 'approved' ? '#22c55e' : '#f87171'};">${r.status}</span>
-        ${r.decisionNote ? ` · <span class="muted">"${escape(r.decisionNote)}"</span>` : ''}
-      </div>
-    `).join('') || '<div class="muted">No decided requests.</div>';
+    $('decidedList').innerHTML = decided.map(r => {
+      const split = (r.status === 'approved' && Number.isFinite(r.unpaidDays) && r.unpaidDays > 0)
+        ? ` <span class="muted" style="font-size:.78rem;">(${r.paidDays} paid + ${r.unpaidDays} unpaid)</span>`
+        : '';
+      return `
+        <div style="padding:10px 0;border-bottom:1px solid var(--border);font-size:.9rem;">
+          <strong>${escape(r.employeeName)}</strong> · ${fmtDate(r.startDate)} – ${fmtDate(r.endDate)} (${r.days} d)${split} ·
+          <span style="color:${r.status === 'approved' ? '#22c55e' : '#f87171'};">${r.status}</span>
+          ${r.decisionNote ? ` · <span class="muted">"${escape(r.decisionNote)}"</span>` : ''}
+        </div>
+      `;
+    }).join('') || '<div class="muted">No decided requests.</div>';
   }
 
   async function handleDecide(btn) {
