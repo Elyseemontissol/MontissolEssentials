@@ -1259,6 +1259,14 @@ input, textarea, select, button { font: inherit; }
 :root[data-theme="light"] .compliance-badge svg { color: var(--brand-dark, #b84d14); }
 .footer-hr { border: none; height: 1px; background: rgba(255,255,255,.08); margin: 0; }
 .footer-links { display: flex; flex-direction: column; gap: 10px; }
+.footer-links--compact {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 16px;
+}
+@media (max-width: 480px) {
+  .footer-links--compact { grid-template-columns: 1fr; }
+}
 .footer-links a {
   font-size: .9rem; color: rgba(255,255,255,.55);
   transition: all var(--ease);
