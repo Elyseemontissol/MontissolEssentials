@@ -346,11 +346,14 @@ export default async function handler(req, res) {
     }
 
     // Image strategy: campaigns bring their own image; everything else pulls a
-    // themed stock photo from Pexels (free API, credit appended to caption below).
-    // On any failure (API down, no results, missing key) we fall back to the
-    // static default so the flow still succeeds and Instagram still gets an image.
+    // themed stock photo from Pexels. On any failure (API down, no results,
+    // missing key) we fall back to the static default so the flow still
+    // succeeds and Instagram still gets an image.
+    //
+    // Photographer credit is NOT appended to the caption. Pexels' license
+    // treats attribution as appreciated but not required, and the owner
+    // asked for cleaner posts without the "Photo by X / Pexels" footer.
     let imageUrl;
-    let pexelsAttribution = null;
     if (campaign) {
       // All campaign posts (hiring pushes) use the Job-Post.png base image
       // with a "NOW HIRING - {role}" banner burned in by /api/job-image.
@@ -362,16 +365,10 @@ export default async function handler(req, res) {
       try {
         const pexels = await fetchPexelsImage(theme, process.env.PEXELS_API_KEY);
         imageUrl = pexels.url;
-        pexelsAttribution = pexels.attribution;
       } catch (err) {
         console.error('Pexels fetch failed, using default image:', err.message);
         imageUrl = `${appBaseUrl()}/assets/social/default.jpg`;
       }
-    }
-
-    // Pexels' terms require photographer credit — append to the caption.
-    if (pexelsAttribution) {
-      captionResult.caption = `${captionResult.caption}\n\n${pexelsAttribution}`;
     }
 
     const draft = {
