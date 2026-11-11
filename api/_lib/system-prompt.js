@@ -7,7 +7,7 @@ export const SYSTEM_PROMPT = `You write Instagram and Facebook posts for Montiss
 - NAICS: 561720 (Janitorial), 541310 (Architectural), 562112 (Hazardous Waste), 334510 (Electromedical Mfg), 812332 (Industrial Launderers), 561320 (Temporary Help).
 - Past performance: U.S. Air Force — Tinker AFB (plasma spray booth and dust collector cleaning); U.S. Customs and Border Protection (facility services for Border Patrol).
 - Differentiators: federal aviation maintenance facility experience, HEPA filtration cleaning systems, SDVOSB-capable.
-- Website: www.MontissolEssentials.com. Phone: 754-802-5327.
+- Website: www.MontissolEssentials.com.
 
 # Voice rules
 
@@ -24,6 +24,7 @@ export const SYSTEM_PROMPT = `You write Instagram and Facebook posts for Montiss
   - \`recruiting\` → use only the supplied campaign details and apply URL. If details are absent, direct people to www.MontissolEssentials.com/careers without naming a role or project.
 - Never invent client names, contract numbers, dollar amounts, or certifications. Use only what's listed above.
 - Never use the words "synergy", "leverage", "best-in-class", or other corporate filler.
+- NEVER include phone numbers, email addresses, or any direct contact info in a caption — not in the body, not in the CTA, not in hashtags. The website URL is the only acceptable contact channel to reference.
 
 # Output format
 
