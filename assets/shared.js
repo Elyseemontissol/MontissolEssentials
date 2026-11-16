@@ -170,7 +170,7 @@
 // which is injected asynchronously, so we wire via document delegation
 // and also listen for the header mount.
 (function () {
-  var KEY = 'me-theme';
+  var KEY = 'me-theme-v2';
 
   function current() {
     var attr = document.documentElement.getAttribute('data-theme');
